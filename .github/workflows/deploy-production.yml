@@ -1,0 +1,123 @@
+# .github/workflows/deploy-production.yml
+# Deploy to Firebase Hosting on merge to main branch
+name: Firebase Deploy - Production
+
+on:
+  push:
+    branches:
+      - main
+    # Only trigger deployment when these files change
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'index.html'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'vite.config.js'
+      - 'firebase.json'
+      - 'database.rules.json'
+      - 'components.json'
+      - 'jsconfig.json'
+      - '.firebaserc'
+      - '.github/workflows/**'
+
+# Required permissions for the workflow
+permissions:
+  contents: write # Required for creating commit comments
+  deployments: write # Required for deployment status
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+
+    # Reference the Production environment
+    environment:
+      name: Production
+      url: https://wwbam-quiz.web.app
+
+    steps:
+      # Checkout repository
+      - uses: actions/checkout@v4
+
+      # Install pnpm
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      # Install dependencies
+      - name: Install dependencies
+        run: pnpm install
+
+      # Build the app with environment variables from Production environment
+      - name: Build
+        run: pnpm build
+        env:
+          VITE_ENVIRONMENT: production
+          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+          VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+          VITE_FIREBASE_MEASUREMENT_ID: ${{ secrets.VITE_FIREBASE_MEASUREMENT_ID }}
+          VITE_FIREBASE_DATABASE_URL: ${{ secrets.VITE_FIREBASE_DATABASE_URL }}
+
+      # Deploy to Firebase Hosting
+      - name: Deploy to Firebase Hosting
+        id: firebase-deploy
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_WWBAM_QUIZ }}
+          channelId: live
+          projectId: wwbam-quiz
+          target: host-panel
+
+      # Output deployment information
+      - name: Display Deployment URLs
+        run: |
+          echo "### 🚀 Production Deployment Successful!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Site:** wwbam-quiz" >> $GITHUB_STEP_SUMMARY
+          echo "**Target:** host-panel" >> $GITHUB_STEP_SUMMARY
+          echo "**Project:** wwbam-quiz" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** Production" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🌐 **Live URL:** https://wwbam-quiz.web.app" >> $GITHUB_STEP_SUMMARY
+          echo "🌐 **Alternative URL:** https://wwbam-quiz.firebaseapp.com" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📊 **Firebase Console:** https://console.firebase.google.com/project/wwbam-quiz/hosting/sites" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Deployment Time:** $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "📝 **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "👤 **Triggered by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+
+      # Create comment on commit with deployment info
+      - name: Comment on commit
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const commitSha = context.sha;
+            const message = `## 🚀 Production Deployment Complete
+
+            **Site:** wwbam-quiz
+            **Environment:** Production
+            **Status:** ✅ Success
+
+            ### URLs
+            - 🌐 Primary: https://wwbam-quiz.web.app
+            - 🌐 Alternative: https://wwbam-quiz.firebaseapp.com
+
+            ### Details
+            - **Project:** wwbam-quiz
+            - **Target:** host-panel
+            - **Deployed at:** ${new Date().toISOString()}
+            - **Triggered by:** @${{ github.actor }}
+
+            [View in Firebase Console](https://console.firebase.google.com/project/wwbam-quiz/hosting/sites)`;
+
+            github.rest.repos.createCommitComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: commitSha,
+              body: message
+            });
