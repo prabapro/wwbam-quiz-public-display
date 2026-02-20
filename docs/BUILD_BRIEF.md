@@ -1,10 +1,5 @@
 # WWBAM Public Display App — Build Brief
 
-> Use this document as context when starting the build in a new chat.
-> Paste the entire contents so the assistant has full project background.
-
----
-
 ## 1. What This App Is
 
 A **standalone, read-only public display** for the WWBAM (Who Wants to Be a Millionaire) quiz
@@ -79,29 +74,29 @@ exposing any credentials.
 
 ```json
 {
-	"rules": {
-		"allowed-hosts": { ".read": "auth != null", ".write": false },
-		"question-sets": {
-			".read": "auth != null && root.child('allowed-hosts').child(auth.uid).exists()",
-			".write": "auth != null && root.child('allowed-hosts').child(auth.uid).exists()"
-		},
-		"game-state": {
-			".read": "auth != null",
-			".write": "auth != null && root.child('allowed-hosts').child(auth.uid).exists()"
-		},
-		"teams": {
-			".read": "auth != null",
-			".write": "auth != null && root.child('allowed-hosts').child(auth.uid).exists()"
-		},
-		"prize-structure": {
-			".read": "auth != null",
-			".write": "auth != null && root.child('allowed-hosts').child(auth.uid).exists()"
-		},
-		"config": {
-			".read": "auth != null",
-			".write": "auth != null && root.child('allowed-hosts').child(auth.uid).exists()"
-		}
-	}
+  "rules": {
+    "allowed-hosts": { ".read": "auth != null", ".write": false },
+    "question-sets": {
+      ".read": "auth != null && root.child('allowed-hosts').child(auth.uid).exists()",
+      ".write": "auth != null && root.child('allowed-hosts').child(auth.uid).exists()"
+    },
+    "game-state": {
+      ".read": "auth != null",
+      ".write": "auth != null && root.child('allowed-hosts').child(auth.uid).exists()"
+    },
+    "teams": {
+      ".read": "auth != null",
+      ".write": "auth != null && root.child('allowed-hosts').child(auth.uid).exists()"
+    },
+    "prize-structure": {
+      ".read": "auth != null",
+      ".write": "auth != null && root.child('allowed-hosts').child(auth.uid).exists()"
+    },
+    "config": {
+      ".read": "auth != null",
+      ".write": "auth != null && root.child('allowed-hosts').child(auth.uid).exists()"
+    }
+  }
 }
 ```
 
@@ -134,15 +129,15 @@ The display app must convert kebab-case → camelCase when reading from Firebase
 
 ```json
 {
-	"id": "q5",
-	"number": 5,
-	"text": "What is the capital of France?",
-	"options": {
-		"A": "London",
-		"B": "Paris",
-		"C": "Berlin",
-		"D": "Rome"
-	}
+  "id": "q5",
+  "number": 5,
+  "text": "What is the capital of France?",
+  "options": {
+    "A": "London",
+    "B": "Paris",
+    "C": "Berlin",
+    "D": "Rome"
+  }
 }
 ```
 
@@ -331,13 +326,13 @@ const { user, loading } = useFirebaseAuth();
 import { ref, onValue } from 'firebase/database';
 
 useEffect(() => {
-	const nodeRef = ref(database, 'game-state');
-	const unsubscribe = onValue(nodeRef, (snapshot) => {
-		if (snapshot.exists()) {
-			setGameState(transformKeys(snapshot.val())); // kebab → camelCase
-		}
-	});
-	return () => unsubscribe(); // cleanup on unmount
+  const nodeRef = ref(database, 'game-state');
+  const unsubscribe = onValue(nodeRef, (snapshot) => {
+    if (snapshot.exists()) {
+      setGameState(transformKeys(snapshot.val())); // kebab → camelCase
+    }
+  });
+  return () => unsubscribe(); // cleanup on unmount
 }, []);
 ```
 
@@ -350,7 +345,7 @@ All Firebase keys arrive as kebab-case. The `transforms.js` utility converts the
 // 'current-team-id' → 'currentTeamId'
 // 'question-visible' → 'questionVisible'
 const kebabToCamel = (str) =>
-	str.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
+  str.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
 ```
 
 ### Option reveal state machine
@@ -404,18 +399,18 @@ Same Firebase project credentials as the host panel.
 
 ```json
 {
-	"dependencies": {
-		"firebase": "^11.x",
-		"framer-motion": "^11.x",
-		"react": "^19.x",
-		"react-dom": "^19.x"
-	},
-	"devDependencies": {
-		"@vitejs/plugin-react": "^4.x",
-		"autoprefixer": "^10.x",
-		"tailwindcss": "^4.x",
-		"vite": "^6.x"
-	}
+  "dependencies": {
+    "firebase": "^11.x",
+    "framer-motion": "^11.x",
+    "react": "^19.x",
+    "react-dom": "^19.x"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.x",
+    "autoprefixer": "^10.x",
+    "tailwindcss": "^4.x",
+    "vite": "^6.x"
+  }
 }
 ```
 
