@@ -1,0 +1,15 @@
+{
+	"projects": {
+		"default": "wwbam-quiz"
+	},
+	"targets": {
+		"wwbam-quiz": {
+			"hosting": {
+				"public-display": [
+					"wwbam-quiz-display"
+				]
+			}
+		}
+	},
+	"etags": {}
+}
