@@ -33,7 +33,7 @@ jobs:
     # Reference the Production environment
     environment:
       name: Production
-      url: https://wwbam-quiz.web.app
+      url: https://wwbam-quiz-display.web.app
 
     steps:
       # Checkout repository
@@ -70,20 +70,20 @@ jobs:
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_WWBAM_QUIZ }}
           channelId: live
           projectId: wwbam-quiz
-          target: host-panel
+          target: public-display
 
       # Output deployment information
       - name: Display Deployment URLs
         run: |
           echo "### 🚀 Production Deployment Successful!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Site:** wwbam-quiz" >> $GITHUB_STEP_SUMMARY
-          echo "**Target:** host-panel" >> $GITHUB_STEP_SUMMARY
+          echo "**Site:** wwbam-quiz-display" >> $GITHUB_STEP_SUMMARY
+          echo "**Target:** public-display" >> $GITHUB_STEP_SUMMARY
           echo "**Project:** wwbam-quiz" >> $GITHUB_STEP_SUMMARY
           echo "**Environment:** Production" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "🌐 **Live URL:** https://wwbam-quiz.web.app" >> $GITHUB_STEP_SUMMARY
-          echo "🌐 **Alternative URL:** https://wwbam-quiz.firebaseapp.com" >> $GITHUB_STEP_SUMMARY
+          echo "🌐 **Live URL:** https://wwbam-quiz-display.web.app" >> $GITHUB_STEP_SUMMARY
+          echo "🌐 **Alternative URL:** https://wwbam-quiz-display.firebaseapp.com" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "📊 **Firebase Console:** https://console.firebase.google.com/project/wwbam-quiz/hosting/sites" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -104,12 +104,12 @@ jobs:
             **Status:** ✅ Success
 
             ### URLs
-            - 🌐 Primary: https://wwbam-quiz.web.app
-            - 🌐 Alternative: https://wwbam-quiz.firebaseapp.com
+            - 🌐 Primary: https://wwbam-quiz-display.web.app
+            - 🌐 Alternative: https://wwbam-quiz-display.firebaseapp.com
 
             ### Details
             - **Project:** wwbam-quiz
-            - **Target:** host-panel
+            - **Target:** public-display
             - **Deployed at:** ${new Date().toISOString()}
             - **Triggered by:** @${{ github.actor }}
 

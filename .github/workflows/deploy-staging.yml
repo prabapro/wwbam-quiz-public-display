@@ -68,7 +68,7 @@ jobs:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_WWBAM_QUIZ }}
           projectId: wwbam-quiz
-          target: host-panel
+          target: public-display
           channelId: staging-${{ github.event.pull_request.number }}
 
       # Output deployment information with proper site name
@@ -77,17 +77,17 @@ jobs:
           echo "### 🔍 Staging Preview Deployed!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**PR #${{ github.event.pull_request.number }}:** ${{ github.event.pull_request.title }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Site:** wwbam-quiz" >> $GITHUB_STEP_SUMMARY
-          echo "**Target:** host-panel" >> $GITHUB_STEP_SUMMARY
+          echo "**Site:** wwbam-quiz-display" >> $GITHUB_STEP_SUMMARY
+          echo "**Target:** public-display" >> $GITHUB_STEP_SUMMARY
           echo "**Channel:** staging-${{ github.event.pull_request.number }}" >> $GITHUB_STEP_SUMMARY
           echo "**Environment:** Staging" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "🌐 **Preview URL:** ${{ steps.firebase-deploy.outputs.details_url }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "ℹ️ **Note:** The preview URL format is: \`https://wwbam-quiz--staging-${{ github.event.pull_request.number }}-XXXXXXXX.web.app\`" >> $GITHUB_STEP_SUMMARY
+          echo "ℹ️ **Note:** The preview URL format is: \`https://wwbam-quiz-display--staging-${{ github.event.pull_request.number }}-XXXXXXXX.web.app\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "⏱️ **Preview expires:** 7 days from deployment" >> $GITHUB_STEP_SUMMARY
-          echo "📊 **Firebase Console:** https://console.firebase.google.com/project/wwbam-quiz/hosting/sites/wwbam-quiz" >> $GITHUB_STEP_SUMMARY
+          echo "📊 **Firebase Console:** https://console.firebase.google.com/project/wwbam-quiz/hosting/sites/wwbam-quiz-display" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "✅ **Deployment Time:** $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
           echo "📝 **Commit:** ${{ github.event.pull_request.head.sha }}" >> $GITHUB_STEP_SUMMARY
@@ -109,8 +109,8 @@ jobs:
             🌐 **Live Preview:** ${previewUrl}
 
             ### Deployment Details
-            - **Site:** wwbam-quiz
-            - **Target:** host-panel
+            - **Site:** wwbam-quiz-display
+            - **Target:** public-display
             - **Channel:** staging-${prNumber}
             - **Environment:** Staging
             - **Status:** ✅ Success
