@@ -19,16 +19,16 @@
  * // → { displaySettings: { showPrizeLadder: true } }
  */
 export const kebabToCamel = (data) => {
-	if (Array.isArray(data)) return data.map(kebabToCamel);
+  if (Array.isArray(data)) return data.map(kebabToCamel);
 
-	if (data !== null && typeof data === 'object') {
-		return Object.fromEntries(
-			Object.entries(data).map(([key, value]) => [
-				key.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase()),
-				kebabToCamel(value),
-			]),
-		);
-	}
+  if (data !== null && typeof data === 'object') {
+    return Object.fromEntries(
+      Object.entries(data).map(([key, value]) => [
+        key.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase()),
+        kebabToCamel(value),
+      ]),
+    );
+  }
 
-	return data;
+  return data;
 };

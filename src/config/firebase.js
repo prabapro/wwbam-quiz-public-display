@@ -14,7 +14,7 @@ import { getDatabase, connectDatabaseEmulator } from 'firebase/database';
  * Run from host panel: `firebase emulators:start`
  */
 const shouldUseEmulator = () => {
-	return import.meta.env.VITE_ENVIRONMENT === 'development';
+  return import.meta.env.VITE_ENVIRONMENT === 'development';
 };
 
 /**
@@ -23,14 +23,14 @@ const shouldUseEmulator = () => {
  * but it must still be present to satisfy the Firebase SDK init.
  */
 const getDatabaseURL = () => {
-	const url = import.meta.env.VITE_FIREBASE_DATABASE_URL;
-	if (!url && !shouldUseEmulator()) {
-		throw new Error(
-			'VITE_FIREBASE_DATABASE_URL is required for staging/production.',
-		);
-	}
-	// Emulator ignores this — provide a placeholder so SDK doesn't throw
-	return url || 'http://localhost:9000?ns=wwbam-quiz';
+  const url = import.meta.env.VITE_FIREBASE_DATABASE_URL;
+  if (!url && !shouldUseEmulator()) {
+    throw new Error(
+      'VITE_FIREBASE_DATABASE_URL is required for staging/production.',
+    );
+  }
+  // Emulator ignores this — provide a placeholder so SDK doesn't throw
+  return url || 'http://localhost:9000?ns=wwbam-quiz';
 };
 
 // ============================================================================
@@ -38,30 +38,30 @@ const getDatabaseURL = () => {
 // ============================================================================
 
 const firebaseConfig = {
-	apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-	authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-	projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-	storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-	messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-	appId: import.meta.env.VITE_FIREBASE_APP_ID,
-	databaseURL: getDatabaseURL(),
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  databaseURL: getDatabaseURL(),
 };
 
 // Validate required fields are present
 const REQUIRED_FIELDS = [
-	'apiKey',
-	'authDomain',
-	'projectId',
-	'storageBucket',
-	'messagingSenderId',
-	'appId',
+  'apiKey',
+  'authDomain',
+  'projectId',
+  'storageBucket',
+  'messagingSenderId',
+  'appId',
 ];
 
 const missingFields = REQUIRED_FIELDS.filter((field) => !firebaseConfig[field]);
 if (missingFields.length > 0) {
-	throw new Error(
-		`Firebase config incomplete. Missing: ${missingFields.join(', ')}`,
-	);
+  throw new Error(
+    `Firebase config incomplete. Missing: ${missingFields.join(', ')}`,
+  );
 }
 
 // ============================================================================
@@ -86,14 +86,14 @@ export const database = getDatabase(app);
  *   Database: localhost:9000
  */
 if (shouldUseEmulator()) {
-	connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
-	connectDatabaseEmulator(database, 'localhost', 9000);
+  connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
+  connectDatabaseEmulator(database, 'localhost', 9000);
 
-	console.log('🔧 Display app connected to Firebase Emulators:', {
-		auth: 'localhost:9099',
-		database: 'localhost:9000',
-		note: 'Emulator must be started from the host panel project',
-	});
+  console.log('🔧 Display app connected to Firebase Emulators:', {
+    auth: 'localhost:9099',
+    database: 'localhost:9000',
+    note: 'Emulator must be started from the host panel project',
+  });
 }
 
 // ============================================================================
@@ -109,14 +109,14 @@ if (shouldUseEmulator()) {
  * Returns the anonymous user credential.
  */
 export const signInAnon = async () => {
-	try {
-		const credential = await signInAnonymously(auth);
-		console.log('✅ Anonymous auth successful:', credential.user.uid);
-		return { success: true, user: credential.user };
-	} catch (error) {
-		console.error('❌ Anonymous auth failed:', error.message);
-		return { success: false, error: error.message };
-	}
+  try {
+    const credential = await signInAnonymously(auth);
+    console.log('✅ Anonymous auth successful:', credential.user.uid);
+    return { success: true, user: credential.user };
+  } catch (error) {
+    console.error('❌ Anonymous auth failed:', error.message);
+    return { success: false, error: error.message };
+  }
 };
 
 // ============================================================================
@@ -124,12 +124,12 @@ export const signInAnon = async () => {
 // ============================================================================
 
 if (import.meta.env.DEV) {
-	console.log('🔥 Firebase Display App initialized:', {
-		projectId: firebaseConfig.projectId,
-		environment: import.meta.env.VITE_ENVIRONMENT || 'development',
-		useEmulator: shouldUseEmulator(),
-		databaseURL: shouldUseEmulator() ? 'Emulator' : firebaseConfig.databaseURL,
-	});
+  console.log('🔥 Firebase Display App initialized:', {
+    projectId: firebaseConfig.projectId,
+    environment: import.meta.env.VITE_ENVIRONMENT || 'development',
+    useEmulator: shouldUseEmulator(),
+    databaseURL: shouldUseEmulator() ? 'Emulator' : firebaseConfig.databaseURL,
+  });
 }
 
 export default app;

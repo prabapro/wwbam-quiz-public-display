@@ -28,48 +28,48 @@ import { kebabToCamel } from '../utils/transforms';
  * }}
  */
 export function useGameState(authReady) {
-	const [gameState, setGameState] = useState(null);
-	const [isListening, setIsListening] = useState(false);
-	const [isError, setIsError] = useState(false);
-	const [errorMessage, setErrorMessage] = useState(null);
+  const [gameState, setGameState] = useState(null);
+  const [isListening, setIsListening] = useState(false);
+  const [isError, setIsError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(null);
 
-	useEffect(() => {
-		// Don't start until anonymous auth is confirmed
-		if (!authReady) return;
+  useEffect(() => {
+    // Don't start until anonymous auth is confirmed
+    if (!authReady) return;
 
-		console.log('📡 Starting game-state listener...');
+    console.log('📡 Starting game-state listener...');
 
-		const gameStateRef = ref(database, 'game-state');
+    const gameStateRef = ref(database, 'game-state');
 
-		const unsubscribe = onValue(
-			gameStateRef,
-			(snapshot) => {
-				if (snapshot.exists()) {
-					const raw = snapshot.val();
-					const converted = kebabToCamel(raw);
-					setGameState(converted);
-					console.log('🎮 game-state updated:', converted.gameStatus);
-				} else {
-					// Node exists but is empty — treat as default state
-					setGameState({ gameStatus: 'not-started' });
-					console.warn('⚠️ game-state node is empty in Firebase');
-				}
-				setIsListening(true);
-				setIsError(false);
-			},
-			(error) => {
-				console.error('❌ game-state listener error:', error.message);
-				setIsError(true);
-				setErrorMessage(error.message);
-				setIsListening(false);
-			},
-		);
+    const unsubscribe = onValue(
+      gameStateRef,
+      (snapshot) => {
+        if (snapshot.exists()) {
+          const raw = snapshot.val();
+          const converted = kebabToCamel(raw);
+          setGameState(converted);
+          console.log('🎮 game-state updated:', converted.gameStatus);
+        } else {
+          // Node exists but is empty — treat as default state
+          setGameState({ gameStatus: 'not-started' });
+          console.warn('⚠️ game-state node is empty in Firebase');
+        }
+        setIsListening(true);
+        setIsError(false);
+      },
+      (error) => {
+        console.error('❌ game-state listener error:', error.message);
+        setIsError(true);
+        setErrorMessage(error.message);
+        setIsListening(false);
+      },
+    );
 
-		return () => {
-			console.log('🛑 game-state listener stopped');
-			unsubscribe();
-		};
-	}, [authReady]);
+    return () => {
+      console.log('🛑 game-state listener stopped');
+      unsubscribe();
+    };
+  }, [authReady]);
 
-	return { gameState, isListening, isError, errorMessage };
+  return { gameState, isListening, isError, errorMessage };
 }

@@ -1,0 +1,30 @@
+.
+├── docs
+│   └── BUILD_BRIEF.md
+├── public
+│   └── vite.svg
+├── src
+│   ├── config
+│   │   └── firebase.js
+│   ├── hooks
+│   │   ├── useFirebaseAuth.js
+│   │   └── useGameState.js
+│   ├── utils
+│   │   ├── formatters.js
+│   │   └── transforms.js
+│   ├── App.jsx
+│   ├── index.css
+│   └── main.jsx
+├── tools
+│   ├── update-tree.js
+│   └── update-version.js
+├── .firebaserc
+├── .gitignore
+├── .infisical.json
+├── eslint.config.js
+├── file-tree.txt
+├── firebase.json
+├── index.html
+├── package.json
+├── README.md
+├── vite.config.js
