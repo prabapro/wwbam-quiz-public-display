@@ -11,6 +11,24 @@ const OPTION_KEYS = ['A', 'B', 'C', 'D'];
 const HEXAGON_CLIP =
   'polygon(2% 0%, 98% 0%, 100% 50%, 98% 100%, 2% 100%, 0% 50%)';
 
+// ── Helpers ────────────────────────────────────────────────────────────────────
+
+/**
+ * Looks up an option value from the Firebase options object.
+ *
+ * The host panel writes option keys as lowercase ('a', 'b', 'c', 'd'),
+ * but we display them as uppercase ('A', 'B', 'C', 'D'). This helper
+ * handles both cases so we're resilient to either format in Firebase.
+ *
+ * @param {{ [key: string]: string|null }} options
+ * @param {string} key - Uppercase key e.g. 'A'
+ * @returns {string|null|undefined}
+ */
+function getOptionText(options, key) {
+  // Prefer lowercase (what the host panel writes), fall back to uppercase
+  return options[key.toLowerCase()] ?? options[key];
+}
+
 // ── Option state derivation ────────────────────────────────────────────────────
 
 /**
@@ -204,7 +222,7 @@ export default function OptionGrid({
             exit="exit"
             className="grid grid-cols-2 gap-3">
             {OPTION_KEYS.map((key) => {
-              const text = options[key];
+              const text = getOptionText(options, key);
               const state = deriveOptionState(
                 key,
                 text,

@@ -1,12 +1,13 @@
 // src/screens/GameScreen.jsx
 
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import TeamInfoBar from '@components/topbar/TeamInfoBar';
 import LifelineIndicator from '@components/topbar/LifelineIndicator';
 import QuestionCard from '@components/question/QuestionCard';
 import OptionGrid from '@components/question/OptionGrid';
 import PrizeLadder from '@components/sidebar/PrizeLadder';
 import TeamList from '@components/sidebar/TeamList';
+import TeamAnnouncement from '@components/game/TeamAnnouncement';
 
 // ── Animation variants ─────────────────────────────────────────────────────────
 
@@ -28,9 +29,13 @@ const pauseOverlayVariants = {
  * GameScreen
  *
  * The main gameplay display. Shown when gameStatus is:
- *   "active"    → normal gameplay
+ *   "active"    → normal gameplay, or TeamAnnouncement overlay if between teams
  *   "paused"    → same layout with a semi-transparent pause overlay
  *   "completed" → same layout until displayFinalResults flips to true
+ *
+ * Between-teams detection:
+ *   currentQuestionNumber === 0 means the host has moved to a new team
+ *   but hasn't loaded a question yet — the perfect window for TeamAnnouncement.
  *
  * Layout (16:9, full screen):
  * ┌──────────────────────────────────────────────────────┐
@@ -62,9 +67,19 @@ export default function GameScreen({
   const currentTeam =
     teams.find((t) => t.id === gameState?.currentTeamId) ?? null;
 
+  // Between-teams window: team is active but no question loaded yet
+  const isBetweenTeams =
+    gameState?.gameStatus === 'active' &&
+    (gameState?.currentQuestionNumber === 0 ||
+      gameState?.currentQuestionNumber == null);
+
+  // Queue position for the announcement (1-based)
+  const playQueue = gameState?.playQueue ?? [];
+  const queuePosition = currentTeam ? playQueue.indexOf(currentTeam.id) + 1 : 0;
+
   return (
     <motion.div
-      className="w-full h-full flex flex-col"
+      className="relative w-full h-full flex flex-col"
       style={{ background: '#0a0a2e' }}
       variants={screenVariants}
       initial="hidden"
@@ -111,7 +126,6 @@ export default function GameScreen({
         <div
           className="flex flex-col shrink-0 w-72 border-l"
           style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
-          {/* Prize ladder always shown (top half of sidebar) */}
           {displayConfig?.showPrizeLadder && (
             <div className="flex-1 min-h-0">
               <PrizeLadder
@@ -121,7 +135,6 @@ export default function GameScreen({
             </div>
           )}
 
-          {/* Team list (bottom half, if enabled) */}
           {displayConfig?.showTeamList && (
             <div
               className="shrink-0 border-t"
@@ -134,6 +147,22 @@ export default function GameScreen({
           )}
         </div>
       </div>
+
+      {/* ── Team announcement overlay ─────────────────────────────────────
+          Shown when a team is active but no question has been loaded yet.
+          Sits above the game layout (absolute), dismisses automatically
+          once the host loads question 1 (currentQuestionNumber → 1).    */}
+      <AnimatePresence>
+        {isBetweenTeams && !isPaused && (
+          <TeamAnnouncement
+            key={currentTeam?.id}
+            team={currentTeam}
+            queuePosition={queuePosition}
+            queueTotal={playQueue.length}
+            prizeStructure={prizeStructure}
+          />
+        )}
+      </AnimatePresence>
 
       {/* ── Pause overlay ────────────────────────────────────────────────── */}
       <AnimatePresence>
