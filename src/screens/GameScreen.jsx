@@ -174,8 +174,6 @@ export default function GameScreen({
         {overlay === 'phoneAFriend' && (
           <PhoneAFriendOverlay
             key="phone-a-friend"
-            question={gameState?.currentQuestion}
-            options={gameState?.currentQuestion?.options}
             startedAt={gameState?.lifelineTimerStartedAt ?? null}
             durationSeconds={timerDuration}
           />
