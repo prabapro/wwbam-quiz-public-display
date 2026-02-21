@@ -5,81 +5,92 @@ import { ref, onValue } from 'firebase/database';
 import { database } from '@config/firebase';
 import { kebabToCamel } from '@utils/transforms';
 
-/**
- * Default display settings — used as fallback if the Firebase node is
- * absent or partially populated. Keeps the UI stable even before the
- * host panel has written config to the database.
- */
+// ── Defaults ───────────────────────────────────────────────────────────────────
+
 const DEFAULT_DISPLAY_CONFIG = {
   showPrizeLadder: true,
   showTeamList: true,
   animationDuration: 500,
 };
 
+/** Mirrors PHONE_A_FRIEND_DURATION from the host panel constants. */
+const DEFAULT_TIMER_DURATION = 30;
+
+// ── Hook ───────────────────────────────────────────────────────────────────────
+
 /**
  * useDisplayConfig
  *
- * Attaches a real-time listener to the `config/display-settings` Firebase node.
- * Falls back to DEFAULT_DISPLAY_CONFIG if the node doesn't exist yet.
+ * Listens to the `config` Firebase node (parent of `display-settings`)
+ * so we can read both display toggles and the phone-a-friend timer duration
+ * with a single listener.
  *
- * Only starts listening once `authReady` is true.
+ * Previously listened to `config/display-settings`. Moved up one level to
+ * also capture `config/timer-duration`, which the display app needs to
+ * correctly compute the phone-a-friend countdown from the Firebase timestamp.
  *
- * @param {boolean} authReady - Pass `isReady` from useFirebaseAuth
+ * Returns:
+ *   displayConfig  — show-prize-ladder, show-team-list, animation-duration
+ *   timerDuration  — phone-a-friend call duration in seconds (e.g. 30)
  *
- * @returns {{
- *   displayConfig: {
- *     showPrizeLadder: boolean,
- *     showTeamList: boolean,
- *     animationDuration: number,
- *   },
- *   isListening: boolean,
- *   isError: boolean,
- *   errorMessage: string|null,
- * }}
+ * @param {boolean} authReady - Gate: only start listener once auth is ready
  */
 export function useDisplayConfig(authReady) {
   const [displayConfig, setDisplayConfig] = useState(DEFAULT_DISPLAY_CONFIG);
+  const [timerDuration, setTimerDuration] = useState(DEFAULT_TIMER_DURATION);
   const [isListening, setIsListening] = useState(false);
   const [isError, setIsError] = useState(false);
-  const [errorMessage, setErrorMessage] = useState(null);
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     if (!authReady) return;
 
-    console.log('📡 Starting display-config listener...');
-
-    const configRef = ref(database, 'config/display-settings');
+    // Listen to the config parent node so we get display-settings AND
+    // timer-duration in one snapshot.
+    const configRef = ref(database, 'config');
 
     const unsubscribe = onValue(
       configRef,
       (snapshot) => {
-        if (snapshot.exists()) {
-          const converted = kebabToCamel(snapshot.val());
-
-          // Merge with defaults so missing keys never cause undefined issues
-          setDisplayConfig({ ...DEFAULT_DISPLAY_CONFIG, ...converted });
-          console.log('⚙️ display-config updated:', converted);
-        } else {
-          // Node not yet written by host — use defaults silently
-          setDisplayConfig(DEFAULT_DISPLAY_CONFIG);
-          console.warn('⚠️ display-settings node absent — using defaults');
-        }
         setIsListening(true);
         setIsError(false);
+
+        if (!snapshot.exists()) {
+          // No config in Firebase yet — use defaults
+          setDisplayConfig(DEFAULT_DISPLAY_CONFIG);
+          setTimerDuration(DEFAULT_TIMER_DURATION);
+          return;
+        }
+
+        const raw = snapshot.val();
+
+        // display-settings sub-node (convert kebab keys → camelCase)
+        const rawDisplaySettings = raw['display-settings'] ?? {};
+        const converted = Object.fromEntries(
+          Object.entries(rawDisplaySettings).map(([k, v]) => [
+            kebabToCamel(k),
+            v,
+          ]),
+        );
+        setDisplayConfig({ ...DEFAULT_DISPLAY_CONFIG, ...converted });
+
+        // timer-duration is a scalar at config/timer-duration
+        const duration = raw['timer-duration'];
+        setTimerDuration(
+          typeof duration === 'number' && duration > 0
+            ? duration
+            : DEFAULT_TIMER_DURATION,
+        );
       },
       (error) => {
-        console.error('❌ display-config listener error:', error.message);
         setIsError(true);
         setErrorMessage(error.message);
-        setIsListening(false);
+        console.error('useDisplayConfig error:', error);
       },
     );
 
-    return () => {
-      console.log('🛑 display-config listener stopped');
-      unsubscribe();
-    };
+    return () => unsubscribe();
   }, [authReady]);
 
-  return { displayConfig, isListening, isError, errorMessage };
+  return { displayConfig, timerDuration, isListening, isError, errorMessage };
 }
