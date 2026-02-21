@@ -9,11 +9,29 @@
 ├── public
 │   └── vite.svg
 ├── src
+│   ├── components
+│   │   ├── question
+│   │   │   ├── OptionGrid.jsx
+│   │   │   └── QuestionCard.jsx
+│   │   ├── sidebar
+│   │   │   ├── PrizeLadder.jsx
+│   │   │   └── TeamList.jsx
+│   │   └── topbar
+│   │       ├── LifelineIndicator.jsx
+│   │       └── TeamInfoBar.jsx
 │   ├── config
 │   │   └── firebase.js
 │   ├── hooks
+│   │   ├── useDisplayConfig.js
 │   │   ├── useFirebaseAuth.js
-│   │   └── useGameState.js
+│   │   ├── useGameState.js
+│   │   ├── usePrizeStructure.js
+│   │   └── useTeams.js
+│   ├── screens
+│   │   ├── GameScreen.jsx
+│   │   ├── IdleScreen.jsx
+│   │   ├── LoadingScreen.jsx
+│   │   └── ResultsScreen.jsx
 │   ├── utils
 │   │   ├── formatters.js
 │   │   └── transforms.js
