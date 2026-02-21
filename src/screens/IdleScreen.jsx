@@ -40,12 +40,12 @@ export default function IdleScreen({ gameStatus }) {
       {/* Ambient glow rings */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
         <motion.div
-          className="w-[600px] h-[600px] rounded-full border border-amber-400/5"
+          className="w-150 h-150 rounded-full border border-amber-400/5"
           animate={{ scale: [1, 1.05, 1], opacity: [0.5, 1, 0.5] }}
           transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
         />
         <motion.div
-          className="absolute w-[400px] h-[400px] rounded-full border border-blue-400/10"
+          className="absolute w-100 h-100 rounded-full border border-blue-400/10"
           animate={{ scale: [1, 1.08, 1], opacity: [0.3, 0.7, 0.3] }}
           transition={{
             duration: 4,
@@ -84,9 +84,9 @@ export default function IdleScreen({ gameStatus }) {
         <motion.div
           variants={itemVariants}
           className="flex items-center gap-4 w-80">
-          <span className="flex-1 h-px bg-gradient-to-r from-transparent to-amber-400/40" />
+          <span className="flex-1 h-px bg-linear-to-r from-transparent to-amber-400/40" />
           <span className="text-amber-400/60 text-lg">✦</span>
-          <span className="flex-1 h-px bg-gradient-to-l from-transparent to-amber-400/40" />
+          <span className="flex-1 h-px bg-linear-to-l from-transparent to-amber-400/40" />
         </motion.div>
 
         {/* Status message */}

@@ -139,9 +139,9 @@ export default function TeamAnnouncement({
         <motion.div
           variants={detailVariants}
           className="flex items-center gap-4 w-64">
-          <span className="flex-1 h-px bg-gradient-to-r from-transparent to-amber-400/30" />
+          <span className="flex-1 h-px bg-linear-to-r from-transparent to-amber-400/30" />
           <span className="text-amber-400/40 text-sm">✦</span>
-          <span className="flex-1 h-px bg-gradient-to-l from-transparent to-amber-400/30" />
+          <span className="flex-1 h-px bg-linear-to-l from-transparent to-amber-400/30" />
         </motion.div>
 
         {/* Top prize */}
