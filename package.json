@@ -9,6 +9,7 @@
     "deploy:firebase": "pnpm build && firebase deploy --only hosting:public-display",
     "dev": "infisical run -- vite",
     "format": "prettier --write \"./**/*.{html,js,jsx,json,css,ts,tsx}\"",
+    "generate-jsconfig": "node tools/generate-jsconfig.js",
     "lint": "eslint .",
     "preview": "vite preview",
     "update-tree": "node tools/update-tree.js",

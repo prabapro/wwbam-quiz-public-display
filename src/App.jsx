@@ -1,7 +1,7 @@
 // src/App.jsx
 
-import { useFirebaseAuth } from './hooks/useFirebaseAuth';
-import { useGameState } from './hooks/useGameState';
+import { useFirebaseAuth } from '@hooks/useFirebaseAuth';
+import { useGameState } from '@hooks/useGameState';
 
 /**
  * App — Root component
@@ -23,6 +23,7 @@ export default function App() {
     errorMessage: authErrorMessage,
     uid,
   } = useFirebaseAuth();
+
   const {
     gameState,
     isListening,
@@ -91,20 +92,20 @@ export default function App() {
   );
 }
 
-// ============================================================================
-// INTERNAL HELPER
-// ============================================================================
+// ── Internal helper ────────────────────────────────────────────────────────────
 
 /**
  * StatusScreen — Full-screen message for loading / error states.
- * Internal to App — not exported or reused elsewhere at this stage.
+ * Internal to App — will be replaced by LoadingScreen when screens are built.
  */
 function StatusScreen({ icon, message, muted = false, error = false }) {
   return (
-    <div className="w-full h-full flex items-center justify-center gap-4">
+    <div className="w-full h-full flex items-center justify-center gap-3">
       <span className="text-3xl">{icon}</span>
       <p
-        className={`text-xl font-semibold ${error ? 'text-red-400' : muted ? 'text-slate-500' : 'text-white'}`}>
+        className={`text-xl font-medium ${
+          error ? 'text-red-400' : muted ? 'text-slate-500' : 'text-white'
+        }`}>
         {message}
       </p>
     </div>

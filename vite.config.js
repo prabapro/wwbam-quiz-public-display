@@ -2,19 +2,35 @@
 
 import { defineConfig } from 'vite';
 import { ViteMinifyPlugin } from 'vite-plugin-minify';
+import { fileURLToPath } from 'url';
+import { dirname, resolve } from 'path';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   plugins: [react(), tailwindcss(), ViteMinifyPlugin({})],
 
-  // Development server config
+  // ── Path aliases ───────────────────────────────────────────────────────────
+  resolve: {
+    alias: {
+      '@': resolve(__dirname, './src'),
+      '@config': resolve(__dirname, './src/config'),
+      '@hooks': resolve(__dirname, './src/hooks'),
+      '@utils': resolve(__dirname, './src/utils'),
+      '@screens': resolve(__dirname, './src/screens'),
+      '@components': resolve(__dirname, './src/components'),
+    },
+  },
+
+  // ── Dev server ─────────────────────────────────────────────────────────────
   server: {
     port: 3001,
     open: true,
   },
 
-  // Build config
+  // ── Build ──────────────────────────────────────────────────────────────────
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
@@ -34,14 +50,9 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          // React core
           'react-vendor': ['react', 'react-dom'],
-
-          // Utilities
-          'utils-vendor': ['tailwind-merge', 'framer-motion'],
-
-          // Icons
-          icons: ['lucide-react'],
+          'utils-vendor': ['framer-motion'],
+          firebase: ['firebase/app', 'firebase/auth', 'firebase/database'],
         },
       },
     },

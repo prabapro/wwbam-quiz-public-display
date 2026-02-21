@@ -2,29 +2,25 @@
 
 import { useState, useEffect } from 'react';
 import { ref, onValue } from 'firebase/database';
-import { database } from '../config/firebase';
-import { kebabToCamel } from '../utils/transforms';
-
-// ============================================================================
-// HOOK
-// ============================================================================
+import { database } from '@config/firebase';
+import { kebabToCamel } from '@utils/transforms';
 
 /**
  * useGameState
  *
  * Attaches a real-time listener to the `game-state` Firebase node.
- * Only starts listening once `authReady` is true — passing false
- * keeps the hook idle (avoids permission errors before auth resolves).
+ * Only starts listening once `authReady` is true — passing false keeps the
+ * hook idle (avoids permission errors before auth resolves).
  *
  * All keys are converted from kebab-case to camelCase automatically.
  *
  * @param {boolean} authReady - Pass `isReady` from useFirebaseAuth
  *
  * @returns {{
- *   gameState: object | null,
+ *   gameState: object|null,
  *   isListening: boolean,
  *   isError: boolean,
- *   errorMessage: string | null,
+ *   errorMessage: string|null,
  * }}
  */
 export function useGameState(authReady) {
@@ -34,7 +30,6 @@ export function useGameState(authReady) {
   const [errorMessage, setErrorMessage] = useState(null);
 
   useEffect(() => {
-    // Don't start until anonymous auth is confirmed
     if (!authReady) return;
 
     console.log('📡 Starting game-state listener...');
@@ -45,12 +40,10 @@ export function useGameState(authReady) {
       gameStateRef,
       (snapshot) => {
         if (snapshot.exists()) {
-          const raw = snapshot.val();
-          const converted = kebabToCamel(raw);
+          const converted = kebabToCamel(snapshot.val());
           setGameState(converted);
           console.log('🎮 game-state updated:', converted.gameStatus);
         } else {
-          // Node exists but is empty — treat as default state
           setGameState({ gameStatus: 'not-started' });
           console.warn('⚠️ game-state node is empty in Firebase');
         }

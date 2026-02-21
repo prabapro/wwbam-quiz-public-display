@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { auth, signInAnon } from '../config/firebase';
+import { auth, signInAnon } from '@config/firebase';
 
 /**
  * useFirebaseAuth
@@ -12,10 +12,10 @@ import { auth, signInAnon } from '../config/firebase';
  * Firebase will reject reads if auth hasn't resolved yet.
  *
  * @returns {{
- *   isReady: boolean,   // true once anonymous auth is confirmed
- *   isError: boolean,   // true if sign-in failed
- *   errorMessage: string | null,
- *   uid: string | null, // anonymous user UID (useful for debugging)
+ *   isReady: boolean,          // true once anonymous auth is confirmed
+ *   isError: boolean,          // true if sign-in failed
+ *   errorMessage: string|null,
+ *   uid: string|null,          // anonymous user UID (useful for debugging)
  * }}
  */
 export function useFirebaseAuth() {
