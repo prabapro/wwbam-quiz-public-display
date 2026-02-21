@@ -1,7 +1,7 @@
 {
   "name": "wwbam-quiz-public-display",
   "private": true,
-  "version": "0.0.1",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "build:viz": "pnpm dlx vite-bundle-visualizer --report dist/stats.json --output dist/bundle-visualizer.html",
@@ -9,6 +9,7 @@
     "deploy:firebase": "pnpm build && firebase deploy --only hosting:public-display",
     "dev": "infisical run -- vite",
     "format": "prettier --write \"./**/*.{html,js,jsx,json,css,ts,tsx}\"",
+    "generate-jsconfig": "node tools/generate-jsconfig.js",
     "lint": "eslint .",
     "preview": "vite preview",
     "update-tree": "node tools/update-tree.js",
@@ -29,6 +30,7 @@
     "@vitejs/plugin-react": "^5.1.1",
     "chalk": "^5.6.2",
     "eslint": "^9.39.1",
+    "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
     "firebase-tools": "^15.7.0",

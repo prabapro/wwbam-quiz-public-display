@@ -1,5 +1,8 @@
+// eslint.config.js
+
 import js from '@eslint/js';
 import globals from 'globals';
+import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
 
@@ -11,7 +14,7 @@ export default [
       ecmaVersion: 2020,
       globals: {
         ...globals.browser,
-        ...globals.node, // This removes process not defined error when using env variables
+        ...globals.node,
       },
       parserOptions: {
         ecmaVersion: 'latest',
@@ -20,12 +23,16 @@ export default [
       },
     },
     plugins: {
+      react,
       'react-hooks': reactHooks,
       'react-refresh': reactRefresh,
     },
     rules: {
       ...js.configs.recommended.rules,
       ...reactHooks.configs.recommended.rules,
+      // Marks JSX-used variables (e.g. <motion.div>) as "used"
+      // so no-unused-vars doesn't flag them as errors
+      'react/jsx-uses-vars': 'error',
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
       'react-refresh/only-export-components': [
         'warn',

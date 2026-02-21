@@ -1,28 +1,37 @@
 // src/App.jsx
 
-import { useFirebaseAuth } from './hooks/useFirebaseAuth';
-import { useGameState } from './hooks/useGameState';
+import { AnimatePresence } from 'framer-motion';
+import { useFirebaseAuth } from '@hooks/useFirebaseAuth';
+import { useGameState } from '@hooks/useGameState';
+import { useTeams } from '@hooks/useTeams';
+import { usePrizeStructure } from '@hooks/usePrizeStructure';
+import { useDisplayConfig } from '@hooks/useDisplayConfig';
+import LoadingScreen from '@screens/LoadingScreen';
+import IdleScreen from '@screens/IdleScreen';
+import GameScreen from '@screens/GameScreen';
+import ResultsScreen from '@screens/ResultsScreen';
 
 /**
  * App — Root component
  *
- * Current state: confirmation scaffold
- *  - Triggers anonymous Firebase auth
- *  - Starts game-state listener once auth is ready
- *  - Renders a status message at each stage
+ * Owns all Firebase hooks and handles screen routing based on game state.
+ * Screens receive only the data they need as props — no hooks inside screens.
  *
- * Next step: replace the status UI with screen routing:
- *  - not-started / initialized  → IdleScreen
- *  - active / paused            → GameScreen
- *  - displayFinalResults: true  → ResultsScreen
+ * Routing logic:
+ *   auth pending / db connecting        → LoadingScreen
+ *   gameStatus: not-started/initialized → IdleScreen
+ *   gameStatus: active/paused/completed → GameScreen
+ *   displayFinalResults: true           → ResultsScreen
  */
 export default function App() {
+  // ── Auth ────────────────────────────────────────────────────────────────────
   const {
     isReady: authReady,
     isError: authError,
     errorMessage: authErrorMessage,
-    uid,
   } = useFirebaseAuth();
+
+  // ── Data listeners (all gated on authReady) ─────────────────────────────────
   const {
     gameState,
     isListening,
@@ -30,83 +39,62 @@ export default function App() {
     errorMessage: dbErrorMessage,
   } = useGameState(authReady);
 
-  // ── Auth connecting ────────────────────────────────────────────
+  const { teams } = useTeams(authReady);
+  const { prizeStructure } = usePrizeStructure(authReady);
+  const { displayConfig } = useDisplayConfig(authReady);
+
+  // ── Loading states ──────────────────────────────────────────────────────────
   if (!authReady && !authError) {
-    return <StatusScreen icon="🔐" message="Authenticating..." muted />;
+    return <LoadingScreen message="Authenticating..." />;
   }
 
-  // ── Auth failed ────────────────────────────────────────────────
   if (authError) {
-    return (
-      <StatusScreen
-        icon="❌"
-        message={`Auth failed: ${authErrorMessage}`}
-        error
-      />
-    );
+    return <LoadingScreen message={`Auth failed: ${authErrorMessage}`} />;
   }
 
-  // ── Waiting for first Firebase snapshot ───────────────────────
   if (!isListening && !dbError) {
-    return <StatusScreen icon="📡" message="Connecting to Firebase..." muted />;
+    return <LoadingScreen message="Connecting to Firebase..." />;
   }
 
-  // ── Database error ─────────────────────────────────────────────
   if (dbError) {
+    return <LoadingScreen message={`Connection error: ${dbErrorMessage}`} />;
+  }
+
+  // ── Screen routing ─────────────────────────────────────────────────────────
+  const { gameStatus, displayFinalResults } = gameState ?? {};
+
+  // Results screen takes priority over everything else
+  if (displayFinalResults) {
     return (
-      <StatusScreen
-        icon="❌"
-        message={`Database error: ${dbErrorMessage}`}
-        error
-      />
+      <AnimatePresence mode="wait">
+        <ResultsScreen key="results" teams={teams} />
+      </AnimatePresence>
     );
   }
 
-  // ── Listening — show confirmation ──────────────────────────────
+  // Active gameplay (including paused and completed-but-not-yet-results)
+  if (
+    gameStatus === 'active' ||
+    gameStatus === 'paused' ||
+    gameStatus === 'completed'
+  ) {
+    return (
+      <AnimatePresence mode="wait">
+        <GameScreen
+          key="game"
+          gameState={gameState}
+          teams={teams}
+          prizeStructure={prizeStructure}
+          displayConfig={displayConfig}
+        />
+      </AnimatePresence>
+    );
+  }
+
+  // Fallback: not-started / initialized / unknown
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center gap-6">
-      <div className="flex items-center gap-3">
-        <span className="text-4xl">✅</span>
-        <p className="text-white text-2xl font-bold tracking-wide">
-          Listening to Firebase
-        </p>
-      </div>
-
-      <div className="flex flex-col items-center gap-2">
-        <p className="text-slate-400 text-sm uppercase tracking-widest">
-          Game Status
-        </p>
-        <p className="text-yellow-400 text-3xl font-mono font-bold">
-          {gameState?.gameStatus ?? '—'}
-        </p>
-      </div>
-
-      {/* Dev-only debug info */}
-      {import.meta.env.DEV && (
-        <p className="text-slate-600 text-xs font-mono absolute bottom-4">
-          uid: {uid}
-        </p>
-      )}
-    </div>
-  );
-}
-
-// ============================================================================
-// INTERNAL HELPER
-// ============================================================================
-
-/**
- * StatusScreen — Full-screen message for loading / error states.
- * Internal to App — not exported or reused elsewhere at this stage.
- */
-function StatusScreen({ icon, message, muted = false, error = false }) {
-  return (
-    <div className="w-full h-full flex items-center justify-center gap-4">
-      <span className="text-3xl">{icon}</span>
-      <p
-        className={`text-xl font-semibold ${error ? 'text-red-400' : muted ? 'text-slate-500' : 'text-white'}`}>
-        {message}
-      </p>
-    </div>
+    <AnimatePresence mode="wait">
+      <IdleScreen key="idle" gameStatus={gameStatus} />
+    </AnimatePresence>
   );
 }
