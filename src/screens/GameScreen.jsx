@@ -8,6 +8,7 @@ import OptionGrid from '@components/question/OptionGrid';
 import PrizeLadder from '@components/sidebar/PrizeLadder';
 import TeamList from '@components/sidebar/TeamList';
 import TeamAnnouncement from '@components/game/TeamAnnouncement';
+import TeamResult from '@components/game/TeamResult';
 
 // ── Animation variants ─────────────────────────────────────────────────────────
 
@@ -23,30 +24,63 @@ const pauseOverlayVariants = {
   exit: { opacity: 0, transition: { duration: 0.3 } },
 };
 
+// ── Helpers ────────────────────────────────────────────────────────────────────
+
+/**
+ * Derives which overlay (if any) should be shown on top of the game layout.
+ *
+ * Priority (highest → lowest):
+ *   1. pause       — always beats everything else
+ *   2. teamResult  — team just finished (eliminated or completed)
+ *   3. announcement — new team is up, no question loaded yet
+ *   4. none        — normal gameplay
+ *
+ * TeamResult detection covers two cases:
+ *   A) Normal:   answerRevealed && team.status is eliminated/completed
+ *   B) Last team: gameStatus === 'completed' (completeGame() nulls currentTeamId
+ *                 and clears answerRevealed, so we fall back to the last team
+ *                 in the play queue)
+ *
+ * @returns {'pause'|'teamResult'|'announcement'|null}
+ */
+function deriveOverlay(gameState, currentTeam) {
+  const { gameStatus, answerRevealed, currentQuestionNumber } = gameState ?? {};
+
+  if (gameStatus === 'paused') return 'pause';
+
+  // Last-team edge case: completeGame() fires, resetting currentTeamId + answerRevealed.
+  // We detect this via gameStatus === 'completed' and show the last team's result.
+  if (gameStatus === 'completed') return 'teamResult';
+
+  // Normal finish: answer revealed and team status has updated
+  const teamFinished =
+    currentTeam?.status === 'eliminated' || currentTeam?.status === 'completed';
+  if (answerRevealed && teamFinished) return 'teamResult';
+
+  // Between-teams window: active team, no question loaded yet
+  const isBetweenTeams =
+    gameStatus === 'active' &&
+    (currentQuestionNumber === 0 || currentQuestionNumber == null);
+  if (isBetweenTeams) return 'announcement';
+
+  return null;
+}
+
 // ── Component ──────────────────────────────────────────────────────────────────
 
 /**
  * GameScreen
  *
  * The main gameplay display. Shown when gameStatus is:
- *   "active"    → normal gameplay, or TeamAnnouncement overlay if between teams
- *   "paused"    → same layout with a semi-transparent pause overlay
- *   "completed" → same layout until displayFinalResults flips to true
+ *   "active"    → normal gameplay, TeamAnnouncement, or TeamResult overlay
+ *   "paused"    → same layout with a pause overlay
+ *   "completed" → TeamResult for the last team (until displayFinalResults)
  *
- * Between-teams detection:
- *   currentQuestionNumber === 0 means the host has moved to a new team
- *   but hasn't loaded a question yet — the perfect window for TeamAnnouncement.
- *
- * Layout (16:9, full screen):
- * ┌──────────────────────────────────────────────────────┐
- * │  TOP BAR: team info + lifelines                      │
- * ├─────────────────────────────────┬────────────────────┤
- * │                                 │                    │
- * │   QUESTION CARD                 │   PRIZE LADDER     │
- * │   OPTION GRID                   │                    │
- * │                                 ├────────────────────┤
- * │                                 │   TEAM LIST        │
- * └─────────────────────────────────┴────────────────────┘
+ * Overlay state machine (see deriveOverlay):
+ *   pause        → semi-transparent pause screen
+ *   teamResult   → team elimination / completion card
+ *   announcement → upcoming team intro card
+ *   null         → no overlay, normal gameplay visible
  *
  * @param {{
  *   gameState:      object,
@@ -61,20 +95,23 @@ export default function GameScreen({
   prizeStructure,
   displayConfig,
 }) {
-  const isPaused = gameState?.gameStatus === 'paused';
+  // ── Derived state ────────────────────────────────────────────────────────────
 
-  // Derive current team from teams array
+  const playQueue = gameState?.playQueue ?? [];
   const currentTeam =
     teams.find((t) => t.id === gameState?.currentTeamId) ?? null;
 
-  // Between-teams window: team is active but no question loaded yet
-  const isBetweenTeams =
-    gameState?.gameStatus === 'active' &&
-    (gameState?.currentQuestionNumber === 0 ||
-      gameState?.currentQuestionNumber == null);
+  // Fallback for the last-team edge case: completeGame() nulls currentTeamId,
+  // so we look up the last team in the play queue directly from the teams array.
+  const lastTeamId = playQueue[playQueue.length - 1] ?? null;
+  const lastTeam = teams.find((t) => t.id === lastTeamId) ?? null;
 
-  // Queue position for the announcement (1-based)
-  const playQueue = gameState?.playQueue ?? [];
+  // The team to show in TeamResult: current if present, otherwise last team
+  const resultTeam = currentTeam ?? lastTeam;
+
+  const overlay = deriveOverlay(gameState, currentTeam, lastTeam);
+
+  // Queue position for TeamAnnouncement (1-based)
   const queuePosition = currentTeam ? playQueue.indexOf(currentTeam.id) + 1 : 0;
 
   return (
@@ -148,25 +185,31 @@ export default function GameScreen({
         </div>
       </div>
 
-      {/* ── Team announcement overlay ─────────────────────────────────────
-          Shown when a team is active but no question has been loaded yet.
-          Sits above the game layout (absolute), dismisses automatically
-          once the host loads question 1 (currentQuestionNumber → 1).    */}
+      {/* ── Overlays ─────────────────────────────────────────────────────── */}
+
       <AnimatePresence>
-        {isBetweenTeams && !isPaused && (
+        {/* Team announcement — new team is up, no question loaded yet */}
+        {overlay === 'announcement' && (
           <TeamAnnouncement
-            key={currentTeam?.id}
+            key={`announce-${currentTeam?.id}`}
             team={currentTeam}
             queuePosition={queuePosition}
             queueTotal={playQueue.length}
             prizeStructure={prizeStructure}
           />
         )}
-      </AnimatePresence>
 
-      {/* ── Pause overlay ────────────────────────────────────────────────── */}
-      <AnimatePresence>
-        {isPaused && (
+        {/* Team result — team just finished (eliminated or completed) */}
+        {overlay === 'teamResult' && (
+          <TeamResult
+            key={`result-${resultTeam?.id}`}
+            team={resultTeam}
+            totalQuestions={prizeStructure?.length ?? 20}
+          />
+        )}
+
+        {/* Pause overlay — always on top */}
+        {overlay === 'pause' && (
           <motion.div
             key="pause-overlay"
             className="absolute inset-0 flex flex-col items-center justify-center gap-4 z-50"
