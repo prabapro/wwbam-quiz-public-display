@@ -121,10 +121,8 @@ const contentVariants = {
 // ── Timer display ──────────────────────────────────────────────────────────────
 
 function TimerDisplay({ startedAt, durationSeconds }) {
-  const { secondsLeft, progressPct, isExpiring } = useTimestampCountdown(
-    startedAt,
-    durationSeconds,
-  );
+  const { secondsLeft, progressPct, hasStarted, isExpiring } =
+    useTimestampCountdown(startedAt, durationSeconds);
 
   const RADIUS = 54;
   const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
@@ -133,10 +131,24 @@ function TimerDisplay({ startedAt, durationSeconds }) {
   const timeColor = isExpiring ? '#f87171' : '#ffffff';
 
   return (
-    <div className="shrink-0 flex items-center justify-center">
-      {/* Ring + number only — no labels */}
+    <div className="shrink-0 flex flex-col items-center justify-center gap-5">
+      {/* Top: 📞 Call in progress — always visible, pulses until timer starts */}
+      <motion.div
+        className="flex items-center gap-2"
+        animate={!hasStarted ? { opacity: [1, 0.45, 1] } : { opacity: 1 }}
+        transition={{
+          duration: 2,
+          repeat: hasStarted ? 0 : Infinity,
+          ease: 'easeInOut',
+        }}>
+        <span className="text-xl">📞</span>
+        <p className="text-slate-300 text-sm font-semibold tracking-wide">
+          Call in progress
+        </p>
+      </motion.div>
+
+      {/* Middle: ring with seconds (or dash before timer starts) */}
       <div className="relative w-44 h-44">
-        {/* SVG progress ring */}
         <svg
           className="absolute inset-0 w-full h-full -rotate-90"
           viewBox="0 0 128 128">
@@ -164,19 +176,67 @@ function TimerDisplay({ startedAt, durationSeconds }) {
           />
         </svg>
 
-        {/* Seconds — centred over the ring */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <motion.p
-            className="font-black font-mono leading-none"
-            style={{
-              color: timeColor,
-              fontSize: secondsLeft >= 10 ? '3.5rem' : '4rem',
-            }}
-            animate={isExpiring ? { scale: [1, 1.06, 1] } : { scale: 1 }}
-            transition={{ duration: 1, repeat: Infinity, ease: 'easeInOut' }}>
-            {secondsLeft}
-          </motion.p>
+          <AnimatePresence mode="wait">
+            {!hasStarted ? (
+              <motion.p
+                key="dash"
+                className="text-4xl font-black font-mono leading-none text-slate-600"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}>
+                —
+              </motion.p>
+            ) : (
+              <motion.p
+                key="countdown"
+                className="font-black font-mono leading-none"
+                style={{
+                  color: timeColor,
+                  fontSize: secondsLeft >= 10 ? '3.5rem' : '4rem',
+                }}
+                initial={{ opacity: 0, scale: 0.85 }}
+                animate={
+                  isExpiring
+                    ? { opacity: 1, scale: [1, 1.06, 1] }
+                    : { opacity: 1, scale: 1 }
+                }
+                transition={{
+                  duration: 1,
+                  repeat: isExpiring ? Infinity : 0,
+                  ease: 'easeInOut',
+                }}>
+                {secondsLeft}
+              </motion.p>
+            )}
+          </AnimatePresence>
         </div>
+      </div>
+
+      {/* Bottom: "seconds" label — only once timer is running */}
+      <div className="h-5 flex items-center justify-center">
+        <AnimatePresence mode="wait">
+          {hasStarted && (
+            <motion.p
+              key="unit"
+              className="text-xs uppercase tracking-[0.3em]"
+              style={{ color: isExpiring ? '#f87171' : '#64748b' }}
+              initial={{ opacity: 0, y: 4 }}
+              animate={
+                isExpiring
+                  ? { opacity: [1, 0.4, 1], y: 0 }
+                  : { opacity: 1, y: 0 }
+              }
+              exit={{ opacity: 0 }}
+              transition={
+                isExpiring
+                  ? { duration: 0.8, repeat: Infinity }
+                  : { duration: 0.3 }
+              }>
+              {isExpiring ? 'seconds left!' : 'seconds'}
+            </motion.p>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
