@@ -9,6 +9,7 @@ import PrizeLadder from '@components/sidebar/PrizeLadder';
 import TeamList from '@components/sidebar/TeamList';
 import TeamAnnouncement from '@components/game/TeamAnnouncement';
 import TeamResult from '@components/game/TeamResult';
+import PhoneAFriendOverlay from '@components/game/PhoneAFriendOverlay';
 
 // ── Animation variants ─────────────────────────────────────────────────────────
 
@@ -24,40 +25,33 @@ const pauseOverlayVariants = {
   exit: { opacity: 0, transition: { duration: 0.3 } },
 };
 
-// ── Helpers ────────────────────────────────────────────────────────────────────
+// ── Overlay state machine ──────────────────────────────────────────────────────
 
 /**
- * Derives which overlay (if any) should be shown on top of the game layout.
+ * Derives which overlay (if any) to render on top of the game layout.
  *
  * Priority (highest → lowest):
- *   1. pause       — always beats everything else
- *   2. teamResult  — team just finished (eliminated or completed)
- *   3. announcement — new team is up, no question loaded yet
- *   4. none        — normal gameplay
+ *   1. phoneAFriend  — paused for a phone-a-friend call (beats generic pause)
+ *   2. pause         — generic game pause
+ *   3. teamResult    — team just finished (eliminated or completed)
+ *   4. announcement  — new team is up, no question loaded yet
+ *   5. null          — normal gameplay, no overlay
  *
- * TeamResult detection covers two cases:
- *   A) Normal:   answerRevealed && team.status is eliminated/completed
- *   B) Last team: gameStatus === 'completed' (completeGame() nulls currentTeamId
- *                 and clears answerRevealed, so we fall back to the last team
- *                 in the play queue)
- *
- * @returns {'pause'|'teamResult'|'announcement'|null}
+ * @returns {'phoneAFriend'|'pause'|'teamResult'|'announcement'|null}
  */
 function deriveOverlay(gameState, currentTeam) {
-  const { gameStatus, answerRevealed, currentQuestionNumber } = gameState ?? {};
+  const { gameStatus, activeLifeline, answerRevealed, currentQuestionNumber } =
+    gameState ?? {};
 
+  if (gameStatus === 'paused' && activeLifeline === 'phone-a-friend')
+    return 'phoneAFriend';
   if (gameStatus === 'paused') return 'pause';
-
-  // Last-team edge case: completeGame() fires, resetting currentTeamId + answerRevealed.
-  // We detect this via gameStatus === 'completed' and show the last team's result.
   if (gameStatus === 'completed') return 'teamResult';
 
-  // Normal finish: answer revealed and team status has updated
   const teamFinished =
     currentTeam?.status === 'eliminated' || currentTeam?.status === 'completed';
   if (answerRevealed && teamFinished) return 'teamResult';
 
-  // Between-teams window: active team, no question loaded yet
   const isBetweenTeams =
     gameStatus === 'active' &&
     (currentQuestionNumber === 0 || currentQuestionNumber == null);
@@ -71,22 +65,21 @@ function deriveOverlay(gameState, currentTeam) {
 /**
  * GameScreen
  *
- * The main gameplay display. Shown when gameStatus is:
- *   "active"    → normal gameplay, TeamAnnouncement, or TeamResult overlay
- *   "paused"    → same layout with a pause overlay
- *   "completed" → TeamResult for the last team (until displayFinalResults)
+ * The main gameplay display. Shown when gameStatus is active/paused/completed.
  *
  * Overlay state machine (see deriveOverlay):
- *   pause        → semi-transparent pause screen
- *   teamResult   → team elimination / completion card
- *   announcement → upcoming team intro card
- *   null         → no overlay, normal gameplay visible
+ *   phoneAFriend  → question recap + synced countdown timer
+ *   pause         → generic pause screen
+ *   teamResult    → elimination / completion card
+ *   announcement  → upcoming team intro card
+ *   null          → normal gameplay
  *
  * @param {{
  *   gameState:      object,
  *   teams:          Array,
  *   prizeStructure: number[],
  *   displayConfig:  object,
+ *   timerDuration:  number,   - phone-a-friend duration in seconds (from config)
  * }} props
  */
 export default function GameScreen({
@@ -94,24 +87,18 @@ export default function GameScreen({
   teams,
   prizeStructure,
   displayConfig,
+  timerDuration,
 }) {
-  // ── Derived state ────────────────────────────────────────────────────────────
-
   const playQueue = gameState?.playQueue ?? [];
   const currentTeam =
     teams.find((t) => t.id === gameState?.currentTeamId) ?? null;
 
-  // Fallback for the last-team edge case: completeGame() nulls currentTeamId,
-  // so we look up the last team in the play queue directly from the teams array.
+  // Last-team fallback: completeGame() nulls currentTeamId
   const lastTeamId = playQueue[playQueue.length - 1] ?? null;
   const lastTeam = teams.find((t) => t.id === lastTeamId) ?? null;
-
-  // The team to show in TeamResult: current if present, otherwise last team
   const resultTeam = currentTeam ?? lastTeam;
 
-  const overlay = deriveOverlay(gameState, currentTeam, lastTeam);
-
-  // Queue position for TeamAnnouncement (1-based)
+  const overlay = deriveOverlay(gameState, currentTeam);
   const queuePosition = currentTeam ? playQueue.indexOf(currentTeam.id) + 1 : 0;
 
   return (
@@ -142,7 +129,6 @@ export default function GameScreen({
 
       {/* ── Main area ───────────────────────────────────────────────────── */}
       <div className="flex flex-1 min-h-0">
-        {/* Left: Question + Options */}
         <div className="flex flex-col flex-1 min-w-0 items-center justify-center gap-6 px-8 py-6">
           <QuestionCard
             question={gameState?.currentQuestion}
@@ -159,7 +145,6 @@ export default function GameScreen({
           />
         </div>
 
-        {/* Right: Sidebar */}
         <div
           className="flex flex-col shrink-0 w-72 border-l"
           style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
@@ -171,7 +156,6 @@ export default function GameScreen({
               />
             </div>
           )}
-
           {displayConfig?.showTeamList && (
             <div
               className="shrink-0 border-t"
@@ -186,29 +170,15 @@ export default function GameScreen({
       </div>
 
       {/* ── Overlays ─────────────────────────────────────────────────────── */}
-
       <AnimatePresence>
-        {/* Team announcement — new team is up, no question loaded yet */}
-        {overlay === 'announcement' && (
-          <TeamAnnouncement
-            key={`announce-${currentTeam?.id}`}
-            team={currentTeam}
-            queuePosition={queuePosition}
-            queueTotal={playQueue.length}
-            prizeStructure={prizeStructure}
+        {overlay === 'phoneAFriend' && (
+          <PhoneAFriendOverlay
+            key="phone-a-friend"
+            startedAt={gameState?.lifelineTimerStartedAt ?? null}
+            durationSeconds={timerDuration}
           />
         )}
 
-        {/* Team result — team just finished (eliminated or completed) */}
-        {overlay === 'teamResult' && (
-          <TeamResult
-            key={`result-${resultTeam?.id}`}
-            team={resultTeam}
-            totalQuestions={prizeStructure?.length ?? 20}
-          />
-        )}
-
-        {/* Pause overlay — always on top */}
         {overlay === 'pause' && (
           <motion.div
             key="pause-overlay"
@@ -233,6 +203,24 @@ export default function GameScreen({
               Waiting for host to resume
             </p>
           </motion.div>
+        )}
+
+        {overlay === 'teamResult' && (
+          <TeamResult
+            key={`result-${resultTeam?.id}`}
+            team={resultTeam}
+            totalQuestions={prizeStructure?.length ?? 20}
+          />
+        )}
+
+        {overlay === 'announcement' && (
+          <TeamAnnouncement
+            key={`announce-${currentTeam?.id}`}
+            team={currentTeam}
+            queuePosition={queuePosition}
+            queueTotal={playQueue.length}
+            prizeStructure={prizeStructure}
+          />
         )}
       </AnimatePresence>
     </motion.div>

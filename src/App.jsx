@@ -41,7 +41,7 @@ export default function App() {
 
   const { teams } = useTeams(authReady);
   const { prizeStructure } = usePrizeStructure(authReady);
-  const { displayConfig } = useDisplayConfig(authReady);
+  const { displayConfig, timerDuration } = useDisplayConfig(authReady);
 
   // ── Loading states ──────────────────────────────────────────────────────────
   if (!authReady && !authError) {
@@ -63,7 +63,7 @@ export default function App() {
   // ── Screen routing ─────────────────────────────────────────────────────────
   const { gameStatus, displayFinalResults } = gameState ?? {};
 
-  // Results screen takes priority over everything else
+  // Results screen takes priority
   if (displayFinalResults) {
     return (
       <AnimatePresence mode="wait">
@@ -86,6 +86,7 @@ export default function App() {
           teams={teams}
           prizeStructure={prizeStructure}
           displayConfig={displayConfig}
+          timerDuration={timerDuration}
         />
       </AnimatePresence>
     );
