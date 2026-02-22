@@ -44,15 +44,6 @@ const itemVariants = {
   },
 };
 
-const queueItemVariants = {
-  hidden: { opacity: 0, x: -20 },
-  visible: (i) => ({
-    opacity: 1,
-    x: 0,
-    transition: { duration: 0.45, ease: 'easeOut', delay: i * 0.1 },
-  }),
-};
-
 // ── Sub-components ─────────────────────────────────────────────────────────────
 
 /** Shared ambient glow rings shown on all phases. */
@@ -216,7 +207,7 @@ function LobbyPhase({ teams }) {
         <p
           className="text-sm font-semibold tracking-widest uppercase"
           style={{ color: 'rgba(255,255,255,0.25)' }}>
-          Team order &amp; question sets will be assigned automatically
+          Team order &amp; question sets will be assigned shortly...
         </p>
         <motion.p
           className="text-xs tracking-[0.3em] uppercase"
@@ -320,72 +311,23 @@ function ReadyPhase({ teams, gameState }) {
       {/* Play order */}
       {orderedTeams.length > 0 && (
         <motion.div
-          className="relative z-10 flex flex-col gap-3 w-full max-w-md"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1, transition: { delay: 0.3 } }}>
+          className="relative z-10 flex flex-col gap-3 w-full max-w-3xl"
+          variants={teamGridVariants}
+          initial="hidden"
+          animate="visible">
           <p
-            className="text-xs font-bold uppercase tracking-[0.3em] text-center mb-1"
-            style={{ color: 'rgba(255,255,255,0.3)' }}>
+            className="wwbam-label text-center mb-1"
+            style={{ letterSpacing: '0.3em' }}>
             Play Order
           </p>
 
           {orderedTeams.map((team, i) => (
-            <motion.div
+            <TeamRosterCard
               key={team.id}
-              custom={i}
-              variants={queueItemVariants}
-              initial="hidden"
-              animate="visible"
-              className="flex items-center gap-4 px-4 py-3 rounded-sm"
-              style={{
-                background: 'rgba(255,255,255,0.04)',
-                border: '1px solid rgba(255,255,255,0.07)',
-              }}>
-              {/* Position number */}
-              <span
-                className="text-sm font-black tabular-nums shrink-0"
-                style={{
-                  color: 'var(--c-gold)',
-                  fontFamily: 'var(--font-numeric)',
-                  minWidth: '1.5rem',
-                }}>
-                {i + 1}
-              </span>
-
-              {/* Team info */}
-              <div className="flex-1 min-w-0">
-                <p
-                  className="text-white font-bold truncate"
-                  style={{
-                    fontFamily: 'var(--font-condensed)',
-                    letterSpacing: '0.04em',
-                  }}>
-                  {team.name}
-                </p>
-                {team.participants && (
-                  <p
-                    className="text-xs truncate"
-                    style={{ color: 'rgba(255,255,255,0.4)' }}>
-                    {team.participants}
-                  </p>
-                )}
-              </div>
-
-              {/* Question set badge */}
-              {assignments[team.id] && (
-                <span
-                  className="text-xs font-semibold px-2 py-1 rounded-sm shrink-0"
-                  style={{
-                    color: 'var(--c-blue-light)',
-                    background: 'rgba(26,79,207,0.2)',
-                    border: '1px solid rgba(74,143,232,0.25)',
-                    fontFamily: 'var(--font-condensed)',
-                    letterSpacing: '0.05em',
-                  }}>
-                  {assignments[team.id]}
-                </span>
-              )}
-            </motion.div>
+              team={team}
+              index={i}
+              assignment={assignments[team.id] ?? null}
+            />
           ))}
         </motion.div>
       )}
