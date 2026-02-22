@@ -64,14 +64,14 @@ function AmbientGlow() {
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
       {/* Outer gold ring */}
       <motion.div
-        className="w-[600px] h-[600px] rounded-full border"
+        className="w-150 h-150 rounded-full border"
         style={{ borderColor: 'var(--c-gold-deep)' }}
         animate={{ scale: [1, 1.05, 1], opacity: [0.12, 0.28, 0.12] }}
         transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
       />
       {/* Inner blue ring */}
       <motion.div
-        className="absolute w-[380px] h-[380px] rounded-full border"
+        className="absolute w-95 h-95 rounded-full border"
         style={{ borderColor: 'var(--c-blue-deep)' }}
         animate={{ scale: [1, 1.08, 1], opacity: [0.1, 0.22, 0.1] }}
         transition={{
@@ -203,20 +203,19 @@ function LobbyPhase({ teams }) {
           className="w-full max-w-3xl flex">
           <WwbamShape
             size="wide"
-            state="default"
+            state="selected"
             strokeWidth={3}
             className="flex-1"
             style={{ minHeight: '88px' }}>
-            <div className="flex items-center justify-center py-4 w-full">
+            <div className="flex items-center justify-center py-4 w-full text-center">
               <h1
+                className="wwbam-text-gold-gradient"
                 style={{
                   fontFamily: 'var(--font-condensed)',
                   fontSize: '3.4rem',
                   fontWeight: 900,
-                  color: 'var(--c-text)',
                   letterSpacing: '0.08em',
                   textTransform: 'uppercase',
-                  textShadow: '0 0 40px rgba(74, 143, 232, 0.25)',
                   lineHeight: 1,
                 }}>
                 {hasTeams
@@ -266,39 +265,30 @@ function LobbyPhase({ teams }) {
           </motion.div>
         )}
 
-        {/* Footer section — note in shape + dim pulse below */}
+        {/* Footer note — gold shape, prominent */}
         <motion.div
           variants={sectionVariants}
-          className="w-full max-w-3xl flex flex-col items-center gap-3">
-          {/* Footer note in a used-state shape */}
-          <div className="w-full flex">
-            <WwbamShape
-              size="wide"
-              state="used"
-              strokeWidth={3}
-              className="flex-1"
-              style={{ minHeight: '52px' }}>
-              <div className="flex items-center justify-center py-3 w-full">
-                <p
-                  className="wwbam-label"
-                  style={{
-                    letterSpacing: '0.2em',
-                    color: 'var(--c-text-muted)',
-                  }}>
-                  {COPY_LOBBY.FOOTER_NOTE}
-                </p>
-              </div>
-            </WwbamShape>
-          </div>
-
-          {/* "Waiting for host" — dim pulsing text, no shape */}
-          <motion.p
-            className="wwbam-label"
-            style={{ color: 'var(--c-used-subtext)', letterSpacing: '0.3em' }}
-            animate={{ opacity: [0.4, 1, 0.4] }}
-            transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}>
-            {COPY_LOBBY.WAITING_FOR_HOST}
-          </motion.p>
+          className="w-full max-w-3xl flex">
+          <WwbamShape
+            size="wide"
+            state="selected"
+            strokeWidth={3}
+            className="flex-1"
+            style={{ minHeight: '60px' }}>
+            <div className="flex items-center justify-center py-3 w-full text-center">
+              <p
+                style={{
+                  fontFamily: 'var(--font-condensed)',
+                  fontSize: '1.25rem',
+                  fontWeight: 700,
+                  color: 'var(--c-gold)',
+                  letterSpacing: '0.18em',
+                  textTransform: 'uppercase',
+                }}>
+                {COPY_LOBBY.FOOTER_NOTE}
+              </p>
+            </div>
+          </WwbamShape>
         </motion.div>
       </motion.div>
     </motion.div>
@@ -404,16 +394,16 @@ function ReadyPhase({ teams, gameState }) {
           </WwbamShape>
         </motion.div>
 
-        {/* Play order — label + team cards */}
+        {/* Play order team cards */}
         {orderedTeams.length > 0 && (
           <motion.div
             variants={sectionVariants}
             className="w-full max-w-3xl flex flex-col gap-3">
-            <p
+            {/* <p
               className="wwbam-label text-center"
               style={{ letterSpacing: '0.3em', color: 'var(--c-text-muted)' }}>
               {COPY_READY.PLAY_ORDER_LABEL}
-            </p>
+            </p> */}
 
             {/* Independent card stagger — isolated variant keys */}
             <motion.div

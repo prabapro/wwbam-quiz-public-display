@@ -31,8 +31,7 @@ export const COPY_STEPPER = {
 
 // Idle screen — Ready phase
 export const COPY_READY = {
-  HEADING: 'Game Ready',
-  PLAY_ORDER_LABEL: 'Play Order',
+  HEADING: 'Play Order',
   STARTING_SOON: 'Starting soon...',
 };
 
