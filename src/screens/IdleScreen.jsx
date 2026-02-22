@@ -140,16 +140,6 @@ function GoldDivider() {
 function LobbyPhase({ teams }) {
   const hasTeams = teams.length > 0;
 
-  // Determine number of columns based on team count
-  const gridCols =
-    teams.length <= 2
-      ? 'grid-cols-2'
-      : teams.length <= 4
-        ? 'grid-cols-2'
-        : teams.length <= 6
-          ? 'grid-cols-3'
-          : 'grid-cols-4';
-
   return (
     <motion.div
       key="lobby"
@@ -192,10 +182,10 @@ function LobbyPhase({ teams }) {
         </motion.h1>
       </motion.div>
 
-      {/* Team grid */}
+      {/* Team list — one full-width row per team */}
       {hasTeams ? (
         <motion.div
-          className={`relative z-10 grid ${gridCols} gap-4 w-full max-w-5xl`}
+          className="relative z-10 flex flex-col gap-3 w-full max-w-3xl"
           variants={teamGridVariants}
           initial="hidden"
           animate="visible">
