@@ -26,7 +26,7 @@ import ResultsScreen from '@screens/ResultsScreen';
  * IdleScreen receives `teams` and `gameState` so it can display:
  *   - Team roster cards in the lobby phase (not-started)
  *   - Initialization stepper (transition-triggered, local animation)
- *   - Play order with question set assignments in the ready phase (initialized)
+ *   - Play order in the ready phase (initialized)
  */
 export default function App() {
   // ── Auth ────────────────────────────────────────────────────────────────────

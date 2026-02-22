@@ -247,19 +247,16 @@ function InitializingPhase({ onComplete }) {
  * ReadyPhase
  *
  * Shown after the stepper completes (or immediately on page load when already
- * initialized). Shows the finalized play order from gameState.playQueue,
- * with question set assignments if available.
+ * initialized). Shows the finalized play order from gameState.playQueue.
+ * Team names are displayed in playing order — no question set assignments shown.
  */
 function ReadyPhase({ teams, gameState }) {
   const playQueue = gameState?.playQueue ?? [];
-  const assignments = gameState?.questionSetAssignments ?? {};
 
   // Build ordered team list from playQueue
   const orderedTeams = playQueue
     .map((id) => teams.find((t) => t.id === id))
     .filter(Boolean);
-
-  const setCount = Object.values(assignments).filter(Boolean).length;
 
   return (
     <motion.div
@@ -298,14 +295,6 @@ function ReadyPhase({ teams, gameState }) {
           }}>
           Game Ready
         </h1>
-
-        {setCount > 0 && (
-          <p
-            className="text-sm tracking-widest uppercase"
-            style={{ color: 'rgba(255,255,255,0.4)' }}>
-            {setCount} question {setCount === 1 ? 'set' : 'sets'} assigned
-          </p>
-        )}
       </motion.div>
 
       {/* Play order */}
@@ -322,12 +311,7 @@ function ReadyPhase({ teams, gameState }) {
           </p>
 
           {orderedTeams.map((team, i) => (
-            <TeamRosterCard
-              key={team.id}
-              team={team}
-              index={i}
-              assignment={assignments[team.id] ?? null}
-            />
+            <TeamRosterCard key={team.id} team={team} index={i} />
           ))}
         </motion.div>
       )}

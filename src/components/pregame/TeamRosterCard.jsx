@@ -17,14 +17,13 @@ const cardVariant = {
  * TeamRosterCard
  *
  * Displays a single team's name and participant list.
- * Used in both the lobby phase (no assignment) and the ready phase
- * (with question set assignment badge on the right).
+ * Used in both the lobby phase and the ready phase (play order).
  *
  * Uses WwbamShape (compact, default) as the card surface — consistent with
  * LifelineIndicator and the rest of the WWBAM design system.
  *
  * Layout:
- *   [ Team # ] | separator | [ Team Name / Participants ] | [ Set ID? ]
+ *   [ Team # ] | separator | [ Team Name / Participants ]
  *
  * Typography is driven entirely by .wwbam-* classes from components.css
  * and token values from tokens.css — no inline colour strings.
@@ -35,11 +34,10 @@ const cardVariant = {
  *     name:         string,
  *     participants: string,  // comma-separated names from Firebase
  *   },
- *   index:       number,        // 0-based position used for the team number label
- *   assignment?: string | null, // question set ID shown after initialization
+ *   index: number,           // 0-based position used for the team number label
  * }} props
  */
-export default function TeamRosterCard({ team, index, assignment = null }) {
+export default function TeamRosterCard({ team, index }) {
   return (
     <motion.div variants={cardVariant} className="flex">
       <WwbamShape
@@ -80,26 +78,6 @@ export default function TeamRosterCard({ team, index, assignment = null }) {
               </span>
             )}
           </div>
-
-          {/* ── Question set assignment (ready phase only) ─────────────────── */}
-          {assignment && (
-            <>
-              <div className="wwbam-sep" />
-              <div className="flex flex-col items-center justify-center shrink-0 px-4">
-                <span className="wwbam-label">Set</span>
-                <span
-                  className="leading-none font-bold"
-                  style={{
-                    fontFamily: 'var(--font-condensed)',
-                    fontSize: '1rem',
-                    color: 'var(--c-blue-light)',
-                    letterSpacing: '0.06em',
-                  }}>
-                  {assignment}
-                </span>
-              </div>
-            </>
-          )}
         </div>
       </WwbamShape>
     </motion.div>
