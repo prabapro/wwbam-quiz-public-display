@@ -5,6 +5,7 @@
   Base styles for the public display app.
   Designed for full-screen TV/projector output (16:9 landscape).
   All component-level styling is handled via Tailwind utility classes.
+  Background is managed by ScreenBackground component, not here.
 */
 
 *,
@@ -24,7 +25,11 @@ body,
 }
 
 body {
-  background-color: #0a0a2e;
+  /* Background is intentionally unset here — each screen uses          */
+  /* ScreenBackground (src/components/layout/ScreenBackground.jsx)      */
+  /* which renders the WWBAM set image with a dark overlay.             */
+  /* Fallback colour covers the brief flash before React mounts.        */
+  background-color: #05051c;
   color: #ffffff;
   font-family: 'Inter', 'Roboto', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;

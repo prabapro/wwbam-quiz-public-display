@@ -16,6 +16,8 @@
 │   │   │   ├── PhoneAFriendOverlay.jsx
 │   │   │   ├── TeamAnnouncement.jsx
 │   │   │   └── TeamResult.jsx
+│   │   ├── layout
+│   │   │   └── ScreenBackground.jsx
 │   │   ├── question
 │   │   │   ├── OptionGrid.jsx
 │   │   │   └── QuestionCard.jsx
