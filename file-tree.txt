@@ -26,9 +26,11 @@
 │   │   ├── sidebar
 │   │   │   ├── PrizeLadder.jsx
 │   │   │   └── TeamList.jsx
-│   │   └── topbar
-│   │       ├── LifelineIndicator.jsx
-│   │       └── TeamInfoBar.jsx
+│   │   ├── topbar
+│   │   │   ├── LifelineIndicator.jsx
+│   │   │   └── TeamInfoBar.jsx
+│   │   └── ui
+│   │       └── WwbamShape.jsx
 │   ├── config
 │   │   └── firebase.js
 │   ├── hooks
