@@ -1,6 +1,6 @@
 // src/screens/IdleScreen.jsx
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ScreenBackground from '@components/layout/ScreenBackground';
 import TeamRosterCard from '@components/pregame/TeamRosterCard';
@@ -421,12 +421,23 @@ function ReadyPhase({ teams, gameState }) {
  *
  *   'lobby'       — gameStatus: "not-started"  → shows team roster
  *   'initializing'— transition detected locally → stepper animation plays
- *   'ready'       — stepper complete (or page loaded while already initialized)
+ *   'ready'       — stepper done (or page loaded while already initialized)
  *                   → shows play order, pulsing "Starting soon…"
  *
- * The 'initializing' phase is entirely display-side — the Firebase transition
- * from not-started → initialized is near-instant, but the display deliberately
- * holds on the stepper until all animations complete before advancing to 'ready'.
+ * Phase is derived during render using React's "storing information from
+ * previous renders" pattern — setState called conditionally during render
+ * (not inside an effect), which React supports and the linter accepts.
+ *
+ *   prevGameStatus    — mirrors gameStatus in state so we can compare renders.
+ *   stepperTriggered  — set true when the not-started → initialized live
+ *                       transition is observed; never resets within a session.
+ *   stepperDone       — set true when the stepper calls onComplete.
+ *
+ * Derived phase table:
+ *   gameStatus !== 'initialized'                               → LOBBY
+ *   gameStatus === 'initialized' && !stepperTriggered          → READY  (loaded mid-game)
+ *   gameStatus === 'initialized' && triggered && !done         → INITIALIZING
+ *   gameStatus === 'initialized' && triggered && done          → READY
  *
  * @param {{
  *   gameStatus: string,
@@ -435,33 +446,39 @@ function ReadyPhase({ teams, gameState }) {
  * }} props
  */
 export default function IdleScreen({ gameStatus, teams, gameState }) {
-  const [phase, setPhase] = useState(() => {
-    // Determine initial phase without triggering the stepper animation.
-    // If the page loads while already initialized, skip straight to 'ready'.
-    if (gameStatus === 'initialized') return PHASE.READY;
-    return PHASE.LOBBY;
-  });
+  // Whether the stepper animation has fully completed.
+  const [stepperDone, setStepperDone] = useState(false);
 
-  const prevGameStatusRef = useRef(gameStatus);
+  // Whether the live not-started → initialized transition was observed.
+  // Pages that load while already initialized never set this — they skip
+  // straight to READY without playing the stepper.
+  const [stepperTriggered, setStepperTriggered] = useState(false);
 
-  // Detect the not-started → initialized transition and trigger the stepper
-  useEffect(() => {
-    const prev = prevGameStatusRef.current;
-    prevGameStatusRef.current = gameStatus;
+  // Previous gameStatus stored in state — the React-sanctioned pattern for
+  // "storing information from previous renders" (no refs, no effects).
+  // See: react.dev/reference/react/useState#storing-information-from-previous-renders
+  const [prevGameStatus, setPrevGameStatus] = useState(gameStatus);
 
-    if (prev === 'not-started' && gameStatus === 'initialized') {
-      setPhase(PHASE.INITIALIZING);
+  // Conditional setState during render: React immediately re-renders without
+  // a browser paint, and the linter is satisfied because this is not inside
+  // an effect body.
+  if (prevGameStatus !== gameStatus) {
+    setPrevGameStatus(gameStatus);
+    if (prevGameStatus === 'not-started' && gameStatus === 'initialized') {
+      setStepperTriggered(true);
     }
+  }
 
-    // If the game somehow reverts to not-started (uninitialize), go back to lobby
-    if (gameStatus === 'not-started') {
-      setPhase(PHASE.LOBBY);
-    }
-  }, [gameStatus]);
+  // Derive the current phase — pure calculation, nothing asynchronous.
+  const phase = (() => {
+    if (gameStatus !== 'initialized') return PHASE.LOBBY;
+    if (stepperTriggered && !stepperDone) return PHASE.INITIALIZING;
+    return PHASE.READY;
+  })();
 
-  // Called by InitializationStepper when all steps are complete
+  // Called by InitializationStepper when all steps are complete.
   const handleStepperComplete = useCallback(() => {
-    setPhase(PHASE.READY);
+    setStepperDone(true);
   }, []);
 
   return (

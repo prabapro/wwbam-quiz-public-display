@@ -2,9 +2,11 @@
 
 import { motion } from 'framer-motion';
 
-// ── Animation variant (driven by parent stagger) ───────────────────────────────
+// ── Animation variant ──────────────────────────────────────────────────────────
+// Internal only — consumed by the motion.div below.
+// Parent stagger works via matching key names (hidden / visible).
 
-export const teamCardVariant = {
+const teamCardVariant = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } },
 };
@@ -16,7 +18,8 @@ export const teamCardVariant = {
  *
  * Displays a single team's name and participant list in the pre-game lobby.
  * Designed to be used inside a staggered motion container so each card
- * animates in sequentially.
+ * animates in sequentially — variant keys (hidden / visible) match the
+ * parent's staggerChildren container automatically.
  *
  * @param {{
  *   team: {
@@ -24,7 +27,7 @@ export const teamCardVariant = {
  *     name:         string,
  *     participants: string,   // comma-separated names from Firebase
  *   },
- *   index: number,            // position in the roster (0-based, used for numbering)
+ *   index: number,            // 0-based position used for the team number label
  * }} props
  */
 export default function TeamRosterCard({ team, index }) {
