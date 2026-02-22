@@ -24,7 +24,7 @@
  */
 export default function ScreenBackground({
   children,
-  overlayOpacity = 0.72,
+  overlayOpacity = 0.75,
   className = '',
 }) {
   return (

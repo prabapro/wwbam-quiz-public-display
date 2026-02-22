@@ -18,10 +18,15 @@ import ResultsScreen from '@screens/ResultsScreen';
  * Screens receive only the data they need as props — no hooks inside screens.
  *
  * Routing logic:
- *   auth pending / db connecting        → LoadingScreen
- *   gameStatus: not-started/initialized → IdleScreen
- *   gameStatus: active/paused/completed → GameScreen
- *   displayFinalResults: true           → ResultsScreen
+ *   auth pending / db connecting          → LoadingScreen
+ *   gameStatus: not-started / initialized → IdleScreen  (manages its own phase internally)
+ *   gameStatus: active / paused / completed → GameScreen
+ *   displayFinalResults: true             → ResultsScreen
+ *
+ * IdleScreen receives `teams` and `gameState` so it can display:
+ *   - Team roster cards in the lobby phase (not-started)
+ *   - Initialization stepper (transition-triggered, local animation)
+ *   - Play order in the ready phase (initialized)
  */
 export default function App() {
   // ── Auth ────────────────────────────────────────────────────────────────────
@@ -93,9 +98,16 @@ export default function App() {
   }
 
   // Fallback: not-started / initialized / unknown
+  // Pass teams + gameState so IdleScreen can render the lobby roster,
+  // the initialization stepper, and the ready-state play order.
   return (
     <AnimatePresence mode="wait">
-      <IdleScreen key="idle" gameStatus={gameStatus} />
+      <IdleScreen
+        key="idle"
+        gameStatus={gameStatus}
+        teams={teams}
+        gameState={gameState}
+      />
     </AnimatePresence>
   );
 }

@@ -20,6 +20,9 @@
 │   │   │   └── TeamResult.jsx
 │   │   ├── layout
 │   │   │   └── ScreenBackground.jsx
+│   │   ├── pregame
+│   │   │   ├── InitializationStepper.jsx
+│   │   │   └── TeamRosterCard.jsx
 │   │   ├── question
 │   │   │   ├── OptionGrid.jsx
 │   │   │   └── QuestionCard.jsx
@@ -33,6 +36,8 @@
 │   │       └── WwbamShape.jsx
 │   ├── config
 │   │   └── firebase.js
+│   ├── constants
+│   │   └── app.js
 │   ├── hooks
 │   │   ├── useDisplayConfig.js
 │   │   ├── useFirebaseAuth.js
@@ -65,6 +70,7 @@
 ├── firebase.json
 ├── index.html
 ├── jsconfig.json
+├── jsconfig.json.backup
 ├── package.json
 ├── README.md
 ├── vite.config.js
