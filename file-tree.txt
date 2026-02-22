@@ -7,12 +7,19 @@
 ├── docs
 │   └── BUILD_BRIEF.md
 ├── public
-│   └── vite.svg
+│   └── images
+│       ├── wwbam-logo.svg
+│       ├── wwbam-set-background-1.jpg
+│       └── wwbam-set-background-2.jpg
 ├── src
 │   ├── components
 │   │   ├── game
+│   │   │   ├── BetweenQuestionsLogo.jsx
+│   │   │   ├── PhoneAFriendOverlay.jsx
 │   │   │   ├── TeamAnnouncement.jsx
 │   │   │   └── TeamResult.jsx
+│   │   ├── layout
+│   │   │   └── ScreenBackground.jsx
 │   │   ├── question
 │   │   │   ├── OptionGrid.jsx
 │   │   │   └── QuestionCard.jsx

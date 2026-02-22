@@ -15,17 +15,9 @@ const HEXAGON_CLIP =
 
 /**
  * Looks up an option value from the Firebase options object.
- *
- * The host panel writes option keys as lowercase ('a', 'b', 'c', 'd'),
- * but we display them as uppercase ('A', 'B', 'C', 'D'). This helper
- * handles both cases so we're resilient to either format in Firebase.
- *
- * @param {{ [key: string]: string|null }} options
- * @param {string} key - Uppercase key e.g. 'A'
- * @returns {string|null|undefined}
+ * Handles both lowercase keys (host panel) and uppercase keys.
  */
 function getOptionText(options, key) {
-  // Prefer lowercase (what the host panel writes), fall back to uppercase
   return options[key.toLowerCase()] ?? options[key];
 }
 
@@ -34,20 +26,16 @@ function getOptionText(options, key) {
 /**
  * Derives the visual state for a single option.
  *
- * States (per brief):
+ * States:
  *   'default'  → dark blue, no highlight
  *   'selected' → amber/orange — host locked this answer, awaiting reveal
- *   'correct'  → green — answerRevealed, this is the correct option
- *   'wrong'    → red  — answerRevealed, this was selected but is wrong
- *   'dimmed'   → grey — answerRevealed, neither selected nor correct
+ *   'correct'  → green  — answerRevealed + this is the correct option
+ *   'wrong'    → red    — answerRevealed + this was the selected wrong answer
+ *   'dimmed'   → muted  — answerRevealed + neither selected nor correct
  *   'removed'  → hidden — 50/50 lifeline removed this option
  *
- * @param {string}      key           - 'A' | 'B' | 'C' | 'D'
- * @param {string|null} optionText    - null / undefined means 50/50 removed it
- * @param {boolean}     answerRevealed
- * @param {string|null} correctOption
- * @param {string|null} selectedOption
- * @returns {'default'|'selected'|'correct'|'wrong'|'dimmed'|'removed'}
+ * After reveal all 4 options stay visible:
+ *   correct → green, selected wrong → red, others → dimmed (muted but readable)
  */
 function deriveOptionState(
   key,
@@ -56,7 +44,6 @@ function deriveOptionState(
   correctOption,
   selectedOption,
 ) {
-  // 50/50 removed — null value means this option was stripped
   if (optionText === null || optionText === undefined) return 'removed';
 
   if (answerRevealed) {
@@ -72,6 +59,13 @@ function deriveOptionState(
 
 // ── Style map ──────────────────────────────────────────────────────────────────
 
+/**
+ * Visual styles per option state.
+ *
+ * 'dimmed' is now fully opaque with a visible muted style so all 4 options
+ * stay on screen after the answer is revealed — hiding them removes context
+ * from the audience. Previously opacity: 0.4 made them near-invisible.
+ */
 const STATE_STYLES = {
   default: {
     background: 'linear-gradient(135deg, #0d1b4b 0%, #1a3a8f 100%)',
@@ -100,11 +94,13 @@ const STATE_STYLES = {
     opacity: 1,
     boxShadow: '0 0 24px rgba(185,28,28,0.4)',
   },
+  // Fully visible but clearly deprioritised — dark, desaturated, low contrast
+  // Keeps all 4 options on screen so the audience can see the full picture
   dimmed: {
-    background: 'linear-gradient(135deg, #0d1b4b 0%, #1a3a8f 100%)',
-    border: '1.5px solid rgba(99,132,255,0.1)',
+    background: 'linear-gradient(135deg, #0a0f1e 0%, #0f1729 100%)',
+    border: '1.5px solid rgba(255,255,255,0.06)',
     color: '#334155',
-    opacity: 0.4,
+    opacity: 1,
   },
   removed: {
     opacity: 0,
@@ -141,7 +137,6 @@ const optionVariants = {
 function OptionButton({ optionKey, optionText, state }) {
   const style = STATE_STYLES[state] ?? STATE_STYLES.default;
 
-  // Pulse animation for 'selected' (suspense) and flash for reveal states
   const pulseAnimate =
     state === 'selected'
       ? { scale: [1, 1.02, 1], transition: { duration: 1.4, repeat: Infinity } }
@@ -149,6 +144,7 @@ function OptionButton({ optionKey, optionText, state }) {
         ? { scale: [1, 1.03, 1], transition: { duration: 0.35, repeat: 2 } }
         : {};
 
+  // 'removed' renders an invisible placeholder to preserve grid layout
   if (state === 'removed') return <div className="w-full" />;
 
   return (
@@ -162,7 +158,7 @@ function OptionButton({ optionKey, optionText, state }) {
         style={{
           ...style,
           transition:
-            'background 0.4s ease, border-color 0.4s ease, opacity 0.4s ease',
+            'background 0.4s ease, border-color 0.4s ease, opacity 0.4s ease, color 0.4s ease',
         }}>
         {/* Label badge */}
         <span
@@ -192,7 +188,8 @@ function OptionButton({ optionKey, optionText, state }) {
  * Each option's visual state is derived from Firebase game-state fields.
  * Options stagger in A → B → C → D with 150 ms between each.
  *
- * Renders nothing when `optionsVisible` is false.
+ * After answer reveal all 4 options remain visible:
+ *   correct → green, selected wrong → red, others → dimmed (dark but readable)
  *
  * @param {{
  *   options:        { A: string, B: string, C: string, D: string } | null,
@@ -242,7 +239,6 @@ export default function OptionGrid({
             })}
           </motion.div>
         ) : (
-          // Invisible placeholder keeps the layout from collapsing
           <div key="placeholder" style={{ minHeight: '10rem', opacity: 0 }} />
         )}
       </AnimatePresence>
