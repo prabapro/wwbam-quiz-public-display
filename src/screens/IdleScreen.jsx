@@ -3,17 +3,13 @@
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ScreenBackground from '@components/layout/ScreenBackground';
+import WwbamShape from '@components/ui/WwbamShape';
 import TeamRosterCard from '@components/pregame/TeamRosterCard';
 import InitializationStepper from '@components/pregame/InitializationStepper';
 import { APP_NAME, COPY_LOBBY, COPY_READY } from '@constants/app';
 
 // ── Phase constants ────────────────────────────────────────────────────────────
 
-/**
- * 'lobby'       — gameStatus is "not-started"; teams are registered, waiting.
- * 'initializing'— host just triggered init; stepper animation plays locally.
- * 'ready'       — stepper done (or page loaded while already initialized).
- */
 const PHASE = {
   LOBBY: 'lobby',
   INITIALIZING: 'initializing',
@@ -28,37 +24,56 @@ const phaseContainerVariants = {
   exit: { opacity: 0, transition: { duration: 0.35, ease: 'easeIn' } },
 };
 
-const teamGridVariants = {
+// Stagger container — drives sequential reveal of major sections within a phase.
+const sectionStaggerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { staggerChildren: 0.1, delayChildren: 0.3 },
+    transition: { staggerChildren: 0.12, delayChildren: 0.2 },
   },
 };
 
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.55, ease: 'easeOut' },
-  },
+// Each staggered section fades up into position.
+const sectionVariants = {
+  hidden: { opacity: 0, y: 18 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } },
 };
 
-// ── Sub-components ─────────────────────────────────────────────────────────────
+// Card stagger — orchestrates TeamRosterCards sequentially.
+// Uses different keys (enter/show) to stay completely isolated from the outer
+// section stagger (hidden/visible), preventing any variant name conflicts.
+const cardStaggerVariants = {
+  enter: {},
+  show: { transition: { staggerChildren: 0.1, delayChildren: 0.15 } },
+};
 
-/** Shared ambient glow rings shown on all phases. */
+const cardItemVariants = {
+  enter: { opacity: 0, y: 16 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: 'easeOut' } },
+};
+
+// ── Shared sub-components ──────────────────────────────────────────────────────
+
+/**
+ * AmbientGlow
+ * Soft pulsing rings centered behind the content on all phases.
+ * All colours via CSS tokens — no raw rgba.
+ */
 function AmbientGlow() {
   return (
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+      {/* Outer gold ring */}
       <motion.div
-        className="w-150 h-150 rounded-full border border-amber-400/5"
-        animate={{ scale: [1, 1.05, 1], opacity: [0.5, 1, 0.5] }}
+        className="w-[600px] h-[600px] rounded-full border"
+        style={{ borderColor: 'var(--c-gold-deep)' }}
+        animate={{ scale: [1, 1.05, 1], opacity: [0.12, 0.28, 0.12] }}
         transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
       />
+      {/* Inner blue ring */}
       <motion.div
-        className="absolute w-100 h-100 rounded-full border border-blue-400/10"
-        animate={{ scale: [1, 1.08, 1], opacity: [0.3, 0.7, 0.3] }}
+        className="absolute w-[380px] h-[380px] rounded-full border"
+        style={{ borderColor: 'var(--c-blue-deep)' }}
+        animate={{ scale: [1, 1.08, 1], opacity: [0.1, 0.22, 0.1] }}
         transition={{
           duration: 4,
           repeat: Infinity,
@@ -70,14 +85,18 @@ function AmbientGlow() {
   );
 }
 
-/** Small spinning WWBAM logo used in lobby + ready phases. */
-function SpinningLogo({ size = 'w-24 h-24' }) {
+/**
+ * SpinningLogo
+ * WWBAM logo with a slow Y-axis rotation loop and gold drop-shadow.
+ */
+function SpinningLogo({ size = 'w-20 h-20' }) {
   return (
     <div style={{ perspective: '800px' }}>
       <motion.img
         src="/images/wwbam-logo.svg"
         alt="WWBAM Logo"
-        className={`${size} drop-shadow-[0_0_30px_rgba(245,158,11,0.35)]`}
+        className={`${size}`}
+        style={{ filter: 'drop-shadow(0 0 28px var(--c-gold-dark))' }}
         animate={{ rotateY: [0, 360] }}
         transition={{
           duration: 2.5,
@@ -90,28 +109,49 @@ function SpinningLogo({ size = 'w-24 h-24' }) {
   );
 }
 
-/** Divider used between sections. */
+/**
+ * GoldDivider
+ * Horizontal rule with a ✦ centrepiece — all colours via tokens.
+ */
 function GoldDivider() {
   return (
-    <div className="flex items-center gap-4 w-full max-w-xs">
+    <div className="flex items-center gap-4 w-56">
       <span
         className="flex-1 h-px"
         style={{
-          background:
-            'linear-gradient(90deg, transparent, rgba(245,158,11,0.4))',
+          background: 'linear-gradient(90deg, transparent, var(--c-gold-dark))',
         }}
       />
-      <span style={{ color: 'rgba(245,158,11,0.6)', fontSize: '0.9rem' }}>
+      <span
+        style={{
+          color: 'var(--c-gold)',
+          fontFamily: 'var(--font-condensed)',
+          fontSize: '0.85rem',
+        }}>
         ✦
       </span>
       <span
         className="flex-1 h-px"
         style={{
           background:
-            'linear-gradient(270deg, transparent, rgba(245,158,11,0.4))',
+            'linear-gradient(270deg, transparent, var(--c-gold-dark))',
         }}
       />
     </div>
+  );
+}
+
+/**
+ * AppEyebrow
+ * Show title displayed above the main heading — animated gold shimmer text.
+ */
+function AppEyebrow() {
+  return (
+    <p
+      className="wwbam-label wwbam-text-gold-gradient"
+      style={{ letterSpacing: '0.28em' }}>
+      {APP_NAME}
+    </p>
   );
 }
 
@@ -121,13 +161,13 @@ function GoldDivider() {
  * LobbyPhase
  *
  * Shown when gameStatus is "not-started".
- * Displays registered teams with participant names and a note that
- * team order & question sets will be assigned automatically.
  *
- * Note: The display app cannot read the `question-sets` Firebase node
- * (restricted to allowed-hosts only). So we don't show a question set count
- * here — that information becomes available in the "ready" phase via
- * gameState.questionSetAssignments after initialization.
+ * Layout (top → bottom):
+ *   Logo + APP_NAME eyebrow (gold shimmer) + GoldDivider
+ *   [WwbamShape default]  — "Tonight's Teams" / "Get Ready to Play" heading
+ *   [team cards]          — TeamRosterCard × N  (or a "used" placeholder shape)
+ *   [WwbamShape used]     — footer note
+ *   "Waiting for host"    — dim pulsing text (no shape, truly secondary)
  */
 function LobbyPhase({ teams }) {
   const hasTeams = teams.length > 0;
@@ -135,90 +175,131 @@ function LobbyPhase({ teams }) {
   return (
     <motion.div
       key="lobby"
-      className="w-full h-full flex flex-col items-center justify-center gap-8 px-16 py-10"
+      className="w-full h-full flex flex-col items-center justify-center gap-5 px-16 py-10"
       variants={phaseContainerVariants}
       initial="hidden"
       animate="visible"
       exit="exit">
       <AmbientGlow />
 
-      {/* Header */}
+      {/* ── Stagger container ─────────────────────────────────────────── */}
       <motion.div
-        className="relative z-10 flex flex-col items-center gap-4"
-        variants={teamGridVariants}
+        className="relative z-10 w-full flex flex-col items-center gap-5"
+        variants={sectionStaggerVariants}
         initial="hidden"
         animate="visible">
+        {/* Logo + eyebrow + divider */}
         <motion.div
-          variants={itemVariants}
-          className="flex flex-col items-center gap-2">
-          <SpinningLogo size="w-16 h-16" />
-          <p
-            className="text-sm font-bold uppercase tracking-[0.4em]"
-            style={{ color: 'var(--c-gold)' }}>
-            {APP_NAME}
-          </p>
-        </motion.div>
-
-        <motion.div variants={itemVariants}>
+          variants={sectionVariants}
+          className="flex flex-col items-center gap-3">
+          <SpinningLogo size="w-20 h-20" />
+          <AppEyebrow />
           <GoldDivider />
         </motion.div>
 
-        <motion.h1
-          variants={itemVariants}
-          className="text-5xl font-black uppercase tracking-widest text-white text-center"
-          style={{
-            fontFamily: 'var(--font-condensed)',
-            textShadow: '0 0 60px rgba(245,158,11,0.2)',
-          }}>
-          {hasTeams
-            ? COPY_LOBBY.HEADING_WITH_TEAMS
-            : COPY_LOBBY.HEADING_NO_TEAMS}
-        </motion.h1>
-      </motion.div>
-
-      {/* Team list — one full-width row per team */}
-      {hasTeams ? (
+        {/* Main heading — inside WwbamShape */}
         <motion.div
-          className="relative z-10 flex flex-col gap-3 w-full max-w-3xl"
-          variants={teamGridVariants}
-          initial="hidden"
-          animate="visible">
-          {teams.map((team, index) => (
-            <TeamRosterCard key={team.id} team={team} index={index} />
-          ))}
+          variants={sectionVariants}
+          className="w-full max-w-3xl flex">
+          <WwbamShape
+            size="wide"
+            state="default"
+            strokeWidth={3}
+            className="flex-1"
+            style={{ minHeight: '88px' }}>
+            <div className="flex items-center justify-center py-4 w-full">
+              <h1
+                style={{
+                  fontFamily: 'var(--font-condensed)',
+                  fontSize: '3.4rem',
+                  fontWeight: 900,
+                  color: 'var(--c-text)',
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  textShadow: '0 0 40px rgba(74, 143, 232, 0.25)',
+                  lineHeight: 1,
+                }}>
+                {hasTeams
+                  ? COPY_LOBBY.HEADING_WITH_TEAMS
+                  : COPY_LOBBY.HEADING_NO_TEAMS}
+              </h1>
+            </div>
+          </WwbamShape>
         </motion.div>
-      ) : (
-        <motion.p
-          variants={itemVariants}
-          initial="hidden"
-          animate="visible"
-          className="text-xl"
-          style={{
-            color: 'rgba(255,255,255,0.4)',
-            fontFamily: 'var(--font-body)',
-          }}>
-          {COPY_LOBBY.NO_TEAMS_MESSAGE}
-        </motion.p>
-      )}
 
-      {/* Footer note */}
-      <motion.div
-        className="relative z-10 flex flex-col items-center gap-2 text-center"
-        variants={itemVariants}
-        initial="hidden"
-        animate="visible">
-        <p
-          className="text-sm font-semibold tracking-widest uppercase"
-          style={{ color: 'rgba(255,255,255,0.25)' }}>
-          {COPY_LOBBY.FOOTER_NOTE}
-        </p>
-        <motion.p
-          className="text-xs tracking-[0.3em] uppercase"
-          style={{ color: 'rgba(255,255,255,0.15)' }}
-          animate={{ opacity: [0.15, 0.4, 0.15] }}
-          transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}>
-          {COPY_LOBBY.WAITING_FOR_HOST}
-        </motion.p>
+        {/* Teams list or no-teams placeholder */}
+        {hasTeams ? (
+          // Outer: participates in section stagger as one block
+          <motion.div variants={sectionVariants} className="w-full max-w-3xl">
+            {/* Inner: isolated card stagger — different variant keys (enter/show)
+                avoid any conflict with the outer hidden/visible stagger */}
+            <motion.div
+              className="flex flex-col gap-3"
+              initial="enter"
+              animate="show"
+              variants={cardStaggerVariants}>
+              {teams.map((team, index) => (
+                <motion.div key={team.id} variants={cardItemVariants}>
+                  <TeamRosterCard team={team} index={index} />
+                </motion.div>
+              ))}
+            </motion.div>
+          </motion.div>
+        ) : (
+          <motion.div
+            variants={sectionVariants}
+            className="w-full max-w-3xl flex">
+            <WwbamShape
+              size="wide"
+              state="used"
+              strokeWidth={3}
+              className="flex-1"
+              style={{ minHeight: '72px' }}>
+              <div className="flex items-center justify-center py-4 w-full">
+                <p
+                  className="wwbam-team-name"
+                  style={{ color: 'var(--c-used-text)' }}>
+                  {COPY_LOBBY.NO_TEAMS_MESSAGE}
+                </p>
+              </div>
+            </WwbamShape>
+          </motion.div>
+        )}
+
+        {/* Footer section — note in shape + dim pulse below */}
+        <motion.div
+          variants={sectionVariants}
+          className="w-full max-w-3xl flex flex-col items-center gap-3">
+          {/* Footer note in a used-state shape */}
+          <div className="w-full flex">
+            <WwbamShape
+              size="wide"
+              state="used"
+              strokeWidth={3}
+              className="flex-1"
+              style={{ minHeight: '52px' }}>
+              <div className="flex items-center justify-center py-3 w-full">
+                <p
+                  className="wwbam-label"
+                  style={{
+                    letterSpacing: '0.2em',
+                    color: 'var(--c-text-muted)',
+                  }}>
+                  {COPY_LOBBY.FOOTER_NOTE}
+                </p>
+              </div>
+            </WwbamShape>
+          </div>
+
+          {/* "Waiting for host" — dim pulsing text, no shape */}
+          <motion.p
+            className="wwbam-label"
+            style={{ color: 'var(--c-used-subtext)', letterSpacing: '0.3em' }}
+            animate={{ opacity: [0.4, 1, 0.4] }}
+            transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}>
+            {COPY_LOBBY.WAITING_FOR_HOST}
+          </motion.p>
+        </motion.div>
       </motion.div>
     </motion.div>
   );
@@ -226,12 +307,18 @@ function LobbyPhase({ teams }) {
 
 // ── Phase: Initializing ────────────────────────────────────────────────────────
 
+/**
+ * InitializingPhase
+ * Darkened overlay so the stepper pops against the background.
+ * The stepper itself (InitializationStepper) already uses WwbamShape per step.
+ */
 function InitializingPhase({ onComplete }) {
   return (
     <motion.div
       key="initializing"
       className="w-full h-full flex items-center justify-center"
-      style={{ background: 'rgba(5,5,28,0.6)', backdropFilter: 'blur(2px)' }}
+      // #05051c @ 60% — same hue as --c-screen-bg, no CSS variable needed for rgba
+      style={{ background: 'rgba(5, 5, 28, 0.6)', backdropFilter: 'blur(2px)' }}
       variants={phaseContainerVariants}
       initial="hidden"
       animate="visible"
@@ -249,14 +336,18 @@ function InitializingPhase({ onComplete }) {
 /**
  * ReadyPhase
  *
- * Shown after the stepper completes (or immediately on page load when already
- * initialized). Shows the finalized play order from gameState.playQueue.
- * Team names are displayed in playing order — no question set assignments shown.
+ * Shown after the stepper completes (or immediately if page loaded while
+ * already initialized). Triumphant gold moment — everything is set.
+ *
+ * Layout (top → bottom):
+ *   Logo + APP_NAME eyebrow + GoldDivider
+ *   [WwbamShape selected]  — "Game Ready" heading (gold-on-gold)
+ *   "Play Order" label     — floating dim label above team list
+ *   [team cards]           — TeamRosterCard × N in play order
+ *   [WwbamShape selected]  — "Starting soon..." pulsing the whole shape
  */
 function ReadyPhase({ teams, gameState }) {
   const playQueue = gameState?.playQueue ?? [];
-
-  // Build ordered team list from playQueue
   const orderedTeams = playQueue
     .map((id) => teams.find((t) => t.id === id))
     .filter(Boolean);
@@ -264,69 +355,109 @@ function ReadyPhase({ teams, gameState }) {
   return (
     <motion.div
       key="ready"
-      className="w-full h-full flex flex-col items-center justify-center gap-8 px-16 py-10"
+      className="w-full h-full flex flex-col items-center justify-center gap-5 px-16 py-10"
       variants={phaseContainerVariants}
       initial="hidden"
       animate="visible"
       exit="exit">
       <AmbientGlow />
 
-      {/* Header */}
+      {/* ── Stagger container ─────────────────────────────────────────── */}
       <motion.div
-        className="relative z-10 flex flex-col items-center gap-4"
-        initial={{ opacity: 0, y: -16 }}
-        animate={{
-          opacity: 1,
-          y: 0,
-          transition: { duration: 0.6, ease: 'easeOut' },
-        }}>
-        <SpinningLogo size="w-16 h-16" />
-
-        <p
-          className="text-sm font-bold uppercase tracking-[0.4em]"
-          style={{ color: 'var(--c-gold)' }}>
-          {APP_NAME}
-        </p>
-
-        <GoldDivider />
-
-        <h1
-          className="text-5xl font-black uppercase tracking-widest text-white text-center"
-          style={{
-            fontFamily: 'var(--font-condensed)',
-            textShadow: '0 0 60px rgba(245,158,11,0.25)',
-          }}>
-          {COPY_READY.HEADING}
-        </h1>
-      </motion.div>
-
-      {/* Play order */}
-      {orderedTeams.length > 0 && (
+        className="relative z-10 w-full flex flex-col items-center gap-5"
+        variants={sectionStaggerVariants}
+        initial="hidden"
+        animate="visible">
+        {/* Logo + eyebrow + divider */}
         <motion.div
-          className="relative z-10 flex flex-col gap-3 w-full max-w-3xl"
-          variants={teamGridVariants}
-          initial="hidden"
-          animate="visible">
-          <p
-            className="wwbam-label text-center mb-1"
-            style={{ letterSpacing: '0.3em' }}>
-            {COPY_READY.PLAY_ORDER_LABEL}
-          </p>
-
-          {orderedTeams.map((team, i) => (
-            <TeamRosterCard key={team.id} team={team} index={i} />
-          ))}
+          variants={sectionVariants}
+          className="flex flex-col items-center gap-3">
+          <SpinningLogo size="w-16 h-16" />
+          <AppEyebrow />
+          <GoldDivider />
         </motion.div>
-      )}
 
-      {/* Starting soon pulse */}
-      <motion.p
-        className="relative z-10 text-base font-semibold tracking-[0.35em] uppercase"
-        style={{ color: 'rgba(255,255,255,0.4)' }}
-        animate={{ opacity: [0.4, 0.85, 0.4] }}
-        transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}>
-        {COPY_READY.STARTING_SOON}
-      </motion.p>
+        {/* "Game Ready" heading — gold-on-gold: selected shape + gradient text */}
+        <motion.div
+          variants={sectionVariants}
+          className="w-full max-w-3xl flex">
+          <WwbamShape
+            size="wide"
+            state="selected"
+            strokeWidth={3}
+            className="flex-1"
+            style={{ minHeight: '96px' }}>
+            <div className="flex items-center justify-center py-5 w-full">
+              <h1
+                className="wwbam-text-gold-gradient"
+                style={{
+                  fontFamily: 'var(--font-condensed)',
+                  fontSize: '3.8rem',
+                  fontWeight: 900,
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                  lineHeight: 1,
+                }}>
+                {COPY_READY.HEADING}
+              </h1>
+            </div>
+          </WwbamShape>
+        </motion.div>
+
+        {/* Play order — label + team cards */}
+        {orderedTeams.length > 0 && (
+          <motion.div
+            variants={sectionVariants}
+            className="w-full max-w-3xl flex flex-col gap-3">
+            <p
+              className="wwbam-label text-center"
+              style={{ letterSpacing: '0.3em', color: 'var(--c-text-muted)' }}>
+              {COPY_READY.PLAY_ORDER_LABEL}
+            </p>
+
+            {/* Independent card stagger — isolated variant keys */}
+            <motion.div
+              className="flex flex-col gap-3"
+              initial="enter"
+              animate="show"
+              variants={cardStaggerVariants}>
+              {orderedTeams.map((team, i) => (
+                <motion.div key={team.id} variants={cardItemVariants}>
+                  <TeamRosterCard team={team} index={i} />
+                </motion.div>
+              ))}
+            </motion.div>
+          </motion.div>
+        )}
+
+        {/* "Starting soon..." — the whole shape pulses opacity */}
+        <motion.div
+          variants={sectionVariants}
+          className="w-full max-w-3xl flex"
+          animate={{ opacity: [0.45, 1, 0.45] }}
+          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}>
+          <WwbamShape
+            size="wide"
+            state="selected"
+            strokeWidth={3}
+            className="flex-1"
+            style={{ minHeight: '56px' }}>
+            <div className="flex items-center justify-center py-3 w-full">
+              <p
+                style={{
+                  fontFamily: 'var(--font-condensed)',
+                  fontSize: '1.1rem',
+                  fontWeight: 700,
+                  color: 'var(--c-gold)',
+                  letterSpacing: '0.4em',
+                  textTransform: 'uppercase',
+                }}>
+                {COPY_READY.STARTING_SOON}
+              </p>
+            </div>
+          </WwbamShape>
+        </motion.div>
+      </motion.div>
     </motion.div>
   );
 }
@@ -338,25 +469,12 @@ function ReadyPhase({ teams, gameState }) {
  *
  * Manages three visual phases based on gameStatus transitions:
  *
- *   'lobby'       — gameStatus: "not-started"  → shows team roster
- *   'initializing'— transition detected locally → stepper animation plays
- *   'ready'       — stepper done (or page loaded while already initialized)
- *                   → shows play order, pulsing "Starting soon…"
+ *   LOBBY       — gameStatus: "not-started"  → team roster or waiting placeholder
+ *   INITIALIZING— not-started → initialized live transition observed → stepper
+ *   READY       — stepper done (or page loaded already initialized) → play order
  *
- * Phase is derived during render using React's "storing information from
- * previous renders" pattern — setState called conditionally during render
- * (not inside an effect), which React supports and the linter accepts.
- *
- *   prevGameStatus    — mirrors gameStatus in state so we can compare renders.
- *   stepperTriggered  — set true when the not-started → initialized live
- *                       transition is observed; never resets within a session.
- *   stepperDone       — set true when the stepper calls onComplete.
- *
- * Derived phase table:
- *   gameStatus !== 'initialized'                               → LOBBY
- *   gameStatus === 'initialized' && !stepperTriggered          → READY  (loaded mid-game)
- *   gameStatus === 'initialized' && triggered && !done         → INITIALIZING
- *   gameStatus === 'initialized' && triggered && done          → READY
+ * Phase derivation uses React's "storing information from previous renders"
+ * pattern — setState called conditionally during render (not inside an effect).
  *
  * @param {{
  *   gameStatus: string,
@@ -365,22 +483,10 @@ function ReadyPhase({ teams, gameState }) {
  * }} props
  */
 export default function IdleScreen({ gameStatus, teams, gameState }) {
-  // Whether the stepper animation has fully completed.
   const [stepperDone, setStepperDone] = useState(false);
-
-  // Whether the live not-started → initialized transition was observed.
-  // Pages that load while already initialized never set this — they skip
-  // straight to READY without playing the stepper.
   const [stepperTriggered, setStepperTriggered] = useState(false);
-
-  // Previous gameStatus stored in state — the React-sanctioned pattern for
-  // "storing information from previous renders" (no refs, no effects).
-  // See: react.dev/reference/react/useState#storing-information-from-previous-renders
   const [prevGameStatus, setPrevGameStatus] = useState(gameStatus);
 
-  // Conditional setState during render: React immediately re-renders without
-  // a browser paint, and the linter is satisfied because this is not inside
-  // an effect body.
   if (prevGameStatus !== gameStatus) {
     setPrevGameStatus(gameStatus);
     if (prevGameStatus === 'not-started' && gameStatus === 'initialized') {
@@ -388,14 +494,12 @@ export default function IdleScreen({ gameStatus, teams, gameState }) {
     }
   }
 
-  // Derive the current phase — pure calculation, nothing asynchronous.
   const phase = (() => {
     if (gameStatus !== 'initialized') return PHASE.LOBBY;
     if (stepperTriggered && !stepperDone) return PHASE.INITIALIZING;
     return PHASE.READY;
   })();
 
-  // Called by InitializationStepper when all steps are complete.
   const handleStepperComplete = useCallback(() => {
     setStepperDone(true);
   }, []);

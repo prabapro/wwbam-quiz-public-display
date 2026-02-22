@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import ScreenBackground from '@components/layout/ScreenBackground';
+import WwbamShape from '@components/ui/WwbamShape';
 import { APP_NAME, APP_SHORT_NAME } from '@constants/app';
 
 /**
@@ -10,8 +11,10 @@ import { APP_NAME, APP_SHORT_NAME } from '@constants/app';
  * Shown while anonymous Firebase auth is pending or the first
  * database snapshot hasn't arrived yet.
  *
- * Accepts an optional `message` prop so App.jsx can surface the
- * specific stage (authenticating vs connecting to database).
+ * Layout (vertical stack, centered):
+ *   [WwbamShape selected]  — APP_SHORT_NAME (gold shimmer) + APP_NAME label
+ *   [spinner]              — free-floating pulsing rings
+ *   [WwbamShape default]   — status message (blue shimmer)
  *
  * @param {{ message?: string }} props
  */
@@ -19,61 +22,94 @@ export default function LoadingScreen({ message = 'Connecting...' }) {
   return (
     <ScreenBackground>
       <div className="w-full h-full flex flex-col items-center justify-center gap-10">
-        {/* Logo / Title */}
+        {/* ── Title block ───────────────────────────────────────────────── */}
         <motion.div
-          className="flex flex-col items-center gap-3"
+          className="w-full max-w-lg flex"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: 'easeOut' }}>
-          <h1
-            className="text-5xl font-black tracking-widest uppercase text-white"
-            style={{ textShadow: '0 0 40px rgba(245,158,11,0.4)' }}>
-            {APP_SHORT_NAME}
-          </h1>
-          <p className="text-slate-400 text-sm tracking-[0.3em] uppercase">
-            {APP_NAME}
-          </p>
+          <WwbamShape
+            size="wide"
+            state="selected"
+            strokeWidth={3}
+            className="flex-1"
+            style={{ minHeight: '108px' }}>
+            <div className="flex flex-col items-center justify-center gap-2 py-5 w-full">
+              <h1
+                className="wwbam-text-gold-gradient leading-none"
+                style={{
+                  fontFamily: 'var(--font-numeric)',
+                  fontSize: '3.5rem',
+                  letterSpacing: '0.12em',
+                }}>
+                {APP_SHORT_NAME}
+              </h1>
+              <p className="wwbam-label" style={{ letterSpacing: '0.25em' }}>
+                {APP_NAME}
+              </p>
+            </div>
+          </WwbamShape>
         </motion.div>
 
-        {/* Spinner + message */}
+        {/* ── Spinner ───────────────────────────────────────────────────── */}
         <motion.div
-          className="flex flex-col items-center gap-5"
+          className="relative w-14 h-14"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3, duration: 0.5 }}>
-          {/* Pulsing ring */}
-          <div className="relative w-14 h-14">
-            <motion.span
-              className="absolute inset-0 rounded-full border-2 border-amber-400"
-              animate={{ scale: [1, 1.6], opacity: [0.8, 0] }}
-              transition={{ duration: 1.2, repeat: Infinity, ease: 'easeOut' }}
-            />
-            <motion.span
-              className="absolute inset-0 rounded-full border-2 border-amber-500"
-              animate={{ scale: [1, 1.3], opacity: [0.6, 0] }}
-              transition={{
-                duration: 1.2,
-                repeat: Infinity,
-                ease: 'easeOut',
-                delay: 0.4,
-              }}
-            />
-            <span className="absolute inset-0 rounded-full border-2 border-amber-400/30" />
-            {/* Inner dot */}
-            <motion.span
-              className="absolute inset-3 rounded-full bg-amber-400"
-              animate={{ opacity: [1, 0.5, 1] }}
-              transition={{
-                duration: 1.5,
-                repeat: Infinity,
-                ease: 'easeInOut',
-              }}
-            />
-          </div>
+          {/* Outer expanding ring */}
+          <motion.span
+            className="absolute inset-0 rounded-full border-2"
+            style={{ borderColor: 'var(--c-gold)' }}
+            animate={{ scale: [1, 1.6], opacity: [0.8, 0] }}
+            transition={{ duration: 1.2, repeat: Infinity, ease: 'easeOut' }}
+          />
+          {/* Mid expanding ring */}
+          <motion.span
+            className="absolute inset-0 rounded-full border-2"
+            style={{ borderColor: 'var(--c-gold-dark)' }}
+            animate={{ scale: [1, 1.3], opacity: [0.6, 0] }}
+            transition={{
+              duration: 1.2,
+              repeat: Infinity,
+              ease: 'easeOut',
+              delay: 0.4,
+            }}
+          />
+          {/* Static outer ring */}
+          <span
+            className="absolute inset-0 rounded-full border-2"
+            style={{ borderColor: 'var(--c-gold-deep)' }}
+          />
+          {/* Pulsing inner dot */}
+          <motion.span
+            className="absolute inset-3 rounded-full"
+            style={{ background: 'var(--c-gold)' }}
+            animate={{ opacity: [1, 0.4, 1] }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+          />
+        </motion.div>
 
-          <p className="text-slate-400 text-base tracking-widest uppercase">
-            {message}
-          </p>
+        {/* ── Status message ────────────────────────────────────────────── */}
+        <motion.div
+          className="w-full max-w-lg flex"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.45, duration: 0.5 }}>
+          <WwbamShape
+            size="wide"
+            state="default"
+            strokeWidth={3}
+            className="flex-1"
+            style={{ minHeight: '56px' }}>
+            <div className="flex items-center justify-center py-3 w-full">
+              <p
+                className="wwbam-label"
+                style={{ color: 'var(--c-text-dim)', letterSpacing: '0.35em' }}>
+                {message}
+              </p>
+            </div>
+          </WwbamShape>
         </motion.div>
       </div>
     </ScreenBackground>
