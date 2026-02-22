@@ -12,121 +12,183 @@ import { useId } from 'react';
  * ── SIZE PRESETS ─────────────────────────────────────────────────────────────
  *
  *   wide    — full-width bars: TeamInfoBar, QuestionCard
- *             generous point extension, long whiskers
- *
  *   medium  — half-width elements: option buttons
- *             moderate point extension
- *
  *   compact — small elements: lifeline cards, prize badge, small labels
- *             reduced extension so tips don't dominate the narrow width
  *
- * Use the `size` prop. Override individual geometry via raw props if needed.
+ * ── STATES ────────────────────────────────────────────────────────────────────
+ *
+ *   default   — blue shimmer   (available, idle)
+ *   selected  — amber shimmer  (active lifeline, locked answer)
+ *   correct   — green shimmer  (correct answer revealed)
+ *   wrong     — red shimmer    (wrong answer revealed)
+ *   used      — slate shimmer  (spent lifeline, disabled option — visible but clearly inactive)
+ *   dimmed    — near-invisible (layout placeholder only — 50/50 removed options)
+ *
+ * ── COLOUR TOKENS ─────────────────────────────────────────────────────────────
+ *
+ * SHAPE_TOKENS mirrors the palette groups in src/styles/tokens.css.
+ * SVG cannot consume CSS custom properties via url() gradients, so we maintain
+ * a parallel JS constant object. Any colour change must be updated in BOTH files.
  *
  * ── SHAPE GEOMETRY ───────────────────────────────────────────────────────────
  *
  * Each pointed side uses two chained cubic bezier curves:
- *   Curve 1: corner → tip  (tangent is horizontal at corner)
- *   Curve 2: tip → corner  (tangent is horizontal at tip)
- *
- * Control point ratios extracted from the original WWBAM SVG asset:
  *   CP1_RATIO = 23.80302 / 62.53058 ≈ 0.381
  *   CP2_RATIO = 36.45760 / 62.53058 ≈ 0.583
- *
- * ── SVG TECHNIQUE ────────────────────────────────────────────────────────────
- *
- * - preserveAspectRatio="none"     → stretches to any container width
- * - vector-effect="non-scaling-stroke" → keeps stroke visually uniform
- * - SMIL animateTransform          → seamless gradient flow loop
- * - overflow: visible              → whiskers render outside SVG bounds
- *
- * ── USAGE ─────────────────────────────────────────────────────────────────────
- *
- *   // Named size preset (recommended)
- *   <WwbamShape size="wide" state="default">...</WwbamShape>
- *   <WwbamShape size="medium" state="selected">...</WwbamShape>
- *   <WwbamShape size="compact" state="default">...</WwbamShape>
- *
- *   // Custom geometry override
- *   <WwbamShape pointExtRatio={0.5} whiskerRatio={0.4}>...</WwbamShape>
- *
- * ── STATES ────────────────────────────────────────────────────────────────────
- *   default   — blue shimmer
- *   selected  — amber shimmer
- *   correct   — green shimmer
- *   wrong     — red shimmer
- *   dimmed    — near invisible
  *
  * @param {{
  *   children?:       React.ReactNode,
  *   size?:           'wide' | 'medium' | 'compact',
- *   state?:          'default' | 'selected' | 'correct' | 'wrong' | 'dimmed',
+ *   state?:          'default' | 'selected' | 'correct' | 'wrong' | 'used' | 'dimmed',
  *   strokeWidth?:    number,
- *   pointExtRatio?:  number,  — point extension as ratio of SVG_H (overrides preset)
- *   whiskerRatio?:   number,  — whisker length as ratio of pointExt (overrides preset)
+ *   pointExtRatio?:  number,
+ *   whiskerRatio?:   number,
  *   className?:      string,
  *   style?:          object,
  * }} props
  */
 
-// ── Control point ratios from original WWBAM SVG ───────────────────────────
+// ── Shape colour tokens (mirrors src/styles/tokens.css palette groups) ─────
+// SVG linearGradient cannot use CSS custom properties, so these JS constants
+// are the single source of truth for all shape stroke and fill colours.
+// When updating a colour, change it here AND in tokens.css.
 
-const CP1_RATIO = 23.80302 / 62.53058; // ≈ 0.381
-const CP2_RATIO = 36.4576 / 62.53058; // ≈ 0.583
+const SHAPE_TOKENS = {
+  // Gold / amber — selected state, active lifeline
+  goldDeep: '#7c3a00', // --c-gold-deep
+  goldDark: '#e8920a', // --c-gold-dark
+  goldLight: '#f5c842', // --c-gold-light
+
+  // Blue — default state
+  blueDeep: '#1a4fcf', // --c-blue-deep
+  blueMid: '#4a8fe8', // --c-blue-mid
+  blueLight: '#8ab8ff', // --c-blue-light
+
+  // Green — correct state
+  greenDeep: '#2d8010', // --c-green-deep
+  greenMid: '#5ec72a', // --c-green-mid
+  greenLight: '#90e05a', // --c-green-light
+
+  // Red — wrong state
+  redDeep: '#8b0000', // --c-red-deep
+  redMid: '#e03030', // --c-red-mid
+  redLight: '#ff6060', // --c-red-light
+
+  // Slate — used / spent state (visible but clearly inactive)
+  usedFill: '#080c14', // --c-used-fill
+  usedStrokeDeep: '#1c2738', // --c-used-stroke-deep
+  usedStrokeMid: '#2a3a52', // --c-used-stroke-mid
+  usedStrokeLight: '#3a5068', // --c-used-stroke-light
+
+  // Dimmed — layout placeholder only (near invisible)
+  dimmedFill: '#030508', // --c-dimmed-fill
+  dimmedStroke1: '#141a24', // --c-dimmed-stroke1
+  dimmedStroke2: '#1e2738', // --c-dimmed-stroke2
+};
+
+// ── Shape fills (background inside the stroke) ─────────────────────────────
+// Kept as separate local constants to keep STATE_CONFIG readable.
+
+const FILLS = {
+  default: '#06090f',
+  selected: '#080500',
+  correct: '#051802',
+  wrong: '#130101',
+  used: SHAPE_TOKENS.usedFill,
+  dimmed: SHAPE_TOKENS.dimmedFill,
+};
+
+// ── State configurations ───────────────────────────────────────────────────
+// stops: array of 5 colour values → [start, inner, peak, inner, end]
+// Symmetric so the SMIL translateX animation creates a seamless shimmer loop.
+
+const STATE_CONFIG = {
+  default: {
+    fill: FILLS.default,
+    stops: [
+      SHAPE_TOKENS.blueDeep,
+      SHAPE_TOKENS.blueMid,
+      SHAPE_TOKENS.blueLight,
+      SHAPE_TOKENS.blueMid,
+      SHAPE_TOKENS.blueDeep,
+    ],
+    dur: '3s',
+  },
+  selected: {
+    fill: FILLS.selected,
+    stops: [
+      SHAPE_TOKENS.goldDeep,
+      SHAPE_TOKENS.goldDark,
+      SHAPE_TOKENS.goldLight,
+      SHAPE_TOKENS.goldDark,
+      SHAPE_TOKENS.goldDeep,
+    ],
+    dur: '2s',
+  },
+  correct: {
+    fill: FILLS.correct,
+    stops: [
+      SHAPE_TOKENS.greenDeep,
+      SHAPE_TOKENS.greenMid,
+      SHAPE_TOKENS.greenLight,
+      SHAPE_TOKENS.greenMid,
+      SHAPE_TOKENS.greenDeep,
+    ],
+    dur: '2.5s',
+  },
+  wrong: {
+    fill: FILLS.wrong,
+    stops: [
+      SHAPE_TOKENS.redDeep,
+      SHAPE_TOKENS.redMid,
+      SHAPE_TOKENS.redLight,
+      SHAPE_TOKENS.redMid,
+      SHAPE_TOKENS.redDeep,
+    ],
+    dur: '2.5s',
+  },
+  // Spent lifeline, disabled option — still fully readable, clearly inactive
+  used: {
+    fill: FILLS.used,
+    stops: [
+      SHAPE_TOKENS.usedStrokeDeep,
+      SHAPE_TOKENS.usedStrokeMid,
+      SHAPE_TOKENS.usedStrokeLight,
+      SHAPE_TOKENS.usedStrokeMid,
+      SHAPE_TOKENS.usedStrokeDeep,
+    ],
+    dur: '6s',
+  },
+  // Near-invisible placeholder — preserves grid space (e.g. 50/50 removed options)
+  dimmed: {
+    fill: FILLS.dimmed,
+    stops: [
+      SHAPE_TOKENS.dimmedStroke1,
+      SHAPE_TOKENS.dimmedStroke2,
+      SHAPE_TOKENS.dimmedStroke1,
+      SHAPE_TOKENS.dimmedStroke2,
+      SHAPE_TOKENS.dimmedStroke1,
+    ],
+    dur: '8s',
+  },
+};
 
 // ── Size presets ───────────────────────────────────────────────────────────
-// pointExtRatio: how far the tip extends, as a multiple of SVG_H
-// whiskerRatio:  whisker length as a fraction of pointExt
 
 const SIZE_PRESETS = {
-  wide: {
-    pointExtRatio: 1.6, // most dramatic — full-width bars (TeamInfoBar, QuestionCard)
-    whiskerRatio: 0.35,
-  },
-  medium: {
-    pointExtRatio: 1.8, // balanced — option buttons and mid-size elements
-    whiskerRatio: 0.35,
-  },
-  compact: {
-    pointExtRatio: 2.0, // prominent — lifeline cards (user-tuned)
-    whiskerRatio: 0.35,
-  },
+  wide: { pointExtRatio: 1.6, whiskerRatio: 0.35 },
+  medium: { pointExtRatio: 1.8, whiskerRatio: 0.35 },
+  compact: { pointExtRatio: 2.0, whiskerRatio: 0.35 },
 };
 
 // ── Internal SVG coordinate space ─────────────────────────────────────────
 
-const SVG_H = 100; // height units (width is nominal; scaled by preserveAspectRatio)
-const SVG_W = 600; // nominal width
+const SVG_H = 100;
+const SVG_W = 600;
 const MID = SVG_H / 2;
 
-// ── State configurations ───────────────────────────────────────────────────
-
-const STATE_CONFIG = {
-  default: {
-    fill: '#06090f',
-    stops: ['#1a4fcf', '#4a8fe8', '#8ab8ff', '#4a8fe8', '#1a4fcf'],
-    dur: '3s',
-  },
-  selected: {
-    fill: '#080500',
-    stops: ['#7c3a00', '#e8920a', '#f5c842', '#e8920a', '#7c3a00'],
-    dur: '2s',
-  },
-  correct: {
-    fill: '#051802',
-    stops: ['#2d8010', '#5ec72a', '#90e05a', '#5ec72a', '#2d8010'],
-    dur: '2.5s',
-  },
-  wrong: {
-    fill: '#130101',
-    stops: ['#8b0000', '#e03030', '#ff6060', '#e03030', '#8b0000'],
-    dur: '2.5s',
-  },
-  dimmed: {
-    fill: '#030508',
-    stops: ['#141a24', '#1e2738', '#141a24', '#1e2738', '#141a24'],
-    dur: '8s',
-  },
-};
+const CP1_RATIO = 23.80302 / 62.53058; // ≈ 0.381
+const CP2_RATIO = 36.4576 / 62.53058; // ≈ 0.583
 
 // ── Path builder ───────────────────────────────────────────────────────────
 
@@ -134,21 +196,17 @@ function buildPaths(pointExt, whiskerLen) {
   const CP1 = CP1_RATIO * pointExt;
   const CP2 = CP2_RATIO * pointExt;
 
-  // Main shape: flat top/bottom, smooth cubic bezier pointed sides
   const shape = [
     `M ${SVG_W} 0`,
     `L 0 0`,
-    // Left side: top-left → left tip → bottom-left
     `C ${-CP1} 0, ${-CP2} ${MID}, ${-pointExt} ${MID}`,
     `C ${-CP2} ${MID}, ${-CP1} ${SVG_H}, 0 ${SVG_H}`,
     `L ${SVG_W} ${SVG_H}`,
-    // Right side: bottom-right → right tip → top-right
     `C ${SVG_W + CP1} ${SVG_H}, ${SVG_W + CP2} ${MID}, ${SVG_W + pointExt} ${MID}`,
     `C ${SVG_W + CP2} ${MID}, ${SVG_W + CP1} 0, ${SVG_W} 0`,
     'Z',
   ].join(' ');
 
-  // Whisker lines extending beyond each tip
   const whiskers = [
     `M ${-pointExt} ${MID} L ${-pointExt - whiskerLen} ${MID}`,
     `M ${SVG_W + pointExt} ${MID} L ${SVG_W + pointExt + whiskerLen} ${MID}`,
@@ -164,8 +222,8 @@ export default function WwbamShape({
   size = 'wide',
   state = 'default',
   strokeWidth = 3,
-  pointExtRatio, // override preset if provided
-  whiskerRatio, // override preset if provided
+  pointExtRatio,
+  whiskerRatio,
   className = '',
   style = {},
 }) {
@@ -173,7 +231,6 @@ export default function WwbamShape({
   const gradId = `wg-${uid}`;
   const cfg = STATE_CONFIG[state] ?? STATE_CONFIG.default;
 
-  // Resolve geometry — prop overrides take priority over preset
   const preset = SIZE_PRESETS[size] ?? SIZE_PRESETS.wide;
   const pRatio = pointExtRatio ?? preset.pointExtRatio;
   const wRatio = whiskerRatio ?? preset.whiskerRatio;
@@ -182,14 +239,12 @@ export default function WwbamShape({
 
   const { shape, whiskers } = buildPaths(pointExt, whiskerLen);
 
-  // ViewBox expands to include stroke overflow + whiskers on both sides
   const pad = pointExt + whiskerLen + strokeWidth + 2;
   const vx = -pad;
   const vy = -(strokeWidth + 1);
   const vw = SVG_W + pad * 2;
   const vh = SVG_H + (strokeWidth + 1) * 2;
 
-  // Content padding as % of viewBox width — keeps children clear of tips
   const padPct = ((pad / vw) * 100).toFixed(2);
 
   const stops = cfg.stops.map((color, i) => ({
@@ -206,10 +261,6 @@ export default function WwbamShape({
         viewBox={`${vx} ${vy} ${vw} ${vh}`}
         preserveAspectRatio="none">
         <defs>
-          {/*
-            Gradient spans SVG_W units, tiles via spreadMethod="repeat".
-            SMIL animateTransform shifts by SVG_W per cycle → seamless loop.
-          */}
           <linearGradient
             id={gradId}
             gradientUnits="userSpaceOnUse"
@@ -232,7 +283,6 @@ export default function WwbamShape({
           </linearGradient>
         </defs>
 
-        {/* Filled shape with animated neon border */}
         <path
           d={shape}
           fill={cfg.fill}
@@ -242,7 +292,6 @@ export default function WwbamShape({
           vectorEffect="non-scaling-stroke"
         />
 
-        {/* Whisker lines */}
         <path
           d={whiskers}
           fill="none"
