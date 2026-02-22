@@ -157,7 +157,7 @@ export default function GameScreen({
           Each column stretches its child to full width via flex.
         */}
         <div
-          className="grid items-stretch px-6 py-3 shrink-0 gap-3"
+          className="grid items-stretch py-6 shrink-0"
           style={{
             gridTemplateColumns: '2fr 1fr 1fr',
             background:
@@ -195,7 +195,7 @@ export default function GameScreen({
           )}
 
           {/* Center — Question, Options, or Between-Questions Logo */}
-          <div className="flex flex-col flex-1 min-w-0 items-center justify-center gap-6 px-8 py-6">
+          <div className="flex flex-col flex-1 min-w-0 items-center justify-center gap-6 py-6">
             <AnimatePresence mode="wait">
               {showBetweenQuestionsLogo ? (
                 <BetweenQuestionsLogo key="between" />
