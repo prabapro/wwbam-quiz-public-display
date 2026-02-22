@@ -2,139 +2,159 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import WwbamShape from '@components/ui/WwbamShape';
 
 // ── Step definitions ───────────────────────────────────────────────────────────
 
 const STEPS = [
-  { id: 1, label: 'Preparing teams', icon: '👥' },
-  { id: 2, label: 'Preparing question sets', icon: '📋' },
-  { id: 3, label: 'Randomizing team order', icon: '🔀' },
-  { id: 4, label: 'Assigning question sets to teams', icon: '✅' },
+  { id: 1, label: 'Preparing teams' },
+  { id: 2, label: 'Preparing question sets' },
+  { id: 3, label: 'Randomizing team order' },
+  { id: 4, label: 'Assigning question sets to teams' },
 ];
 
 // Delay (ms) after which each step is marked as complete.
-// Must finish comfortably before the host presses "Start Game".
 const STEP_COMPLETE_DELAYS = [900, 2000, 3300, 4700];
 
 // Delay after the last step completes before calling onComplete.
 const COMPLETION_DELAY = 5800;
 
+// ── Shape state mapping ────────────────────────────────────────────────────────
+
+/**
+ * Maps step status to WwbamShape state.
+ *   complete → 'correct'  (green shimmer)
+ *   active   → 'selected' (amber shimmer)
+ *   pending  → 'used'     (slate/muted — not yet reached)
+ */
+function shapeStateFor(isComplete, isActive) {
+  if (isComplete) return 'correct';
+  if (isActive) return 'selected';
+  return 'used';
+}
+
 // ── Animation variants ─────────────────────────────────────────────────────────
 
-const containerVariants = {
+const listVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { staggerChildren: 0.18, delayChildren: 0.2 },
+    transition: { staggerChildren: 0.2, delayChildren: 0.25 },
   },
 };
 
-const stepRowVariants = {
-  hidden: { opacity: 0, x: -24 },
-  visible: { opacity: 1, x: 0, transition: { duration: 0.5, ease: 'easeOut' } },
-};
-
-const checkVariants = {
-  hidden: { opacity: 0, scale: 0.4 },
+const rowVariants = {
+  hidden: { opacity: 0, y: 16 },
   visible: {
     opacity: 1,
-    scale: 1,
-    transition: { type: 'spring', stiffness: 320, damping: 18 },
-  },
-};
-
-const pulseRingVariants = {
-  animate: {
-    scale: [1, 1.5, 1],
-    opacity: [0.6, 0, 0.6],
-    transition: { duration: 1.2, repeat: Infinity, ease: 'easeOut' },
+    y: 0,
+    transition: { duration: 0.45, ease: 'easeOut' },
   },
 };
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
 
 /**
- * StepRow — renders a single initialization step with its status indicator.
+ * StepNumber
+ *
+ * The left-side number badge rendered inside each WwbamShape.
+ * Animates between a plain number (pending/active) and a checkmark (complete).
+ */
+function StepNumber({ number, isComplete, isActive }) {
+  return (
+    <div className="flex items-center justify-center w-8 shrink-0">
+      <AnimatePresence mode="wait">
+        {isComplete ? (
+          <motion.svg
+            key="check"
+            width="18"
+            height="18"
+            viewBox="0 0 14 14"
+            fill="none"
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{
+              opacity: 1,
+              scale: 1,
+              transition: { type: 'spring', stiffness: 340, damping: 18 },
+            }}
+            exit={{ opacity: 0 }}>
+            <path
+              d="M2.5 7L5.5 10L11.5 4"
+              stroke="var(--c-green-light)"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </motion.svg>
+        ) : (
+          <motion.span
+            key="number"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              fontFamily: 'var(--font-numeric)',
+              fontSize: '1rem',
+              color: isActive ? 'var(--c-gold)' : 'var(--c-used-text)',
+            }}>
+            {number}
+          </motion.span>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+/**
+ * StepRow
+ *
+ * A single initialization step rendered as a WwbamShape.
+ * The shape's state (colour) transitions automatically as the step progresses.
  */
 function StepRow({ step, isComplete, isActive }) {
+  const shapeState = shapeStateFor(isComplete, isActive);
+
+  const labelColor = isComplete
+    ? 'var(--c-text)'
+    : isActive
+      ? 'var(--c-gold)'
+      : 'var(--c-used-text)';
+
   return (
-    <motion.div variants={stepRowVariants} className="flex items-center gap-5">
-      {/* Status indicator */}
-      <div className="relative flex items-center justify-center w-8 h-8 shrink-0">
-        <AnimatePresence mode="wait">
-          {isComplete ? (
-            // Checkmark
-            <motion.div
-              key="check"
-              variants={checkVariants}
-              initial="hidden"
-              animate="visible"
-              className="flex items-center justify-center w-8 h-8 rounded-full"
-              style={{
-                background: 'rgba(46,128,16,0.25)',
-                border: '1.5px solid rgba(94,199,42,0.6)',
-              }}>
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path
-                  d="M2.5 7L5.5 10L11.5 4"
-                  stroke="#5ec72a"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </motion.div>
-          ) : isActive ? (
-            // Pulsing ring for the in-progress step
-            <motion.div
-              key="active"
-              className="relative flex items-center justify-center">
-              <motion.div
-                className="absolute w-8 h-8 rounded-full"
-                style={{ border: '1.5px solid rgba(245,158,11,0.5)' }}
-                variants={pulseRingVariants}
-                animate="animate"
-              />
-              <div
-                className="w-5 h-5 rounded-full"
-                style={{
-                  background: 'rgba(245,158,11,0.3)',
-                  border: '1.5px solid rgba(245,158,11,0.7)',
-                }}
-              />
-            </motion.div>
-          ) : (
-            // Pending (not yet reached)
-            <motion.div
-              key="pending"
-              className="w-5 h-5 rounded-full"
-              style={{
-                border: '1.5px solid rgba(255,255,255,0.15)',
-                background: 'transparent',
-              }}
+    <motion.div variants={rowVariants} className="w-full">
+      <WwbamShape
+        size="compact"
+        state={shapeState}
+        strokeWidth={3}
+        style={{ minHeight: '52px', transition: 'all 0.4s ease' }}>
+        <div className="flex items-center gap-4 py-2 w-full">
+          <StepNumber
+            number={step.id}
+            isComplete={isComplete}
+            isActive={isActive}
+          />
+          {/* Vertical rule */}
+          <div
+            className="w-px self-stretch"
+            style={{ background: 'rgba(255,255,255,0.1)' }}
+          />
+          {/* Label */}
+          <span
+            className="text-base font-semibold tracking-wide transition-colors duration-500"
+            style={{ fontFamily: 'var(--font-condensed)', color: labelColor }}>
+            {step.label}
+          </span>
+          {/* Active pulse dot — right side */}
+          {isActive && (
+            <motion.span
+              className="ml-auto mr-2 w-2 h-2 rounded-full shrink-0"
+              style={{ background: 'var(--c-gold)' }}
+              animate={{ opacity: [1, 0.2, 1] }}
+              transition={{ duration: 1, repeat: Infinity, ease: 'easeInOut' }}
             />
           )}
-        </AnimatePresence>
-      </div>
-
-      {/* Step icon + label */}
-      <div className="flex items-center gap-3">
-        <span className="text-lg" role="img" aria-hidden="true">
-          {step.icon}
-        </span>
-        <span
-          className="text-lg font-semibold tracking-wide transition-colors duration-300"
-          style={{
-            fontFamily: 'var(--font-condensed)',
-            color: isComplete
-              ? 'rgba(255,255,255,0.9)'
-              : isActive
-                ? 'var(--c-gold)'
-                : 'rgba(255,255,255,0.3)',
-          }}>
-          {step.label}
-        </span>
-      </div>
+        </div>
+      </WwbamShape>
     </motion.div>
   );
 }
@@ -147,9 +167,12 @@ function StepRow({ step, isComplete, isActive }) {
  * Plays a timed step-by-step animation sequence when the host triggers game
  * initialization. Runs entirely on the display side — no Firebase writes.
  *
+ * Each step is rendered as a WwbamShape that transitions through states:
+ *   used (pending) → selected (active, amber) → correct (complete, green)
+ *
  * Steps complete on a fixed schedule (STEP_COMPLETE_DELAYS). Once all steps
  * are done, fires `onComplete` after a brief final pause so the audience can
- * read the completed state before transitioning to the "ready" phase.
+ * read the completed state before the IdleScreen transitions to "ready".
  *
  * @param {{ onComplete: () => void }} props
  */
@@ -159,7 +182,6 @@ export default function InitializationStepper({ onComplete }) {
   useEffect(() => {
     const timers = [];
 
-    // Schedule each step completion
     STEP_COMPLETE_DELAYS.forEach((delay, index) => {
       timers.push(
         setTimeout(() => {
@@ -168,25 +190,24 @@ export default function InitializationStepper({ onComplete }) {
       );
     });
 
-    // Fire completion callback after final pause
     timers.push(setTimeout(onComplete, COMPLETION_DELAY));
 
     return () => timers.forEach(clearTimeout);
   }, [onComplete]);
 
-  // The "active" step is the first one not yet complete
   const activeStepId = STEPS.find((s) => !completedSteps.has(s.id))?.id ?? null;
+  const allDone = completedSteps.size === STEPS.length;
 
   return (
-    <div className="flex flex-col items-center gap-12">
+    <div className="flex flex-col items-center gap-10">
       {/* Header */}
       <motion.div
-        className="flex flex-col items-center gap-3 text-center"
+        className="flex flex-col items-center gap-2 text-center"
         initial={{ opacity: 0, y: -16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: 'easeOut' }}>
         <p
-          className="text-sm font-bold uppercase tracking-[0.35em]"
+          className="text-xs font-bold uppercase tracking-[0.4em]"
           style={{ color: 'var(--c-gold)' }}>
           Initializing
         </p>
@@ -202,8 +223,8 @@ export default function InitializationStepper({ onComplete }) {
 
       {/* Step list */}
       <motion.div
-        className="flex flex-col gap-6"
-        variants={containerVariants}
+        className="flex flex-col gap-3 w-full max-w-lg"
+        variants={listVariants}
         initial="hidden"
         animate="visible">
         {STEPS.map((step) => (
@@ -216,11 +237,11 @@ export default function InitializationStepper({ onComplete }) {
         ))}
       </motion.div>
 
-      {/* "All done" flash when last step completes */}
+      {/* "All done" confirmation */}
       <AnimatePresence>
-        {completedSteps.size === STEPS.length && (
+        {allDone && (
           <motion.p
-            className="text-base font-semibold tracking-widest uppercase"
+            className="text-sm font-bold tracking-[0.35em] uppercase"
             style={{ color: 'var(--c-green-mid)' }}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0, transition: { duration: 0.5 } }}
