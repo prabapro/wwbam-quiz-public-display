@@ -20,6 +20,9 @@
 │   │   │   └── TeamResult.jsx
 │   │   ├── layout
 │   │   │   └── ScreenBackground.jsx
+│   │   ├── pregame
+│   │   │   ├── InitializationStepper.jsx
+│   │   │   └── TeamRosterCard.jsx
 │   │   ├── question
 │   │   │   ├── OptionGrid.jsx
 │   │   │   └── QuestionCard.jsx
