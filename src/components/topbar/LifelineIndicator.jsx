@@ -1,7 +1,7 @@
 // src/components/topbar/LifelineIndicator.jsx
 
 import { motion } from 'framer-motion';
-import { Phone, Scissors } from 'lucide-react';
+import { Phone, PhoneOff, Zap, ZapOff } from 'lucide-react';
 import WwbamShape from '@components/ui/WwbamShape';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -12,12 +12,14 @@ const LIFELINES = [
     activeKey: 'phone-a-friend',
     label: 'Phone a Friend',
     Icon: Phone,
+    IconOff: PhoneOff,
   },
   {
     key: 'fiftyFifty',
     activeKey: 'fifty-fifty',
     label: '50 / 50',
-    Icon: Scissors,
+    Icon: Zap,
+    IconOff: ZapOff,
   },
 ];
 
@@ -38,14 +40,14 @@ const STATUS_LABELS = {
 /** Icon colour per lifeline state — token-driven. */
 const ICON_COLOR = {
   active: 'var(--c-gold)',
-  available: 'var(--c-gold)',
+  available: 'var(--c-text-dim)',
   used: 'var(--c-used-text)',
 };
 
 /** Status sub-label colour per lifeline state — token-driven. */
 const STATUS_LABEL_COLOR = {
   active: 'var(--c-gold)',
-  available: 'var(--c-gold)',
+  available: 'var(--c-text-dim)',
   used: 'var(--c-used-subtext)',
 };
 
@@ -68,9 +70,11 @@ function deriveState(lifeline, lifelinesAvailable, activeLifeline) {
  *
  * Visual states:
  *   active    — amber/gold WwbamShape stroke, pulse ring on icon, "In Use" label
+ *               Icon: Phone / Zap
  *   available — blue WwbamShape stroke, full-brightness text
- *   used      — slate WwbamShape stroke (visible but clearly spent), muted text,
- *               small ✕ badge on icon — no opacity hack on the wrapper
+ *               Icon: Phone / Zap
+ *   used      — slate WwbamShape stroke, muted text
+ *               Icon: PhoneOff / ZapOff (communicates spent state without extra decoration)
  *
  * All colours are token-driven via CSS custom properties. No hardcoded values.
  *
@@ -92,7 +96,9 @@ export default function LifelineIndicator({
         const shapeState = SHAPE_STATE[state];
         const isActive = state === 'active';
         const isUsed = state === 'used';
-        const { Icon } = lifeline;
+
+        // Swap to the "off" variant when the lifeline has been spent
+        const Icon = isUsed ? lifeline.IconOff : lifeline.Icon;
 
         return (
           <motion.div
@@ -127,19 +133,6 @@ export default function LifelineIndicator({
                         ease: 'easeOut',
                       }}
                     />
-                  )}
-
-                  {/* ✕ badge — used state only */}
-                  {isUsed && (
-                    <span
-                      className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-black leading-none select-none"
-                      style={{
-                        background: 'var(--c-used-stroke-mid)',
-                        color: 'var(--c-used-text)',
-                        border: '1px solid var(--c-used-stroke-light)',
-                      }}>
-                      ✕
-                    </span>
                   )}
                 </div>
 
