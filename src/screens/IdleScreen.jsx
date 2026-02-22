@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ScreenBackground from '@components/layout/ScreenBackground';
 import TeamRosterCard from '@components/pregame/TeamRosterCard';
 import InitializationStepper from '@components/pregame/InitializationStepper';
+import { APP_NAME, COPY_LOBBY, COPY_READY } from '@constants/app';
 
 // ── Phase constants ────────────────────────────────────────────────────────────
 
@@ -154,7 +155,7 @@ function LobbyPhase({ teams }) {
           <p
             className="text-sm font-bold uppercase tracking-[0.4em]"
             style={{ color: 'var(--c-gold)' }}>
-            Who Wants to Be a Millionaire
+            {APP_NAME}
           </p>
         </motion.div>
 
@@ -169,7 +170,9 @@ function LobbyPhase({ teams }) {
             fontFamily: 'var(--font-condensed)',
             textShadow: '0 0 60px rgba(245,158,11,0.2)',
           }}>
-          {hasTeams ? "Tonight's Teams" : 'Get Ready to Play'}
+          {hasTeams
+            ? COPY_LOBBY.HEADING_WITH_TEAMS
+            : COPY_LOBBY.HEADING_NO_TEAMS}
         </motion.h1>
       </motion.div>
 
@@ -194,7 +197,7 @@ function LobbyPhase({ teams }) {
             color: 'rgba(255,255,255,0.4)',
             fontFamily: 'var(--font-body)',
           }}>
-          Waiting for teams to be registered...
+          {COPY_LOBBY.NO_TEAMS_MESSAGE}
         </motion.p>
       )}
 
@@ -207,14 +210,14 @@ function LobbyPhase({ teams }) {
         <p
           className="text-sm font-semibold tracking-widest uppercase"
           style={{ color: 'rgba(255,255,255,0.25)' }}>
-          Team order &amp; question sets will be assigned shortly...
+          {COPY_LOBBY.FOOTER_NOTE}
         </p>
         <motion.p
           className="text-xs tracking-[0.3em] uppercase"
           style={{ color: 'rgba(255,255,255,0.15)' }}
           animate={{ opacity: [0.15, 0.4, 0.15] }}
           transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}>
-          Waiting for host
+          {COPY_LOBBY.WAITING_FOR_HOST}
         </motion.p>
       </motion.div>
     </motion.div>
@@ -282,7 +285,7 @@ function ReadyPhase({ teams, gameState }) {
         <p
           className="text-sm font-bold uppercase tracking-[0.4em]"
           style={{ color: 'var(--c-gold)' }}>
-          Who Wants to Be a Millionaire
+          {APP_NAME}
         </p>
 
         <GoldDivider />
@@ -293,7 +296,7 @@ function ReadyPhase({ teams, gameState }) {
             fontFamily: 'var(--font-condensed)',
             textShadow: '0 0 60px rgba(245,158,11,0.25)',
           }}>
-          Game Ready
+          {COPY_READY.HEADING}
         </h1>
       </motion.div>
 
@@ -307,7 +310,7 @@ function ReadyPhase({ teams, gameState }) {
           <p
             className="wwbam-label text-center mb-1"
             style={{ letterSpacing: '0.3em' }}>
-            Play Order
+            {COPY_READY.PLAY_ORDER_LABEL}
           </p>
 
           {orderedTeams.map((team, i) => (
@@ -322,7 +325,7 @@ function ReadyPhase({ teams, gameState }) {
         style={{ color: 'rgba(255,255,255,0.4)' }}
         animate={{ opacity: [0.4, 0.85, 0.4] }}
         transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}>
-        Starting soon...
+        {COPY_READY.STARTING_SOON}
       </motion.p>
     </motion.div>
   );

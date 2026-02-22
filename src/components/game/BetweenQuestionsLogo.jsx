@@ -1,6 +1,7 @@
 // src/components/game/BetweenQuestionsLogo.jsx
 
 import { motion } from 'framer-motion';
+import { COPY_BETWEEN_QUESTIONS } from '@constants/app';
 
 // ── Animation variants ─────────────────────────────────────────────────────────
 
@@ -21,8 +22,7 @@ const containerVariants = {
  * shown to the audience.
  *
  * Renders a spinning WWBAM logo (Y-axis west→east rotation) with a subtle
- * "Get ready for the next question" label, keeping the screen alive and
- * branded during host transitions.
+ * label, keeping the screen alive and branded during host transitions.
  *
  * Intentionally rendered inside the center column (not as an absolute overlay)
  * so the PrizeLadder and TeamList sidebars remain visible throughout.
@@ -56,7 +56,7 @@ export default function BetweenQuestionsLogo() {
         className="text-slate-500 text-sm uppercase tracking-[0.35em]"
         animate={{ opacity: [0.5, 1, 0.5] }}
         transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}>
-        Get ready for the next question
+        {COPY_BETWEEN_QUESTIONS.LABEL}
       </motion.p>
     </motion.div>
   );

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import WwbamShape from '@components/ui/WwbamShape';
+import { COPY_STEPPER } from '@constants/app';
 
 // ── Step definitions ───────────────────────────────────────────────────────────
 
@@ -209,7 +210,7 @@ export default function InitializationStepper({ onComplete }) {
         <p
           className="text-xs font-bold uppercase tracking-[0.4em]"
           style={{ color: 'var(--c-gold)' }}>
-          Initializing
+          {COPY_STEPPER.EYEBROW}
         </p>
         <h2
           className="text-4xl font-black uppercase tracking-widest text-white"
@@ -217,7 +218,7 @@ export default function InitializationStepper({ onComplete }) {
             fontFamily: 'var(--font-condensed)',
             textShadow: '0 0 40px rgba(245,158,11,0.3)',
           }}>
-          Setting Up the Game
+          {COPY_STEPPER.HEADING}
         </h2>
       </motion.div>
 
@@ -246,7 +247,7 @@ export default function InitializationStepper({ onComplete }) {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0, transition: { duration: 0.5 } }}
             exit={{ opacity: 0 }}>
-            ✦ &nbsp; Ready to play &nbsp; ✦
+            {COPY_STEPPER.COMPLETE_MESSAGE}
           </motion.p>
         )}
       </AnimatePresence>

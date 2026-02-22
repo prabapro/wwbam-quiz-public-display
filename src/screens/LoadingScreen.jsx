@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import ScreenBackground from '@components/layout/ScreenBackground';
+import { APP_NAME, APP_SHORT_NAME } from '@constants/app';
 
 /**
  * LoadingScreen
@@ -27,10 +28,10 @@ export default function LoadingScreen({ message = 'Connecting...' }) {
           <h1
             className="text-5xl font-black tracking-widest uppercase text-white"
             style={{ textShadow: '0 0 40px rgba(245,158,11,0.4)' }}>
-            WWBAM
+            {APP_SHORT_NAME}
           </h1>
           <p className="text-slate-400 text-sm tracking-[0.3em] uppercase">
-            Who Wants to Be a Millionaire
+            {APP_NAME}
           </p>
         </motion.div>
 

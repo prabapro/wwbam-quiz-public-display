@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { formatPrize } from '@utils/formatters';
 import ScreenBackground from '@components/layout/ScreenBackground';
+import { COPY_RESULTS } from '@constants/app';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -100,11 +101,11 @@ export default function ResultsScreen({ teams }) {
           <h1
             className="text-5xl font-black tracking-widest uppercase text-white"
             style={{ textShadow: '0 0 40px rgba(245,158,11,0.5)' }}>
-            Final Results
+            {COPY_RESULTS.HEADING}
           </h1>
           {winner && (
             <p className="text-amber-400 text-xl font-semibold tracking-wide">
-              Winner: {winner.name}
+              {COPY_RESULTS.WINNER_PREFIX} {winner.name}
             </p>
           )}
         </motion.div>

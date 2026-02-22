@@ -13,6 +13,7 @@ import TeamAnnouncement from '@components/game/TeamAnnouncement';
 import TeamResult from '@components/game/TeamResult';
 import PhoneAFriendOverlay from '@components/game/PhoneAFriendOverlay';
 import BetweenQuestionsLogo from '@components/game/BetweenQuestionsLogo';
+import { COPY_PAUSE } from '@constants/app';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -157,45 +158,37 @@ export default function GameScreen({
           Each column stretches its child to full width via flex.
         */}
         <div
-          className="grid items-stretch py-6 shrink-0"
-          style={{
-            gridTemplateColumns: '2fr 1fr 1fr',
-            background:
-              'linear-gradient(180deg, rgba(13,27,75,0.85) 0%, rgba(10,10,46,0.6) 100%)',
-            borderBottom: '1px solid rgba(255,255,255,0.06)',
-          }}>
-          {/* col 1 — Team info */}
-          <div className="flex min-w-0">
+          className="shrink-0 grid gap-3 p-3"
+          style={{ gridTemplateColumns: '2fr 1fr 1fr' }}>
+          <div className="flex">
             <TeamInfoBar
               currentTeam={currentTeam}
               currentQuestionNumber={gameState?.currentQuestionNumber}
               prizeStructure={prizeStructure}
             />
           </div>
-
-          {/* cols 2 & 3 — one lifeline per column, each fills its cell */}
           <LifelineIndicator
-            lifelinesAvailable={currentTeam?.lifelinesAvailable}
-            activeLifeline={gameState?.activeLifeline}
+            lifelinesAvailable={currentTeam?.lifelinesAvailable ?? null}
+            activeLifeline={gameState?.activeLifeline ?? null}
           />
         </div>
 
-        {/* ── Main area (3-column) ──────────────────────────────────────── */}
+        {/* ── Main content area ─────────────────────────────────────────── */}
         <div className="flex flex-1 min-h-0">
-          {/* Left sidebar — Teams */}
+          {/* Left sidebar — Team List */}
           {displayConfig?.showTeamList && (
             <div
               className="flex flex-col shrink-0 w-72 border-r"
               style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
               <TeamList
                 teams={teams}
-                currentTeamId={gameState?.currentTeamId}
+                currentTeamId={gameState?.currentTeamId ?? null}
               />
             </div>
           )}
 
-          {/* Center — Question, Options, or Between-Questions Logo */}
-          <div className="flex flex-col flex-1 min-w-0 items-center justify-center gap-6 py-6">
+          {/* Center — Question + Options */}
+          <div className="flex flex-col flex-1 items-center justify-center gap-6 px-8 py-6 min-w-0">
             <AnimatePresence mode="wait">
               {showBetweenQuestionsLogo ? (
                 <BetweenQuestionsLogo key="between" />
@@ -263,10 +256,10 @@ export default function GameScreen({
               <p
                 className="text-5xl font-black tracking-widest uppercase text-white"
                 style={{ textShadow: '0 0 40px rgba(245,158,11,0.4)' }}>
-                Paused
+                {COPY_PAUSE.HEADING}
               </p>
               <p className="text-slate-400 text-base tracking-widest uppercase">
-                Game is on hold
+                {COPY_PAUSE.SUBHEADING}
               </p>
             </motion.div>
           )}
