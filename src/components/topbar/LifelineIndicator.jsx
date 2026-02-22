@@ -1,6 +1,8 @@
 // src/components/topbar/LifelineIndicator.jsx
 
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
+import { Phone, PhoneOff, Zap, ZapOff } from 'lucide-react';
+import WwbamShape from '@components/ui/WwbamShape';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -8,50 +10,73 @@ const LIFELINES = [
   {
     key: 'phoneAFriend',
     activeKey: 'phone-a-friend',
-    label: 'Phone',
-    icon: '📞',
+    label: 'Phone a Friend',
+    Icon: Phone,
+    IconOff: PhoneOff,
   },
   {
     key: 'fiftyFifty',
     activeKey: 'fifty-fifty',
     label: '50 / 50',
-    icon: '✂️',
+    Icon: Zap,
+    IconOff: ZapOff,
   },
 ];
 
-// ── Styles ─────────────────────────────────────────────────────────────────────
-
-const stateStyles = {
-  active: {
-    background: 'rgba(245,158,11,0.25)',
-    border: '1px solid rgba(245,158,11,0.7)',
-    color: '#f59e0b',
-    boxShadow: '0 0 16px rgba(245,158,11,0.3)',
-  },
-  available: {
-    background: 'rgba(30,58,138,0.5)',
-    border: '1px solid rgba(99,132,255,0.4)',
-    color: '#ffffff',
-  },
-  used: {
-    background: 'rgba(255,255,255,0.03)',
-    border: '1px solid rgba(255,255,255,0.08)',
-    color: '#334155',
-  },
+/** WwbamShape state per lifeline state. */
+const SHAPE_STATE = {
+  active: 'selected', // amber shimmer
+  available: 'default', // blue shimmer
+  used: 'used', // slate shimmer — visible but clearly spent
 };
+
+/** Status label text per lifeline state. */
+const STATUS_LABELS = {
+  active: 'In Use',
+  available: 'Available',
+  used: 'Used',
+};
+
+/** Icon colour per lifeline state — token-driven. */
+const ICON_COLOR = {
+  active: 'var(--c-gold)',
+  available: 'var(--c-text-dim)',
+  used: 'var(--c-used-text)',
+};
+
+/** Status sub-label colour per lifeline state — token-driven. */
+const STATUS_LABEL_COLOR = {
+  active: 'var(--c-gold)',
+  available: 'var(--c-text-dim)',
+  used: 'var(--c-used-subtext)',
+};
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
+
+function deriveState(lifeline, lifelinesAvailable, activeLifeline) {
+  if (activeLifeline === lifeline.activeKey) return 'active';
+  if (lifelinesAvailable?.[lifeline.key] === true) return 'available';
+  return 'used';
+}
 
 // ── Component ──────────────────────────────────────────────────────────────────
 
 /**
  * LifelineIndicator
  *
- * Read-only badges showing which lifelines are available / active / used
- * for the current team. Rendered in the top bar of GameScreen.
+ * Renders TWO sibling elements — one per lifeline — using `display: contents`
+ * on the wrapper so the PARENT grid in GameScreen directly controls each card's
+ * column placement and width (cols 2 & 3 of the 2fr 1fr 1fr grid).
  *
- * States per lifeline:
- *   active    → currently in use (amber glow)
- *   available → can still be used (blue)
- *   used      → already consumed (dimmed)
+ * Visual states:
+ *   active    — amber/gold WwbamShape stroke, pulse ring on icon, "In Use" label
+ *               Icon: Phone / Zap
+ *   available — blue WwbamShape stroke, full-brightness text
+ *               Icon: Phone / Zap
+ *   used      — slate WwbamShape stroke, muted text
+ *               Icon: PhoneOff / ZapOff (communicates spent state without extra decoration)
+ *
+ * All colours are token-driven via CSS custom properties. No hardcoded values.
  *
  * @param {{
  *   lifelinesAvailable: { phoneAFriend: boolean, fiftyFifty: boolean } | null,
@@ -63,43 +88,69 @@ export default function LifelineIndicator({
   activeLifeline,
 }) {
   return (
-    <div className="flex items-center gap-3">
+    // display: contents — wrapper disappears from layout,
+    // children become direct children of the parent grid
+    <div style={{ display: 'contents' }}>
       {LIFELINES.map((lifeline) => {
-        const isActive = activeLifeline === lifeline.activeKey;
-        const isAvailable = lifelinesAvailable?.[lifeline.key] === true;
-        const state = isActive ? 'active' : isAvailable ? 'available' : 'used';
-        const style = stateStyles[state];
+        const state = deriveState(lifeline, lifelinesAvailable, activeLifeline);
+        const shapeState = SHAPE_STATE[state];
+        const isActive = state === 'active';
+        const isUsed = state === 'used';
+
+        // Swap to the "off" variant when the lifeline has been spent
+        const Icon = isUsed ? lifeline.IconOff : lifeline.Icon;
 
         return (
-          <AnimatePresence key={lifeline.key} mode="wait">
-            <motion.div
-              key={state}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg select-none"
-              style={style}
-              initial={{ opacity: 0.6, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.25 }}>
-              {/* Pulse ring when active */}
-              {isActive && (
-                <motion.span className="relative flex h-2 w-2 shrink-0">
-                  <motion.span
-                    className="absolute inline-flex h-full w-full rounded-full bg-amber-400"
-                    animate={{ scale: [1, 2], opacity: [0.7, 0] }}
-                    transition={{ duration: 1, repeat: Infinity }}
+          <motion.div
+            key={lifeline.key}
+            className="flex"
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}>
+            <WwbamShape
+              size="compact"
+              state={shapeState}
+              strokeWidth={3}
+              className="flex-1"
+              style={{ minHeight: '64px' }}>
+              <div className="flex items-center justify-center gap-3 px-4 py-2 w-full">
+                {/* ── Icon ────────────────────────────────────────────── */}
+                <div className="relative shrink-0 flex items-center justify-center w-9 h-9">
+                  <Icon
+                    size={22}
+                    strokeWidth={2}
+                    style={{ color: ICON_COLOR[state] }}
                   />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-400" />
-                </motion.span>
-              )}
 
-              <span
-                className={`text-base ${state === 'used' ? 'grayscale opacity-30' : ''}`}>
-                {lifeline.icon}
-              </span>
-              <span className="text-sm font-semibold tracking-wide">
-                {lifeline.label}
-              </span>
-            </motion.div>
-          </AnimatePresence>
+                  {/* Pulse ring — active state only */}
+                  {isActive && (
+                    <motion.span
+                      className="absolute inset-0 rounded-full pointer-events-none"
+                      style={{ background: 'rgba(232,146,10,0.2)' }}
+                      animate={{ scale: [1, 1.9], opacity: [0.6, 0] }}
+                      transition={{
+                        duration: 1.2,
+                        repeat: Infinity,
+                        ease: 'easeOut',
+                      }}
+                    />
+                  )}
+                </div>
+
+                {/* ── Label + status ───────────────────────────────────── */}
+                <div className="flex flex-col">
+                  <span
+                    className={`wwbam-lifeline-label ${isUsed ? 'wwbam-used-text' : ''}`}>
+                    {lifeline.label}
+                  </span>
+                  <span
+                    className={`wwbam-lifeline-status ${isUsed ? 'wwbam-used-subtext' : ''}`}
+                    style={{ color: STATUS_LABEL_COLOR[state] }}>
+                    {STATUS_LABELS[state]}
+                  </span>
+                </div>
+              </div>
+            </WwbamShape>
+          </motion.div>
         );
       })}
     </div>

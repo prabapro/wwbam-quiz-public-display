@@ -42,6 +42,9 @@
 │   │   ├── IdleScreen.jsx
 │   │   ├── LoadingScreen.jsx
 │   │   └── ResultsScreen.jsx
+│   ├── styles
+│   │   ├── components.css
+│   │   └── tokens.css
 │   ├── utils
 │   │   ├── formatters.js
 │   │   └── transforms.js

@@ -1,0 +1,191 @@
+/* src/styles/components.css */
+/* WWBAM Public Display — Reusable Component Classes
+   Shape rendering is handled by <WwbamShape> (src/components/ui/WwbamShape.jsx).
+   This file contains typography utilities, layout helpers, and state modifiers. */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TYPOGRAPHY UTILITIES
+   Calibrated for full-screen TV/projector output (1080p+).
+   All font-family values reference tokens from tokens.css.
+═══════════════════════════════════════════════════════════════════════════ */
+
+/* Tiny dim label above a value — "Now Playing", "Question", "Prize" */
+.wwbam-label {
+  font-family: var(--font-condensed);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--c-text-muted);
+  line-height: 1.2;
+}
+
+/* Primary team name */
+.wwbam-team-name {
+  font-family: var(--font-body);
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--c-text);
+  line-height: 1.1;
+}
+
+/* Participants sub-line beneath team name */
+.wwbam-participants {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--c-text-dim);
+  line-height: 1.2;
+}
+
+/* Large numeric — question number in top bar */
+.wwbam-q-number {
+  font-family: var(--font-numeric);
+  font-size: 2.6rem;
+  color: var(--c-text);
+  line-height: 1;
+  letter-spacing: 0.03em;
+}
+
+/* Prize value in top bar */
+.wwbam-prize-display {
+  font-family: var(--font-numeric);
+  font-size: 1.9rem;
+  color: var(--c-gold);
+  line-height: 1;
+  letter-spacing: 0.03em;
+}
+
+/* Question text inside QuestionCard */
+.wwbam-question-text {
+  font-family: var(--font-body);
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: var(--c-text);
+  line-height: 1.3;
+  text-align: center;
+}
+
+/* Option text inside each option button */
+.wwbam-option-text {
+  font-family: var(--font-body);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--c-text);
+  line-height: 1.2;
+}
+
+/* ♦ A: prefix label on options */
+.wwbam-option-prefix {
+  font-family: var(--font-body);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--c-diamond);
+  line-height: 1;
+  flex-shrink: 0;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+/* Prize amounts in the prize ladder sidebar */
+.wwbam-ladder-prize {
+  font-family: var(--font-numeric);
+  font-size: 1.1rem;
+  color: var(--c-gold);
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+
+/* Question number column in prize ladder */
+.wwbam-ladder-number {
+  font-family: var(--font-condensed);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--c-text-muted);
+  line-height: 1;
+  letter-spacing: 0.05em;
+}
+
+/* Lifeline name — "Phone a Friend", "50 / 50" */
+.wwbam-lifeline-label {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--c-text);
+  line-height: 1.15;
+}
+
+/* Lifeline status — "Available", "In Use", "Used" */
+.wwbam-lifeline-status {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--c-text-dim);
+  line-height: 1.2;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   GOLD GRADIENT TEXT
+   Animated shimmer — matches the WwbamShape "selected" stroke palette.
+   Use on prize amounts, active labels, or any element deserving gold emphasis.
+
+   Usage:
+     <span className="wwbam-text-gold-gradient wwbam-prize-display">Rs. 1M</span>
+═══════════════════════════════════════════════════════════════════════════ */
+
+.wwbam-text-gold-gradient {
+  background: linear-gradient(
+    90deg,
+    var(--c-gold-deep),
+    var(--c-gold-dark),
+    var(--c-gold-light),
+    var(--c-gold-dark),
+    var(--c-gold-deep)
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: wwbam-gold-shimmer 3s linear infinite;
+}
+
+@keyframes wwbam-gold-shimmer {
+  0% {
+    background-position: 0% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   USED / SPENT STATE
+   Applied when a lifeline is spent or an interactive element is permanently
+   inactive. Keeps the element visible and legible — communicates "spent",
+   not "hidden". Pair with WwbamShape state="used" on the container.
+
+   Usage:
+     <span className="wwbam-lifeline-label wwbam-used-text">Phone a Friend</span>
+     <span className="wwbam-lifeline-status wwbam-used-subtext">Used</span>
+═══════════════════════════════════════════════════════════════════════════ */
+
+.wwbam-used-text {
+  color: var(--c-used-text) !important;
+}
+
+.wwbam-used-subtext {
+  color: var(--c-used-subtext) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LAYOUT UTILITIES
+═══════════════════════════════════════════════════════════════════════════ */
+
+/* Vertical separator between info clusters in the top bar */
+.wwbam-sep {
+  width: 1px;
+  align-self: stretch;
+  background: rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+  margin: 4px 0;
+}

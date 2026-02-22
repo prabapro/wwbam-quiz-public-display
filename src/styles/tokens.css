@@ -1,0 +1,80 @@
+/* src/styles/tokens.css */
+/* WWBAM Public Display — Design Tokens
+   Single source of truth for every colour, font, and timing value.
+   Shape geometry lives in WwbamShape.jsx — its JS colour constants (SHAPE_TOKENS)
+   mirror the palette groups defined here so both CSS and SVG share the same values. */
+
+:root {
+  /* ── Typography ─────────────────────────────────────────────────────────── */
+  --font-body: 'Barlow Semi Condensed', system-ui, sans-serif;
+  --font-condensed: 'Barlow Condensed', system-ui, sans-serif;
+  --font-numeric: 'Hammersmith One', sans-serif;
+
+  /* ── Screen background ──────────────────────────────────────────────────── */
+  --c-screen-bg: #05051c;
+
+  /* ── Gold / Amber palette ────────────────────────────────────────────────
+     Used by: selected WwbamShape stroke, prize displays, active lifeline text,
+              .wwbam-text-gold-gradient, SHAPE_TOKENS.gold in WwbamShape.jsx
+  ──────────────────────────────────────────────────────────────────────── */
+  --c-gold-deep: #7c3a00; /* gradient start / end — deepest amber */
+  --c-gold-dark: #e8920a; /* inner stop — rich orange-gold         */
+  --c-gold: #f0b429; /* primary gold — prize amounts, badges  */
+  --c-gold-light: #f5c842; /* gradient peak — brightest highlight   */
+
+  /* ── Blue palette ────────────────────────────────────────────────────────
+     Used by: default WwbamShape stroke, SHAPE_TOKENS.blue in WwbamShape.jsx
+  ──────────────────────────────────────────────────────────────────────── */
+  --c-blue-deep: #1a4fcf;
+  --c-blue-mid: #4a8fe8;
+  --c-blue-light: #8ab8ff;
+
+  /* ── Green palette ───────────────────────────────────────────────────────
+     Used by: correct WwbamShape stroke, SHAPE_TOKENS.green in WwbamShape.jsx
+  ──────────────────────────────────────────────────────────────────────── */
+  --c-green-deep: #2d8010;
+  --c-green-mid: #5ec72a;
+  --c-green-light: #90e05a;
+
+  /* ── Red palette ─────────────────────────────────────────────────────────
+     Used by: wrong WwbamShape stroke, SHAPE_TOKENS.red in WwbamShape.jsx
+  ──────────────────────────────────────────────────────────────────────── */
+  --c-red-deep: #8b0000;
+  --c-red-mid: #e03030;
+  --c-red-light: #ff6060;
+
+  /* ── Used / spent state ──────────────────────────────────────────────────
+     Applied when a lifeline is spent, an answer option is disabled, or any
+     interactive element transitions to a permanently inactive state.
+     Used by: WwbamShape state="used", .wwbam-used-* classes below,
+              SHAPE_TOKENS.used in WwbamShape.jsx
+  ──────────────────────────────────────────────────────────────────────── */
+  --c-used-fill: #080c14; /* shape background             */
+  --c-used-stroke-deep: #1c2738; /* gradient start / end         */
+  --c-used-stroke-mid: #2a3a52; /* inner stop                   */
+  --c-used-stroke-light: #3a5068; /* gradient peak                */
+  --c-used-text: rgba(255, 255, 255, 0.3); /* primary label text    */
+  --c-used-subtext: rgba(255, 255, 255, 0.18); /* secondary / status text */
+
+  /* ── Dimmed — invisible layout placeholder ───────────────────────────────
+     Keeps space in the grid while hiding content (e.g. 50/50 removed options).
+     Distinct from "used" — dimmed means hidden, used means spent-but-visible.
+  ──────────────────────────────────────────────────────────────────────── */
+  --c-dimmed-fill: #030508;
+  --c-dimmed-stroke1: #141a24;
+  --c-dimmed-stroke2: #1e2738;
+
+  /* ── Ladder highlight (current question row) ─────────────────────────────── */
+  --c-ladder-hl: #e8920a;
+  --c-ladder-hl-text: #ffffff;
+
+  /* ── Text ────────────────────────────────────────────────────────────────── */
+  --c-text: #ffffff;
+  --c-text-dim: rgba(255, 255, 255, 0.55);
+  --c-text-muted: rgba(255, 255, 255, 0.3);
+  --c-diamond: #5a92f4;
+
+  /* ── Transitions ─────────────────────────────────────────────────────────── */
+  --t-fast: 0.2s ease;
+  --t-medium: 0.4s ease;
+}

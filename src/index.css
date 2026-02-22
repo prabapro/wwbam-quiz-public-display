@@ -1,11 +1,29 @@
 /* src/index.css */
+
+/* ── Google Fonts ─────────────────────────────────────────────────────────────
+   Barlow Semi Condensed — body / question / option text
+   Barlow Condensed      — condensed UI labels
+   Bebas Neue            — prize amounts, question numbers, numeric displays
+─────────────────────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Barlow+Semi+Condensed:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Hammersmith+One&display=swap');
+
+/* ── Tailwind ─────────────────────────────────────────────────────────────── */
 @import 'tailwindcss';
+
+/* ── WWBAM Design System ──────────────────────────────────────────────────── */
+@import './styles/tokens.css';
+@import './styles/components.css';
+
+/* ── Reset & Base ─────────────────────────────────────────────────────────── */
 
 /*
   Base styles for the public display app.
   Designed for full-screen TV/projector output (16:9 landscape).
-  All component-level styling is handled via Tailwind utility classes.
-  Background is managed by ScreenBackground component, not here.
+  Component-level styling is handled via:
+    - Tailwind utility classes for layout/spacing
+    - .wwbam-* classes (components.css) for branded shapes and typography
+    - Inline style overrides for per-instance token values
+  Background is managed by ScreenBackground (src/components/layout/ScreenBackground.jsx).
 */
 
 *,
@@ -25,13 +43,11 @@ body,
 }
 
 body {
-  /* Background is intentionally unset here — each screen uses          */
-  /* ScreenBackground (src/components/layout/ScreenBackground.jsx)      */
-  /* which renders the WWBAM set image with a dark overlay.             */
-  /* Fallback colour covers the brief flash before React mounts.        */
-  background-color: #05051c;
-  color: #ffffff;
-  font-family: 'Inter', 'Roboto', system-ui, sans-serif;
+  /* Fallback colour covers the brief flash before React mounts.   */
+  /* Each screen uses ScreenBackground for the actual set image.   */
+  background-color: var(--c-screen-bg);
+  color: var(--c-text);
+  font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
