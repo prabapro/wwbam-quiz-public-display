@@ -1,5 +1,6 @@
 // src/screens/GameScreen.jsx
 
+import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import ScreenBackground from '@components/layout/ScreenBackground';
 import TeamInfoBar from '@components/topbar/TeamInfoBar';
@@ -12,6 +13,15 @@ import TeamAnnouncement from '@components/game/TeamAnnouncement';
 import TeamResult from '@components/game/TeamResult';
 import PhoneAFriendOverlay from '@components/game/PhoneAFriendOverlay';
 import BetweenQuestionsLogo from '@components/game/BetweenQuestionsLogo';
+
+// ── Constants ──────────────────────────────────────────────────────────────────
+
+/**
+ * How long (ms) to show the answer highlight before the TeamResult overlay
+ * appears. Gives the audience time to see the correct/wrong colours on the
+ * options grid before the result card covers the screen.
+ */
+const TEAM_RESULT_DELAY_MS = 3000;
 
 // ── Animation variants ─────────────────────────────────────────────────────────
 
@@ -39,9 +49,8 @@ const pauseOverlayVariants = {
  *   4. announcement  — new team is up (currentQuestionNumber === 0)
  *   5. null          — normal gameplay, no overlay
  *
- * Note: the "between questions" blank state (questionVisible === false, mid-game)
- * is NOT an overlay — it's handled inside the center column via BetweenQuestionsLogo
- * so the sidebars remain visible.
+ * Note: 'teamResult' is the *intent* — the card only renders after
+ * readyResultTeamId matches, enforcing the delay in GameScreen.
  *
  * @returns {'phoneAFriend'|'pause'|'teamResult'|'announcement'|null}
  */
@@ -79,23 +88,23 @@ function deriveOverlay(gameState, currentTeam) {
  *   Right sidebar — PrizeLadder   (w-72, hidden when showPrizeLadder is false)
  *
  * Center column behaviour:
- *   - overlay is active              → question/options hidden behind overlay
- *   - questionVisible === false      → BetweenQuestionsLogo shown instead
- *   - questionVisible === true       → QuestionCard + OptionGrid shown normally
+ *   - overlay active             → question/options visible behind overlay
+ *   - questionVisible === false  → BetweenQuestionsLogo shown instead
+ *   - questionVisible === true   → QuestionCard + OptionGrid shown normally
  *
- * Overlay state machine (see deriveOverlay):
- *   phoneAFriend  → question recap + synced countdown timer
- *   pause         → generic pause screen
- *   teamResult    → elimination / completion card
- *   announcement  → upcoming team intro card
- *   null          → normal gameplay
+ * teamResult delay:
+ *   deriveOverlay returns 'teamResult' immediately when a team finishes, but
+ *   the card only renders once readyResultTeamId matches the current team key.
+ *   Both the immediate (game-over) and delayed (answer-reveal) paths go through
+ *   setTimeout — delay 0 vs TEAM_RESULT_DELAY_MS — so no setState is ever
+ *   called synchronously in the effect body, satisfying the lint rule.
  *
  * @param {{
  *   gameState:      object,
  *   teams:          Array,
  *   prizeStructure: number[],
  *   displayConfig:  object,
- *   timerDuration:  number,   - phone-a-friend duration in seconds (from config)
+ *   timerDuration:  number,
  * }} props
  */
 export default function GameScreen({
@@ -109,7 +118,6 @@ export default function GameScreen({
   const currentTeam =
     teams.find((t) => t.id === gameState?.currentTeamId) ?? null;
 
-  // Last-team fallback: completeGame() nulls currentTeamId
   const lastTeamId = playQueue[playQueue.length - 1] ?? null;
   const lastTeam = teams.find((t) => t.id === lastTeamId) ?? null;
   const resultTeam = currentTeam ?? lastTeam;
@@ -117,8 +125,34 @@ export default function GameScreen({
   const overlay = deriveOverlay(gameState, currentTeam);
   const queuePosition = currentTeam ? playQueue.indexOf(currentTeam.id) + 1 : 0;
 
-  // Show the spinning logo whenever no overlay is active and the question
-  // isn't visible yet — covers the gap between questions for the same team.
+  // ── Delayed teamResult ─────────────────────────────────────────────────────
+  // Track which team's result card is ready to show, keyed by team ID.
+  // The card renders only when this ID matches the current result team.
+  // When overlay leaves 'teamResult' the outer condition gates rendering
+  // naturally — no synchronous setState reset needed in the effect.
+  const [readyResultTeamId, setReadyResultTeamId] = useState(null);
+
+  // 'game' key is used when resultTeam is null (game-level completion)
+  const resultTeamKey = resultTeam?.id ?? 'game';
+
+  const showTeamResult =
+    overlay === 'teamResult' && readyResultTeamId === resultTeamKey;
+
+  useEffect(() => {
+    if (overlay !== 'teamResult') return;
+
+    // Both paths go through setTimeout so setState is never called
+    // synchronously in the effect body (satisfies react-hooks/set-state-in-effect).
+    // Game-level completion: delay 0 (no answer was just revealed to show).
+    // Answer-reveal: TEAM_RESULT_DELAY_MS so audience sees green/red first.
+    const delay =
+      gameState?.gameStatus === 'completed' ? 0 : TEAM_RESULT_DELAY_MS;
+
+    const timer = setTimeout(() => setReadyResultTeamId(resultTeamKey), delay);
+    return () => clearTimeout(timer);
+  }, [overlay, gameState?.gameStatus, resultTeamKey]);
+
+  // ── Between-questions logo ─────────────────────────────────────────────────
   const showBetweenQuestionsLogo =
     overlay === null && !gameState?.questionVisible;
 
@@ -240,7 +274,8 @@ export default function GameScreen({
             </motion.div>
           )}
 
-          {overlay === 'teamResult' && (
+          {/* Renders only after per-team delay fires via setTimeout */}
+          {overlay === 'teamResult' && showTeamResult && (
             <TeamResult
               key="team-result"
               team={resultTeam}
