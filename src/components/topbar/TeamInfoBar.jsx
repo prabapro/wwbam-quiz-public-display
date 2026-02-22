@@ -5,15 +5,22 @@ import { formatPrize } from '@utils/formatters';
 /**
  * TeamInfoBar
  *
- * Displays the currently playing team's name, participants,
- * current question number and the prize at stake for that question.
+ * Single wide WWBAM-style chamfered hexagon displayed in the GameScreen
+ * top bar. Contains three info clusters separated by vertical rules:
  *
- * Rendered in the top bar of GameScreen.
+ *   [ Now Playing / Team Name / Participants ] | [ Q# ] | [ Prize ]
+ *
+ * Styling comes entirely from:
+ *   src/styles/tokens.css       — design tokens (--hex-cut, --c-gold, etc.)
+ *   src/styles/components.css   — .wwbam-hex-border, .wwbam-hex-fill, typography
+ *
+ * The --hex-cut override (14px) makes the corner cuts slightly smaller
+ * than the option buttons (16px) so the top bar reads as a distinct element.
  *
  * @param {{
- *   currentTeam:          object|null,
+ *   currentTeam:           object|null,
  *   currentQuestionNumber: number|null,
- *   prizeStructure:       number[],
+ *   prizeStructure:        number[],
  * }} props
  */
 export default function TeamInfoBar({
@@ -21,58 +28,44 @@ export default function TeamInfoBar({
   currentQuestionNumber,
   prizeStructure,
 }) {
-  // Prize for the current question (index = questionNumber - 1)
   const currentPrize =
     currentQuestionNumber && prizeStructure?.length
       ? (prizeStructure[currentQuestionNumber - 1] ?? 0)
       : 0;
 
   return (
-    <div className="flex items-center gap-8">
-      {/* Team identity */}
-      <div className="flex flex-col gap-0.5">
-        <p className="text-slate-400 text-xs uppercase tracking-widest font-medium">
-          Now Playing
-        </p>
-        <p className="text-white text-xl font-bold leading-tight">
-          {currentTeam?.name ?? '—'}
-        </p>
-        {currentTeam?.participants && (
-          <p className="text-slate-400 text-xs truncate max-w-xs">
-            {currentTeam.participants}
-          </p>
-        )}
-      </div>
+    <div className="wwbam-hex-border flex-1" style={{ '--hex-cut': '14px' }}>
+      <div className="wwbam-hex-fill flex items-center gap-0 w-full px-1 py-0">
+        {/* ── Now Playing ─────────────────────────────────────────────── */}
+        <div className="flex flex-col min-w-0 flex-1 px-7 py-3">
+          <span className="wwbam-label">Now Playing</span>
+          <span className="wwbam-team-name truncate">
+            {currentTeam?.name ?? '—'}
+          </span>
+          {currentTeam?.participants && (
+            <span className="wwbam-participants truncate">
+              {currentTeam.participants}
+            </span>
+          )}
+        </div>
 
-      {/* Divider */}
-      <span className="w-px h-10 bg-white/10 shrink-0" />
+        <div className="wwbam-sep" />
 
-      {/* Question number */}
-      <div className="flex flex-col items-center gap-0.5">
-        <p className="text-slate-400 text-xs uppercase tracking-widest font-medium">
-          Question
-        </p>
-        <p className="text-white text-2xl font-black font-mono leading-tight">
-          {currentQuestionNumber ?? '—'}
-        </p>
-      </div>
+        {/* ── Question number ─────────────────────────────────────────── */}
+        <div className="flex flex-col items-center shrink-0 px-7 py-3">
+          <span className="wwbam-label">Question</span>
+          <span className="wwbam-q-number">{currentQuestionNumber ?? '—'}</span>
+        </div>
 
-      {/* Divider */}
-      <span className="w-px h-10 bg-white/10 shrink-0" />
+        <div className="wwbam-sep" />
 
-      {/* Prize at stake */}
-      <div className="flex flex-col gap-0.5">
-        <p className="text-slate-400 text-xs uppercase tracking-widest font-medium">
-          Prize
-        </p>
-        <p
-          className="text-2xl font-black font-mono leading-tight"
-          style={{
-            color: '#f59e0b',
-            textShadow: '0 0 20px rgba(245,158,11,0.4)',
-          }}>
-          {formatPrize(currentPrize)}
-        </p>
+        {/* ── Prize at stake ──────────────────────────────────────────── */}
+        <div className="flex flex-col items-end shrink-0 px-7 py-3">
+          <span className="wwbam-label">Prize</span>
+          <span className="wwbam-prize-display">
+            {formatPrize(currentPrize)}
+          </span>
+        </div>
       </div>
     </div>
   );

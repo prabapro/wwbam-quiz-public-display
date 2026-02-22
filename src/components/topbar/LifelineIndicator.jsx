@@ -1,6 +1,6 @@
 // src/components/topbar/LifelineIndicator.jsx
 
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -8,7 +8,7 @@ const LIFELINES = [
   {
     key: 'phoneAFriend',
     activeKey: 'phone-a-friend',
-    label: 'Phone',
+    label: 'Phone a Friend',
     icon: '📞',
   },
   {
@@ -19,25 +19,23 @@ const LIFELINES = [
   },
 ];
 
-// ── Styles ─────────────────────────────────────────────────────────────────────
+// ── Helpers ────────────────────────────────────────────────────────────────────
 
-const stateStyles = {
-  active: {
-    background: 'rgba(245,158,11,0.25)',
-    border: '1px solid rgba(245,158,11,0.7)',
-    color: '#f59e0b',
-    boxShadow: '0 0 16px rgba(245,158,11,0.3)',
-  },
-  available: {
-    background: 'rgba(30,58,138,0.5)',
-    border: '1px solid rgba(99,132,255,0.4)',
-    color: '#ffffff',
-  },
-  used: {
-    background: 'rgba(255,255,255,0.03)',
-    border: '1px solid rgba(255,255,255,0.08)',
-    color: '#334155',
-  },
+/**
+ * Derives the visual state for a single lifeline.
+ * @returns {'active'|'available'|'used'}
+ */
+function deriveState(lifeline, lifelinesAvailable, activeLifeline) {
+  if (activeLifeline === lifeline.activeKey) return 'active';
+  if (lifelinesAvailable?.[lifeline.key] === true) return 'available';
+  return 'used';
+}
+
+/** Human-readable label for each state. */
+const STATE_LABELS = {
+  active: 'In Use',
+  available: 'Available',
+  used: 'Used',
 };
 
 // ── Component ──────────────────────────────────────────────────────────────────
@@ -45,13 +43,16 @@ const stateStyles = {
 /**
  * LifelineIndicator
  *
- * Read-only badges showing which lifelines are available / active / used
- * for the current team. Rendered in the top bar of GameScreen.
+ * Two WWBAM-style chamfered hexagon cards displayed in the GameScreen top bar,
+ * one per lifeline. Each card shows the lifeline's icon, name, and live status.
  *
- * States per lifeline:
- *   active    → currently in use (amber glow)
- *   available → can still be used (blue)
- *   used      → already consumed (dimmed)
+ * State → visual treatment:
+ *   available — blue border, dark navy fill (default)
+ *   active    — amber border, dark amber fill, pulsing ring on icon
+ *   used      — very dim border, full opacity reduced to 35%
+ *
+ * State is driven by CSS modifier classes on .wwbam-hex-border that override
+ * the --hex-border-color and --hex-fill tokens (see src/styles/components.css).
  *
  * @param {{
  *   lifelinesAvailable: { phoneAFriend: boolean, fiftyFifty: boolean } | null,
@@ -63,43 +64,53 @@ export default function LifelineIndicator({
   activeLifeline,
 }) {
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-stretch gap-3 shrink-0">
       {LIFELINES.map((lifeline) => {
-        const isActive = activeLifeline === lifeline.activeKey;
-        const isAvailable = lifelinesAvailable?.[lifeline.key] === true;
-        const state = isActive ? 'active' : isAvailable ? 'available' : 'used';
-        const style = stateStyles[state];
+        const state = deriveState(lifeline, lifelinesAvailable, activeLifeline);
+        const isActive = state === 'active';
 
         return (
-          <AnimatePresence key={lifeline.key} mode="wait">
-            <motion.div
-              key={state}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg select-none"
-              style={style}
-              initial={{ opacity: 0.6, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.25 }}>
-              {/* Pulse ring when active */}
-              {isActive && (
-                <motion.span className="relative flex h-2 w-2 shrink-0">
+          <motion.div
+            key={lifeline.key}
+            className={`wwbam-hex-border wwbam-lifeline-${state}`}
+            style={{ '--hex-cut': '14px' }}
+            animate={{ opacity: state === 'used' ? 0.35 : 1 }}
+            transition={{ duration: 0.3 }}>
+            <div className="wwbam-hex-fill flex items-center gap-4 px-6 py-2">
+              {/* Icon with pulse ring when active */}
+              <div className="relative shrink-0 flex items-center justify-center w-9 h-9">
+                <span className="text-2xl leading-none">{lifeline.icon}</span>
+                {isActive && (
                   <motion.span
-                    className="absolute inline-flex h-full w-full rounded-full bg-amber-400"
-                    animate={{ scale: [1, 2], opacity: [0.7, 0] }}
-                    transition={{ duration: 1, repeat: Infinity }}
+                    className="absolute inset-0 rounded-full"
+                    style={{ background: 'rgba(232, 146, 10, 0.3)' }}
+                    animate={{ scale: [1, 1.8], opacity: [0.6, 0] }}
+                    transition={{
+                      duration: 1.1,
+                      repeat: Infinity,
+                      ease: 'easeOut',
+                    }}
                   />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-400" />
-                </motion.span>
-              )}
+                )}
+              </div>
 
-              <span
-                className={`text-base ${state === 'used' ? 'grayscale opacity-30' : ''}`}>
-                {lifeline.icon}
-              </span>
-              <span className="text-sm font-semibold tracking-wide">
-                {lifeline.label}
-              </span>
-            </motion.div>
-          </AnimatePresence>
+              {/* Label + status */}
+              <div className="flex flex-col">
+                <span className="wwbam-lifeline-label">{lifeline.label}</span>
+                <span
+                  className="wwbam-lifeline-status"
+                  style={{
+                    color: isActive
+                      ? 'var(--c-gold)'
+                      : state === 'used'
+                        ? 'var(--c-text-muted)'
+                        : 'var(--c-text-dim)',
+                  }}>
+                  {STATE_LABELS[state]}
+                </span>
+              </div>
+            </div>
+          </motion.div>
         );
       })}
     </div>

@@ -1,0 +1,172 @@
+/* src/styles/components.css */
+/* WWBAM Public Display — Reusable Component Classes
+   All classes consume tokens from tokens.css.
+   Do not hardcode colour values here — always reference a token var(). */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CHAMFERED HEX SHAPE
+   Renders an octagon by cutting all 4 corners at 45° using clip-path.
+   Two-layer pattern:
+     .wwbam-hex-border — outer shell: clipped, border-coloured, 1.5px padding
+     .wwbam-hex-fill   — inner shell: clipped, fill background, grows to fit
+
+   Usage:
+     <div class="wwbam-hex-border" style="--hex-cut: 14px">
+       <div class="wwbam-hex-fill flex items-center px-6 py-3">
+         content
+       </div>
+     </div>
+
+   State overrides (apply to the .wwbam-hex-border element or any ancestor):
+     Override --hex-border-color and/or --hex-fill to change look per state.
+═══════════════════════════════════════════════════════════════════════════ */
+
+.wwbam-hex-border {
+  clip-path: polygon(
+    var(--hex-cut) 0%,
+    calc(100% - var(--hex-cut)) 0%,
+    100% var(--hex-cut),
+    100% calc(100% - var(--hex-cut)),
+    calc(100% - var(--hex-cut)) 100%,
+    var(--hex-cut) 100%,
+    0% calc(100% - var(--hex-cut)),
+    0% var(--hex-cut)
+  );
+  background: var(--hex-border-color, var(--c-border));
+  padding: 1.5px;
+  display: flex;
+}
+
+.wwbam-hex-fill {
+  clip-path: polygon(
+    var(--hex-cut) 0%,
+    calc(100% - var(--hex-cut)) 0%,
+    100% var(--hex-cut),
+    100% calc(100% - var(--hex-cut)),
+    calc(100% - var(--hex-cut)) 100%,
+    var(--hex-cut) 100%,
+    0% calc(100% - var(--hex-cut)),
+    0% var(--hex-cut)
+  );
+  background: var(--hex-fill, var(--c-shape-bg));
+  flex: 1;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LIFELINE STATE MODIFIERS
+   Apply to the .wwbam-hex-border element to change border + fill per state.
+   --hex-border-color and --hex-fill cascade to child .wwbam-hex-fill.
+═══════════════════════════════════════════════════════════════════════════ */
+
+/* State: active — lifeline currently in use */
+.wwbam-lifeline-active {
+  --hex-border-color: var(--c-gold-dark);
+  --hex-fill: linear-gradient(175deg, #3d2000 0%, #1e1000 100%);
+}
+
+/* State: used — lifeline spent */
+.wwbam-lifeline-used {
+  --hex-border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* State: available — default (uses base tokens, no override needed) */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TYPOGRAPHY UTILITIES
+   Semantic text classes used across top bar, sidebars, overlays.
+   Font sizes are calibrated for full-screen TV/projector output.
+═══════════════════════════════════════════════════════════════════════════ */
+
+/* Tiny dim label that sits above a value ("Now Playing", "Question", etc.) */
+.wwbam-label {
+  font-family: var(--font-condensed);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--c-text-muted);
+  line-height: 1.2;
+}
+
+/* Primary team name */
+.wwbam-team-name {
+  font-family: var(--font-body);
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--c-text);
+  line-height: 1.1;
+}
+
+/* Participants sub-line */
+.wwbam-participants {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--c-text-dim);
+  line-height: 1.2;
+}
+
+/* Large numeric: question number */
+.wwbam-q-number {
+  font-family: var(--font-numeric);
+  font-size: 2.6rem;
+  color: var(--c-text);
+  line-height: 1;
+  letter-spacing: 0.03em;
+}
+
+/* Prize value in top bar */
+.wwbam-prize-display {
+  font-family: var(--font-numeric);
+  font-size: 1.9rem;
+  color: var(--c-gold);
+  line-height: 1;
+  letter-spacing: 0.03em;
+}
+
+/* Prize values in sidebar ladder */
+.wwbam-ladder-prize {
+  font-family: var(--font-numeric);
+  font-size: 1.1rem;
+  color: var(--c-gold);
+  line-height: 1;
+}
+
+/* Lifeline name (e.g. "Phone a Friend") */
+.wwbam-lifeline-label {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--c-text);
+  line-height: 1.15;
+}
+
+/* Lifeline status ("Available", "In Use", "Used") */
+.wwbam-lifeline-status {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--c-text-dim);
+  line-height: 1.2;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LAYOUT UTILITIES
+═══════════════════════════════════════════════════════════════════════════ */
+
+/* Vertical separator between info clusters in the top bar */
+.wwbam-sep {
+  width: 1px;
+  align-self: stretch;
+  background: rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+  margin: 6px 0;
+}
+
+/* Diamond glyph used as bullet prefix on options & ladder rows */
+.wwbam-diamond {
+  color: var(--c-diamond);
+  font-size: 0.6em;
+  line-height: 1;
+  flex-shrink: 0;
+}
