@@ -79,16 +79,16 @@ const CP2_RATIO = 36.4576 / 62.53058; // ≈ 0.583
 
 const SIZE_PRESETS = {
   wide: {
-    pointExtRatio: 0.86, // generous — tips are bold and prominent
-    whiskerRatio: 0.73, // long whiskers extend well beyond tip
+    pointExtRatio: 1.6, // most dramatic — full-width bars (TeamInfoBar, QuestionCard)
+    whiskerRatio: 0.35,
   },
   medium: {
-    pointExtRatio: 0.55, // moderate — balanced for half-width elements
-    whiskerRatio: 0.55,
+    pointExtRatio: 1.8, // balanced — option buttons and mid-size elements
+    whiskerRatio: 0.35,
   },
   compact: {
-    pointExtRatio: 0.32, // subtle — tips visible but don't dominate
-    whiskerRatio: 0.4,
+    pointExtRatio: 2.0, // prominent — lifeline cards (user-tuned)
+    whiskerRatio: 0.35,
   },
 };
 
