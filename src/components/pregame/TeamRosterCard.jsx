@@ -1,12 +1,12 @@
 // src/components/pregame/TeamRosterCard.jsx
 
 import { motion } from 'framer-motion';
+import WwbamShape from '@components/ui/WwbamShape';
 
 // ── Animation variant ──────────────────────────────────────────────────────────
-// Internal only — consumed by the motion.div below.
-// Parent stagger works via matching key names (hidden / visible).
+// Internal — keys match parent staggerChildren container (hidden / visible).
 
-const teamCardVariant = {
+const cardVariant = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } },
 };
@@ -17,99 +17,67 @@ const teamCardVariant = {
  * TeamRosterCard
  *
  * Displays a single team's name and participant list in the pre-game lobby.
- * Designed to be used inside a staggered motion container so each card
- * animates in sequentially — variant keys (hidden / visible) match the
- * parent's staggerChildren container automatically.
+ * Uses WwbamShape (compact, default) as the card surface — consistent with
+ * LifelineIndicator and the rest of the WWBAM design system.
+ *
+ * Layout mirrors TeamInfoBar:
+ *   [ Team # ] | separator | [ Team Name / Participants ]
+ *
+ * Typography is driven entirely by .wwbam-* classes from components.css
+ * and token values from tokens.css — no inline colour strings.
  *
  * @param {{
  *   team: {
  *     id:           string,
  *     name:         string,
- *     participants: string,   // comma-separated names from Firebase
+ *     participants: string,  // comma-separated names from Firebase
  *   },
- *   index: number,            // 0-based position used for the team number label
+ *   index: number,           // 0-based position used for the team number label
  * }} props
  */
 export default function TeamRosterCard({ team, index }) {
-  const participantList = team.participants
-    ? team.participants
-        .split(',')
-        .map((p) => p.trim())
-        .filter(Boolean)
-    : [];
-
   return (
-    <motion.div
-      variants={teamCardVariant}
-      className="relative flex flex-col gap-2 px-5 py-4 rounded-sm overflow-hidden"
-      style={{
-        background:
-          'linear-gradient(135deg, rgba(26,79,207,0.12) 0%, rgba(6,9,15,0.85) 60%)',
-        border: '1px solid rgba(74,143,232,0.25)',
-        boxShadow: '0 0 20px rgba(26,79,207,0.08)',
-      }}>
-      {/* Top accent line */}
-      <div
-        className="absolute top-0 left-0 right-0 h-px"
-        style={{
-          background:
-            'linear-gradient(90deg, transparent, rgba(74,143,232,0.5), transparent)',
-        }}
-      />
+    <motion.div variants={cardVariant} className="flex">
+      <WwbamShape
+        size="compact"
+        state="default"
+        strokeWidth={3}
+        className="flex-1"
+        style={{ minHeight: '72px' }}>
+        <div className="flex items-center w-full py-2">
+          {/* ── Team number ───────────────────────────────────────────────── */}
+          <div className="flex flex-col items-center justify-center shrink-0 px-4">
+            <span className="wwbam-label">Team</span>
+            <span
+              className="leading-none"
+              style={{
+                fontFamily: 'var(--font-numeric)',
+                fontSize: '1.6rem',
+                color: 'var(--c-gold)',
+              }}>
+              {String(index + 1).padStart(2, '0')}
+            </span>
+          </div>
 
-      {/* Team number + name row */}
-      <div className="flex items-center gap-3">
-        <span
-          className="text-xs font-bold tabular-nums shrink-0"
-          style={{
-            color: 'var(--c-gold)',
-            fontFamily: 'var(--font-numeric)',
-            fontSize: '0.8rem',
-            minWidth: '1.4rem',
-          }}>
-          {String(index + 1).padStart(2, '0')}
-        </span>
-        <p
-          className="text-white font-bold leading-tight truncate"
-          style={{
-            fontFamily: 'var(--font-condensed)',
-            fontSize: '1.05rem',
-            letterSpacing: '0.04em',
-          }}>
-          {team.name}
-        </p>
-      </div>
+          <div className="wwbam-sep" />
 
-      {/* Divider */}
-      <div className="h-px" style={{ background: 'rgba(255,255,255,0.07)' }} />
-
-      {/* Participants */}
-      <div className="flex flex-col gap-1">
-        {participantList.length > 0 ? (
-          participantList.map((name, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <span
-                className="w-1 h-1 rounded-full shrink-0"
-                style={{ background: 'var(--c-blue-mid)' }}
-              />
-              <span
-                className="text-sm leading-tight truncate"
-                style={{
-                  color: 'rgba(255,255,255,0.7)',
-                  fontFamily: 'var(--font-body)',
-                }}>
-                {name}
+          {/* ── Team name + participants ───────────────────────────────────── */}
+          <div className="flex flex-col justify-center min-w-0 flex-1 px-4">
+            <span className="wwbam-team-name truncate">{team.name}</span>
+            {team.participants ? (
+              <span className="wwbam-participants truncate">
+                {team.participants}
               </span>
-            </div>
-          ))
-        ) : (
-          <span
-            className="text-sm italic"
-            style={{ color: 'rgba(255,255,255,0.3)' }}>
-            No participants listed
-          </span>
-        )}
-      </div>
+            ) : (
+              <span
+                className="wwbam-participants"
+                style={{ color: 'var(--c-text-muted)' }}>
+                No participants listed
+              </span>
+            )}
+          </div>
+        </div>
+      </WwbamShape>
     </motion.div>
   );
 }
