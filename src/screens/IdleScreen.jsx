@@ -26,6 +26,10 @@ const itemVariants = {
  * Displayed when gameStatus is "not-started" or "initialized".
  * Shows branding and a "standby" message — no game data to display yet.
  *
+ * The WWBAM logo SVG spins on the Y-axis (west → east) in a continuous loop
+ * with a short pause between each rotation, giving it a polished "attract" feel.
+ * A CSS perspective on the parent container makes the 3D rotation visible.
+ *
  * @param {{ gameStatus: string }} props
  */
 export default function IdleScreen({ gameStatus }) {
@@ -66,16 +70,24 @@ export default function IdleScreen({ gameStatus }) {
             Who Wants to Be a Millionaire
           </motion.p>
 
-          {/* Main logo */}
-          <motion.h1
+          {/* Logo — 3D Y-axis spin (west → east) */}
+          <motion.div
             variants={itemVariants}
-            className="text-8xl font-black tracking-widest uppercase text-white"
-            style={{
-              textShadow:
-                '0 0 60px rgba(245,158,11,0.35), 0 0 120px rgba(245,158,11,0.15)',
-            }}>
-            WWBAM
-          </motion.h1>
+            // perspective here makes the rotateY visually 3D
+            style={{ perspective: '800px' }}>
+            <motion.img
+              src="/images/wwbam-logo.svg"
+              alt="WWBAM Logo"
+              className="w-48 h-48 drop-shadow-[0_0_40px_rgba(245,158,11,0.4)]"
+              animate={{ rotateY: [0, 360] }}
+              transition={{
+                duration: 2.5,
+                ease: 'easeInOut',
+                repeat: Infinity,
+                repeatDelay: 2.5,
+              }}
+            />
+          </motion.div>
 
           {/* Divider */}
           <motion.div
