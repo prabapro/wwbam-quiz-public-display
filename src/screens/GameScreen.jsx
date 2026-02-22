@@ -68,6 +68,16 @@ function deriveOverlay(gameState, currentTeam) {
  *
  * The main gameplay display. Shown when gameStatus is active/paused/completed.
  *
+ * Layout (3-column):
+ *   Left sidebar  — TeamList      (w-60, hidden when showTeamList is false)
+ *   Center        — QuestionCard + OptionGrid (flex-1, always centered)
+ *   Right sidebar — PrizeLadder   (w-72, hidden when showPrizeLadder is false)
+ *
+ * Having equal-width sidebars on both sides keeps the center column
+ * visually symmetric. If one sidebar is hidden, the center still fills
+ * the remaining space but is no longer optically centered — acceptable
+ * edge case for config-driven hide states.
+ *
  * Overlay state machine (see deriveOverlay):
  *   phoneAFriend  → question recap + synced countdown timer
  *   pause         → generic pause screen
@@ -110,7 +120,7 @@ export default function GameScreen({
         initial="hidden"
         animate="visible"
         exit="exit">
-        {/* ── Top bar ─────────────────────────────────────────────────────── */}
+        {/* ── Top bar ───────────────────────────────────────────────────── */}
         <div
           className="flex items-center justify-between px-6 py-3 shrink-0"
           style={{
@@ -129,8 +139,21 @@ export default function GameScreen({
           />
         </div>
 
-        {/* ── Main area ───────────────────────────────────────────────────── */}
+        {/* ── Main area (3-column) ──────────────────────────────────────── */}
         <div className="flex flex-1 min-h-0">
+          {/* Left sidebar — Teams */}
+          {displayConfig?.showTeamList && (
+            <div
+              className="flex flex-col shrink-0 w-72 border-r"
+              style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+              <TeamList
+                teams={teams}
+                currentTeamId={gameState?.currentTeamId}
+              />
+            </div>
+          )}
+
+          {/* Center — Question & Options */}
           <div className="flex flex-col flex-1 min-w-0 items-center justify-center gap-6 px-8 py-6">
             <QuestionCard
               question={gameState?.currentQuestion}
@@ -147,31 +170,20 @@ export default function GameScreen({
             />
           </div>
 
-          <div
-            className="flex flex-col shrink-0 w-72 border-l"
-            style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
-            {displayConfig?.showPrizeLadder && (
-              <div className="flex-1 min-h-0">
-                <PrizeLadder
-                  prizeStructure={prizeStructure}
-                  currentQuestionNumber={gameState?.currentQuestionNumber}
-                />
-              </div>
-            )}
-            {displayConfig?.showTeamList && (
-              <div
-                className="shrink-0 border-t"
-                style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
-                <TeamList
-                  teams={teams}
-                  currentTeamId={gameState?.currentTeamId}
-                />
-              </div>
-            )}
-          </div>
+          {/* Right sidebar — Prize Ladder */}
+          {displayConfig?.showPrizeLadder && (
+            <div
+              className="flex flex-col shrink-0 w-72 border-l"
+              style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+              <PrizeLadder
+                prizeStructure={prizeStructure}
+                currentQuestionNumber={gameState?.currentQuestionNumber}
+              />
+            </div>
+          )}
         </div>
 
-        {/* ── Overlays ─────────────────────────────────────────────────────── */}
+        {/* ── Overlays ──────────────────────────────────────────────────── */}
         <AnimatePresence>
           {overlay === 'phoneAFriend' && (
             <PhoneAFriendOverlay

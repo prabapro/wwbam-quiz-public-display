@@ -18,7 +18,7 @@ import { motion, AnimatePresence } from 'framer-motion';
  *   remaining <= 0      → expired
  *
  * @param {number|null} startedAt       - Unix ms timestamp from Firebase, or null
- * @param {number}      durationSeconds - Total call duration (from config)
+ * @param {number}      durationSeconds - Total call duration in seconds (from config)
  */
 function useTimestampCountdown(startedAt, durationSeconds) {
   const computeRemaining = () => {
@@ -204,27 +204,32 @@ function TimerDisplay({ startedAt, durationSeconds }) {
  * PhoneAFriendOverlay
  *
  * Semi-transparent overlay shown during a Phone-a-Friend call.
- * The question and options remain visible behind it (rendered in GameScreen)
- * so participants can read them out without this overlay duplicating them.
+ * The question and options remain visible behind it (rendered in GameScreen).
  *
- * Only the timer is shown — anchored to the right side so it doesn't
- * obscure the question card on the left.
+ * The timer is centered in the full overlay area. With the 3-column layout
+ * in GameScreen (TeamList | content | PrizeLadder), centering the overlay
+ * naturally puts the timer over the question/options area — the most visible
+ * spot on screen.
+ *
+ * NaN fix: previously this component destructured `durationSeconds` but
+ * GameScreen was passing `timerDuration`. Prop is now `timerDuration` to
+ * match what GameScreen passes, and forwarded to TimerDisplay as `durationSeconds`.
  *
  * @param {{
- *   startedAt:       number|null, - Unix ms timestamp from Firebase, null if not started
- *   durationSeconds: number,      - Call duration in seconds (from config)
+ *   startedAt:     number|null, - Unix ms timestamp from Firebase, null if not started
+ *   timerDuration: number,      - Call duration in seconds (from config)
  * }} props
  */
-export default function PhoneAFriendOverlay({ startedAt, durationSeconds }) {
+export default function PhoneAFriendOverlay({ startedAt, timerDuration }) {
   return (
     <motion.div
-      className="absolute inset-0 z-50 flex items-start justify-center pt-50 pr-72"
+      className="absolute inset-0 z-50 flex items-start justify-center pt-[18%]"
       style={{ background: 'rgba(10,10,46,0.20)' }}
       variants={backdropVariants}
       initial="hidden"
       animate="visible"
       exit="exit">
-      <TimerDisplay startedAt={startedAt} durationSeconds={durationSeconds} />
+      <TimerDisplay startedAt={startedAt} durationSeconds={timerDuration} />
     </motion.div>
   );
 }
