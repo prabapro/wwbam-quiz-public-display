@@ -1,6 +1,7 @@
 // src/components/topbar/LifelineIndicator.jsx
 
 import { motion } from 'framer-motion';
+import WwbamShape from '@components/ui/WwbamShape';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -19,40 +20,43 @@ const LIFELINES = [
   },
 ];
 
-// ── Helpers ────────────────────────────────────────────────────────────────────
-
-/**
- * Derives the visual state for a single lifeline.
- * @returns {'active'|'available'|'used'}
- */
-function deriveState(lifeline, lifelinesAvailable, activeLifeline) {
-  if (activeLifeline === lifeline.activeKey) return 'active';
-  if (lifelinesAvailable?.[lifeline.key] === true) return 'available';
-  return 'used';
-}
-
-/** Human-readable label for each state. */
 const STATE_LABELS = {
   active: 'In Use',
   available: 'Available',
   used: 'Used',
 };
 
+const STATE_LABEL_COLORS = {
+  active: 'var(--c-gold)',
+  available: 'var(--c-text-dim)',
+  used: 'var(--c-text-muted)',
+};
+
+// WwbamShape state mapping: lifeline states → shape states
+const SHAPE_STATE = {
+  active: 'selected', // amber shimmer
+  available: 'default', // blue shimmer
+  used: 'dimmed', // near-invisible
+};
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
+
+function deriveState(lifeline, lifelinesAvailable, activeLifeline) {
+  if (activeLifeline === lifeline.activeKey) return 'active';
+  if (lifelinesAvailable?.[lifeline.key] === true) return 'available';
+  return 'used';
+}
+
 // ── Component ──────────────────────────────────────────────────────────────────
 
 /**
  * LifelineIndicator
  *
- * Two WWBAM-style chamfered hexagon cards displayed in the GameScreen top bar,
- * one per lifeline. Each card shows the lifeline's icon, name, and live status.
+ * Two WWBAM-style shaped cards in the GameScreen top bar — one per lifeline.
+ * Each shows the lifeline icon, name, and live availability status.
  *
- * State → visual treatment:
- *   available — blue border, dark navy fill (default)
- *   active    — amber border, dark amber fill, pulsing ring on icon
- *   used      — very dim border, full opacity reduced to 35%
- *
- * State is driven by CSS modifier classes on .wwbam-hex-border that override
- * the --hex-border-color and --hex-fill tokens (see src/styles/components.css).
+ * Shape rendering and animated gradient border are handled by <WwbamShape>.
+ * State (available / active / used) maps to a WwbamShape state variant.
  *
  * @param {{
  *   lifelinesAvailable: { phoneAFriend: boolean, fiftyFifty: boolean } | null,
@@ -67,49 +71,52 @@ export default function LifelineIndicator({
     <div className="flex items-stretch gap-3 shrink-0">
       {LIFELINES.map((lifeline) => {
         const state = deriveState(lifeline, lifelinesAvailable, activeLifeline);
+        const shapeState = SHAPE_STATE[state];
         const isActive = state === 'active';
 
         return (
           <motion.div
             key={lifeline.key}
-            className={`wwbam-hex-border wwbam-lifeline-${state}`}
-            style={{ '--hex-cut': '14px' }}
-            animate={{ opacity: state === 'used' ? 0.35 : 1 }}
+            className="flex"
+            animate={{ opacity: state === 'used' ? 0.38 : 1 }}
             transition={{ duration: 0.3 }}>
-            <div className="wwbam-hex-fill flex items-center gap-4 px-6 py-2">
-              {/* Icon with pulse ring when active */}
-              <div className="relative shrink-0 flex items-center justify-center w-9 h-9">
-                <span className="text-2xl leading-none">{lifeline.icon}</span>
-                {isActive && (
-                  <motion.span
-                    className="absolute inset-0 rounded-full"
-                    style={{ background: 'rgba(232, 146, 10, 0.3)' }}
-                    animate={{ scale: [1, 1.8], opacity: [0.6, 0] }}
-                    transition={{
-                      duration: 1.1,
-                      repeat: Infinity,
-                      ease: 'easeOut',
-                    }}
-                  />
-                )}
-              </div>
+            <WwbamShape
+              state={shapeState}
+              pointExt={10}
+              cornerR={10}
+              strokeWidth={3}
+              style={{ minHeight: '64px' }}>
+              <div className="flex items-center gap-3 px-5 py-2">
+                {/* Icon with amber pulse ring when active */}
+                <div className="relative shrink-0 flex items-center justify-center w-9 h-9">
+                  <span className="text-2xl leading-none select-none">
+                    {lifeline.icon}
+                  </span>
+                  {isActive && (
+                    <motion.span
+                      className="absolute inset-0 rounded-full pointer-events-none"
+                      style={{ background: 'rgba(232, 146, 10, 0.2)' }}
+                      animate={{ scale: [1, 1.9], opacity: [0.6, 0] }}
+                      transition={{
+                        duration: 1.2,
+                        repeat: Infinity,
+                        ease: 'easeOut',
+                      }}
+                    />
+                  )}
+                </div>
 
-              {/* Label + status */}
-              <div className="flex flex-col">
-                <span className="wwbam-lifeline-label">{lifeline.label}</span>
-                <span
-                  className="wwbam-lifeline-status"
-                  style={{
-                    color: isActive
-                      ? 'var(--c-gold)'
-                      : state === 'used'
-                        ? 'var(--c-text-muted)'
-                        : 'var(--c-text-dim)',
-                  }}>
-                  {STATE_LABELS[state]}
-                </span>
+                {/* Label + status */}
+                <div className="flex flex-col">
+                  <span className="wwbam-lifeline-label">{lifeline.label}</span>
+                  <span
+                    className="wwbam-lifeline-status"
+                    style={{ color: STATE_LABEL_COLORS[state] }}>
+                    {STATE_LABELS[state]}
+                  </span>
+                </div>
               </div>
-            </div>
+            </WwbamShape>
           </motion.div>
         );
       })}

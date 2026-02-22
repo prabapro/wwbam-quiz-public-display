@@ -1,69 +1,33 @@
 /* src/styles/tokens.css */
 /* WWBAM Public Display — Design Tokens
-   Single source of truth for every colour, shape, font, and timing value.
-   All component-level CSS classes consume these tokens.
-   Override locally via inline style={{ '--token': 'value' }} as needed. */
+   Single source of truth for every colour, font, and timing value.
+   Shape geometry and gradient colours live in WwbamShape.jsx STATE_CONFIG.
+   All other component classes consume these tokens. */
 
 :root {
   /* ── Typography ─────────────────────────────────────────────────────────── */
-  /* Barlow Semi Condensed — body text, question, options, labels             */
-  /* Barlow Condensed      — secondary / condensed UI labels                  */
-  /* Bebas Neue            — prize amounts, question numbers, numeric displays */
   --font-body: 'Barlow Semi Condensed', system-ui, sans-serif;
   --font-condensed: 'Barlow Condensed', system-ui, sans-serif;
   --font-numeric: 'Bebas Neue', system-ui, sans-serif;
 
-  /* ── Shape: chamfered octagon ───────────────────────────────────────────── */
-  /* Controls depth of the 45° corner cut on all 4 corners.                  */
-  /* Override per context: style={{ '--hex-cut': '12px' }}                   */
-  --hex-cut: 16px;
-
   /* ── Screen background ──────────────────────────────────────────────────── */
   --c-screen-bg: #05051c;
-
-  /* ── Shape fill ─────────────────────────────────────────────────────────── */
-  --c-shape-bg: linear-gradient(175deg, #0f2245 0%, #080f20 100%);
-  --c-shape-flat: #0a1628; /* solid fallback */
-
-  /* ── Border / Glow ──────────────────────────────────────────────────────── */
-  --c-border: #3a72d4;
-  --c-border-bright: #6096f8;
-  --c-border-glow: rgba(58, 114, 212, 0.45);
-
-  /* Overridden by state modifier classes (active / used) */
-  --hex-border-color: var(--c-border);
-
-  /* ── Option states ───────────────────────────────────────────────────────── */
-  --c-selected-fill: linear-gradient(175deg, #7c3a00 0%, #3a1800 100%);
-  --c-selected-border: #e8920a;
-  --c-selected-glow: rgba(232, 146, 10, 0.45);
-
-  --c-correct-fill: #4db523;
-  --c-correct-glow: rgba(77, 181, 35, 0.5);
-
-  --c-wrong-fill: #b91c1c;
-  --c-wrong-glow: rgba(185, 28, 28, 0.45);
-
-  --c-dimmed-fill: linear-gradient(175deg, #06111e 0%, #040a14 100%);
-  --c-dimmed-border: rgba(58, 114, 212, 0.12);
 
   /* ── Gold / Prize ────────────────────────────────────────────────────────── */
   --c-gold: #f0b429;
   --c-gold-dark: #e8920a;
-  --c-gold-glow: rgba(240, 180, 41, 0.35);
 
-  /* ── Ladder highlight ────────────────────────────────────────────────────── */
+  /* ── Ladder highlight (current question row) ─────────────────────────────── */
   --c-ladder-hl: #e8920a;
   --c-ladder-hl-text: #ffffff;
 
   /* ── Text ────────────────────────────────────────────────────────────────── */
   --c-text: #ffffff;
-  --c-text-dim: rgba(255, 255, 255, 0.5);
-  --c-text-muted: rgba(255, 255, 255, 0.28);
+  --c-text-dim: rgba(255, 255, 255, 0.55);
+  --c-text-muted: rgba(255, 255, 255, 0.3);
   --c-diamond: #5a92f4;
 
   /* ── Transitions ─────────────────────────────────────────────────────────── */
-  --t-state: background 0.4s ease, opacity 0.4s ease;
   --t-fast: 0.2s ease;
   --t-medium: 0.4s ease;
 }
