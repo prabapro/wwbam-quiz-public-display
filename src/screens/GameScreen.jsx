@@ -11,6 +11,7 @@ import TeamList from '@components/sidebar/TeamList';
 import TeamAnnouncement from '@components/game/TeamAnnouncement';
 import TeamResult from '@components/game/TeamResult';
 import PhoneAFriendOverlay from '@components/game/PhoneAFriendOverlay';
+import BetweenQuestionsLogo from '@components/game/BetweenQuestionsLogo';
 
 // ── Animation variants ─────────────────────────────────────────────────────────
 
@@ -35,8 +36,12 @@ const pauseOverlayVariants = {
  *   1. phoneAFriend  — paused for a phone-a-friend call (beats generic pause)
  *   2. pause         — generic game pause
  *   3. teamResult    — team just finished (eliminated or completed)
- *   4. announcement  — new team is up, no question loaded yet
+ *   4. announcement  — new team is up (currentQuestionNumber === 0)
  *   5. null          — normal gameplay, no overlay
+ *
+ * Note: the "between questions" blank state (questionVisible === false, mid-game)
+ * is NOT an overlay — it's handled inside the center column via BetweenQuestionsLogo
+ * so the sidebars remain visible.
  *
  * @returns {'phoneAFriend'|'pause'|'teamResult'|'announcement'|null}
  */
@@ -69,14 +74,14 @@ function deriveOverlay(gameState, currentTeam) {
  * The main gameplay display. Shown when gameStatus is active/paused/completed.
  *
  * Layout (3-column):
- *   Left sidebar  — TeamList      (w-60, hidden when showTeamList is false)
+ *   Left sidebar  — TeamList      (w-72, hidden when showTeamList is false)
  *   Center        — QuestionCard + OptionGrid (flex-1, always centered)
  *   Right sidebar — PrizeLadder   (w-72, hidden when showPrizeLadder is false)
  *
- * Having equal-width sidebars on both sides keeps the center column
- * visually symmetric. If one sidebar is hidden, the center still fills
- * the remaining space but is no longer optically centered — acceptable
- * edge case for config-driven hide states.
+ * Center column behaviour:
+ *   - overlay is active              → question/options hidden behind overlay
+ *   - questionVisible === false      → BetweenQuestionsLogo shown instead
+ *   - questionVisible === true       → QuestionCard + OptionGrid shown normally
  *
  * Overlay state machine (see deriveOverlay):
  *   phoneAFriend  → question recap + synced countdown timer
@@ -111,6 +116,11 @@ export default function GameScreen({
 
   const overlay = deriveOverlay(gameState, currentTeam);
   const queuePosition = currentTeam ? playQueue.indexOf(currentTeam.id) + 1 : 0;
+
+  // Show the spinning logo whenever no overlay is active and the question
+  // isn't visible yet — covers the gap between questions for the same team.
+  const showBetweenQuestionsLogo =
+    overlay === null && !gameState?.questionVisible;
 
   return (
     <ScreenBackground>
@@ -153,21 +163,35 @@ export default function GameScreen({
             </div>
           )}
 
-          {/* Center — Question & Options */}
+          {/* Center — Question, Options, or Between-Questions Logo */}
           <div className="flex flex-col flex-1 min-w-0 items-center justify-center gap-6 px-8 py-6">
-            <QuestionCard
-              question={gameState?.currentQuestion}
-              questionVisible={gameState?.questionVisible}
-              currentQuestionNumber={gameState?.currentQuestionNumber}
-            />
-            <OptionGrid
-              options={gameState?.currentQuestion?.options}
-              optionsVisible={gameState?.optionsVisible}
-              selectedOption={gameState?.selectedOption}
-              correctOption={gameState?.correctOption}
-              answerRevealed={gameState?.answerRevealed}
-              activeLifeline={gameState?.activeLifeline}
-            />
+            <AnimatePresence mode="wait">
+              {showBetweenQuestionsLogo ? (
+                <BetweenQuestionsLogo key="between" />
+              ) : (
+                <motion.div
+                  key="gameplay"
+                  className="w-full flex flex-col items-center gap-6"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.4 }}>
+                  <QuestionCard
+                    question={gameState?.currentQuestion}
+                    questionVisible={gameState?.questionVisible}
+                    currentQuestionNumber={gameState?.currentQuestionNumber}
+                  />
+                  <OptionGrid
+                    options={gameState?.currentQuestion?.options}
+                    optionsVisible={gameState?.optionsVisible}
+                    selectedOption={gameState?.selectedOption}
+                    correctOption={gameState?.correctOption}
+                    answerRevealed={gameState?.answerRevealed}
+                    activeLifeline={gameState?.activeLifeline}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Right sidebar — Prize Ladder */}
@@ -190,9 +214,6 @@ export default function GameScreen({
               key="phone-a-friend"
               startedAt={gameState?.lifelineTimerStartedAt ?? null}
               timerDuration={timerDuration}
-              currentTeam={currentTeam}
-              currentQuestion={gameState?.currentQuestion}
-              currentQuestionNumber={gameState?.currentQuestionNumber}
             />
           )}
 
