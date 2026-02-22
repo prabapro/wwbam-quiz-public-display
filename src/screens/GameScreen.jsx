@@ -49,9 +49,6 @@ const pauseOverlayVariants = {
  *   4. announcement  — new team is up (currentQuestionNumber === 0)
  *   5. null          — normal gameplay, no overlay
  *
- * Note: 'teamResult' is the *intent* — the card only renders after
- * readyResultTeamId matches, enforcing the delay in GameScreen.
- *
  * @returns {'phoneAFriend'|'pause'|'teamResult'|'announcement'|null}
  */
 function deriveOverlay(gameState, currentTeam) {
@@ -87,17 +84,27 @@ function deriveOverlay(gameState, currentTeam) {
  *   Center        — QuestionCard + OptionGrid (flex-1, always centered)
  *   Right sidebar — PrizeLadder   (w-72, hidden when showPrizeLadder is false)
  *
- * Center column behaviour:
- *   - overlay active             → question/options visible behind overlay
- *   - questionVisible === false  → BetweenQuestionsLogo shown instead
- *   - questionVisible === true   → QuestionCard + OptionGrid shown normally
- *
  * teamResult delay:
- *   deriveOverlay returns 'teamResult' immediately when a team finishes, but
- *   the card only renders once readyResultTeamId matches the current team key.
- *   Both the immediate (game-over) and delayed (answer-reveal) paths go through
- *   setTimeout — delay 0 vs TEAM_RESULT_DELAY_MS — so no setState is ever
- *   called synchronously in the effect body, satisfying the lint rule.
+ *   deriveOverlay returns 'teamResult' immediately, but the card only renders
+ *   after TEAM_RESULT_DELAY_MS via a `teamResultUnlocked` boolean.
+ *
+ *   Previous approaches (readyResultTeamId) were fragile because:
+ *   - For wrong-answer eliminations, completeGame() fires automatically right
+ *     after eliminateTeam(), causing a brief intermediate render where
+ *     deriveOverlay returns null (currentTeamId cleared, gameStatus not yet
+ *     'completed'). This cancelled the in-flight timer via the effect cleanup.
+ *     When 'teamResult' resumed, readyResultTeamId already matched, so the
+ *     card showed immediately.
+ *
+ *   Current approach:
+ *   - `teamResultUnlocked` is a plain boolean, always reset to false when
+ *     overlay leaves 'teamResult', and unlocked after TEAM_RESULT_DELAY_MS
+ *     when it enters 'teamResult'.
+ *   - Both effect branches use setTimeout so setState is never synchronous
+ *     (satisfies react-hooks/set-state-in-effect lint rule).
+ *   - If overlay briefly flickers null → 'teamResult' → null → 'teamResult'
+ *     (race condition during completeGame), the reset (0 ms) and new delay
+ *     timer are both non-blocking and independently correct.
  *
  * @param {{
  *   gameState:      object,
@@ -126,31 +133,26 @@ export default function GameScreen({
   const queuePosition = currentTeam ? playQueue.indexOf(currentTeam.id) + 1 : 0;
 
   // ── Delayed teamResult ─────────────────────────────────────────────────────
-  // Track which team's result card is ready to show, keyed by team ID.
-  // The card renders only when this ID matches the current result team.
-  // When overlay leaves 'teamResult' the outer condition gates rendering
-  // naturally — no synchronous setState reset needed in the effect.
-  const [readyResultTeamId, setReadyResultTeamId] = useState(null);
-
-  // 'game' key is used when resultTeam is null (game-level completion)
-  const resultTeamKey = resultTeam?.id ?? 'game';
-
-  const showTeamResult =
-    overlay === 'teamResult' && readyResultTeamId === resultTeamKey;
+  // Simple boolean: true only after the delay has elapsed since entering
+  // the 'teamResult' overlay state. Resets (via setTimeout 0) when overlay
+  // leaves 'teamResult', ready for the next team.
+  const [teamResultUnlocked, setTeamResultUnlocked] = useState(false);
+  const showTeamResult = overlay === 'teamResult' && teamResultUnlocked;
 
   useEffect(() => {
-    if (overlay !== 'teamResult') return;
-
-    // Both paths go through setTimeout so setState is never called
-    // synchronously in the effect body (satisfies react-hooks/set-state-in-effect).
-    // Game-level completion: delay 0 (no answer was just revealed to show).
-    // Answer-reveal: TEAM_RESULT_DELAY_MS so audience sees green/red first.
-    const delay =
-      gameState?.gameStatus === 'completed' ? 0 : TEAM_RESULT_DELAY_MS;
-
-    const timer = setTimeout(() => setReadyResultTeamId(resultTeamKey), delay);
-    return () => clearTimeout(timer);
-  }, [overlay, gameState?.gameStatus, resultTeamKey]);
+    if (overlay === 'teamResult') {
+      // Unlock after delay — setTimeout keeps this out of the effect body
+      const timer = setTimeout(
+        () => setTeamResultUnlocked(true),
+        TEAM_RESULT_DELAY_MS,
+      );
+      return () => clearTimeout(timer);
+    } else {
+      // Reset for next team — setTimeout 0 is still async, satisfies lint rule
+      const timer = setTimeout(() => setTeamResultUnlocked(false), 0);
+      return () => clearTimeout(timer);
+    }
+  }, [overlay]);
 
   // ── Between-questions logo ─────────────────────────────────────────────────
   const showBetweenQuestionsLogo =
@@ -274,7 +276,6 @@ export default function GameScreen({
             </motion.div>
           )}
 
-          {/* Renders only after per-team delay fires via setTimeout */}
           {overlay === 'teamResult' && showTeamResult && (
             <TeamResult
               key="team-result"
