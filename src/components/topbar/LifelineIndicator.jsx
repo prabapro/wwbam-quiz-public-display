@@ -1,6 +1,7 @@
 // src/components/topbar/LifelineIndicator.jsx
 
 import { motion } from 'framer-motion';
+import { Phone, Scissors } from 'lucide-react';
 import WwbamShape from '@components/ui/WwbamShape';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -10,13 +11,13 @@ const LIFELINES = [
     key: 'phoneAFriend',
     activeKey: 'phone-a-friend',
     label: 'Phone a Friend',
-    icon: '📞',
+    Icon: Phone,
   },
   {
     key: 'fiftyFifty',
     activeKey: 'fifty-fifty',
     label: '50 / 50',
-    icon: '✂️',
+    Icon: Scissors,
   },
 ];
 
@@ -34,10 +35,17 @@ const STATUS_LABELS = {
   used: 'Used',
 };
 
-/** CSS colour class for the status sub-label (token-driven, not hardcoded). */
+/** Icon colour per lifeline state — token-driven. */
+const ICON_COLOR = {
+  active: 'var(--c-gold)',
+  available: 'var(--c-gold)',
+  used: 'var(--c-used-text)',
+};
+
+/** Status sub-label colour per lifeline state — token-driven. */
 const STATUS_LABEL_COLOR = {
   active: 'var(--c-gold)',
-  available: 'var(--c-text-dim)',
+  available: 'var(--c-gold)',
   used: 'var(--c-used-subtext)',
 };
 
@@ -62,10 +70,9 @@ function deriveState(lifeline, lifelinesAvailable, activeLifeline) {
  *   active    — amber/gold WwbamShape stroke, pulse ring on icon, "In Use" label
  *   available — blue WwbamShape stroke, full-brightness text
  *   used      — slate WwbamShape stroke (visible but clearly spent), muted text,
- *               small ✕ overlay on icon — no opacity hack on the wrapper
+ *               small ✕ badge on icon — no opacity hack on the wrapper
  *
- * Text colours are fully token-driven via CSS custom properties and .wwbam-used-*
- * classes defined in components.css. No hardcoded colour values in this file.
+ * All colours are token-driven via CSS custom properties. No hardcoded values.
  *
  * @param {{
  *   lifelinesAvailable: { phoneAFriend: boolean, fiftyFifty: boolean } | null,
@@ -85,12 +92,12 @@ export default function LifelineIndicator({
         const shapeState = SHAPE_STATE[state];
         const isActive = state === 'active';
         const isUsed = state === 'used';
+        const { Icon } = lifeline;
 
         return (
           <motion.div
             key={lifeline.key}
             className="flex"
-            // Transition in/out smoothly when state changes — no opacity hack
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3 }}>
             <WwbamShape
@@ -102,14 +109,11 @@ export default function LifelineIndicator({
               <div className="flex items-center justify-center gap-3 px-4 py-2 w-full">
                 {/* ── Icon ────────────────────────────────────────────── */}
                 <div className="relative shrink-0 flex items-center justify-center w-9 h-9">
-                  {/* Emoji — muted slightly when used via CSS filter */}
-                  <span
-                    className="text-2xl leading-none select-none"
-                    style={{
-                      filter: isUsed ? 'grayscale(0.7) opacity(0.45)' : 'none',
-                    }}>
-                    {lifeline.icon}
-                  </span>
+                  <Icon
+                    size={22}
+                    strokeWidth={2}
+                    style={{ color: ICON_COLOR[state] }}
+                  />
 
                   {/* Pulse ring — active state only */}
                   {isActive && (

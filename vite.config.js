@@ -53,6 +53,7 @@ export default defineConfig({
           'react-vendor': ['react', 'react-dom'],
           'utils-vendor': ['framer-motion'],
           firebase: ['firebase/app', 'firebase/auth', 'firebase/database'],
+          icons: ['lucide-react'],
         },
       },
     },
