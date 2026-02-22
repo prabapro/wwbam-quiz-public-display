@@ -32,11 +32,10 @@ const STATE_LABEL_COLORS = {
   used: 'var(--c-text-muted)',
 };
 
-// WwbamShape state mapping: lifeline states → shape states
 const SHAPE_STATE = {
-  active: 'selected', // amber shimmer
-  available: 'default', // blue shimmer
-  used: 'dimmed', // near-invisible
+  active: 'selected',
+  available: 'default',
+  used: 'dimmed',
 };
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -52,11 +51,12 @@ function deriveState(lifeline, lifelinesAvailable, activeLifeline) {
 /**
  * LifelineIndicator
  *
- * Two WWBAM-style shaped cards in the GameScreen top bar — one per lifeline.
- * Each shows the lifeline icon, name, and live availability status.
+ * Renders TWO sibling elements — one per lifeline — using `display: contents`
+ * on the wrapper so the PARENT grid in GameScreen directly controls each card's
+ * column placement and width (cols 2 & 3 of the 2fr 1fr 1fr grid).
  *
- * Shape rendering and animated gradient border are handled by <WwbamShape>.
- * State (available / active / used) maps to a WwbamShape state variant.
+ * Each card is `w-full h-full` so it fills its grid cell entirely, keeping
+ * the lifeline shapes perfectly proportioned at exactly 25% screen width each.
  *
  * @param {{
  *   lifelinesAvailable: { phoneAFriend: boolean, fiftyFifty: boolean } | null,
@@ -68,7 +68,9 @@ export default function LifelineIndicator({
   activeLifeline,
 }) {
   return (
-    <div className="flex items-stretch gap-3 shrink-0">
+    // display: contents — this wrapper disappears from layout,
+    // its children become direct children of the parent grid
+    <div style={{ display: 'contents' }}>
       {LIFELINES.map((lifeline) => {
         const state = deriveState(lifeline, lifelinesAvailable, activeLifeline);
         const shapeState = SHAPE_STATE[state];
@@ -81,12 +83,12 @@ export default function LifelineIndicator({
             animate={{ opacity: state === 'used' ? 0.38 : 1 }}
             transition={{ duration: 0.3 }}>
             <WwbamShape
+              size="compact"
               state={shapeState}
-              pointExt={10}
-              cornerR={10}
               strokeWidth={3}
+              className="flex-1"
               style={{ minHeight: '64px' }}>
-              <div className="flex items-center gap-3 px-5 py-2">
+              <div className="flex items-center justify-center gap-3 px-4 py-2 w-full">
                 {/* Icon with amber pulse ring when active */}
                 <div className="relative shrink-0 flex items-center justify-center w-9 h-9">
                   <span className="text-2xl leading-none select-none">

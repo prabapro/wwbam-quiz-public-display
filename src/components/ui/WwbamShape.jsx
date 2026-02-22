@@ -5,122 +5,98 @@ import { useId } from 'react';
 /**
  * WwbamShape
  *
- * Renders the authentic WWBAM TV show shape using an SVG path derived
- * directly from the original show SVG asset.
+ * Renders the authentic WWBAM TV show shape — a rectangle with smooth
+ * rounded corners and outward pointed ends on left and right, with whisker
+ * lines extending beyond each tip, and an animated gradient stroke.
  *
- * ── SHAPE ANATOMY ───────────────────────────────────────────────────────────
+ * ── SIZE PRESETS ─────────────────────────────────────────────────────────────
  *
- *         whisker ◄──────── flat top edge ────────► whisker
- *     ────────────╮                               ╭────────────
- *                  ╲                             ╱
- *    ◄── tip ───────◄  (left pointed side)       (right pointed side)  ► tip ─────►
- *                  ╱                             ╲
- *     ────────────╯                               ╰────────────
+ *   wide    — full-width bars: TeamInfoBar, QuestionCard
+ *             generous point extension, long whiskers
  *
- * Each pointed side is made of TWO chained cubic bezier curves:
- *   - Curve 1: from corner → tip  (starts tangentially horizontal at corner)
- *   - Curve 2: from tip → corner  (also tangentially horizontal at tip)
+ *   medium  — half-width elements: option buttons
+ *             moderate point extension
  *
- * This gives:
- *   - Soft rounded-feel at corners (tangent is flat → no sharp angle)
- *   - Clean smooth point at the tip (both curves arrive/leave horizontally)
+ *   compact — small elements: lifeline cards, prize badge, small labels
+ *             reduced extension so tips don't dominate the narrow width
  *
- * Control point ratios are taken directly from the original SVG file:
+ * Use the `size` prop. Override individual geometry via raw props if needed.
+ *
+ * ── SHAPE GEOMETRY ───────────────────────────────────────────────────────────
+ *
+ * Each pointed side uses two chained cubic bezier curves:
+ *   Curve 1: corner → tip  (tangent is horizontal at corner)
+ *   Curve 2: tip → corner  (tangent is horizontal at tip)
+ *
+ * Control point ratios extracted from the original WWBAM SVG asset:
  *   CP1_RATIO = 23.80302 / 62.53058 ≈ 0.381
  *   CP2_RATIO = 36.45760 / 62.53058 ≈ 0.583
  *
- * ── SVG TECHNIQUE ───────────────────────────────────────────────────────────
+ * ── SVG TECHNIQUE ────────────────────────────────────────────────────────────
  *
- * The SVG is absolutely positioned over the container (position: absolute).
- * overflow: visible allows whiskers and stroke to render outside bounds.
- * preserveAspectRatio="none" stretches the path to any container width.
- * vector-effect="non-scaling-stroke" keeps stroke visually consistent.
+ * - preserveAspectRatio="none"     → stretches to any container width
+ * - vector-effect="non-scaling-stroke" → keeps stroke visually uniform
+ * - SMIL animateTransform          → seamless gradient flow loop
+ * - overflow: visible              → whiskers render outside SVG bounds
  *
- * The animated gradient uses SMIL animateTransform to translate the gradient
- * by one full pattern width per loop — creating a seamless flowing shimmer.
+ * ── USAGE ─────────────────────────────────────────────────────────────────────
  *
- * ── USAGE ────────────────────────────────────────────────────────────────────
+ *   // Named size preset (recommended)
+ *   <WwbamShape size="wide" state="default">...</WwbamShape>
+ *   <WwbamShape size="medium" state="selected">...</WwbamShape>
+ *   <WwbamShape size="compact" state="default">...</WwbamShape>
  *
- *   <WwbamShape state="default">
- *     <div className="flex items-center px-6 py-3">content</div>
- *   </WwbamShape>
+ *   // Custom geometry override
+ *   <WwbamShape pointExtRatio={0.5} whiskerRatio={0.4}>...</WwbamShape>
  *
- * ── STATES ───────────────────────────────────────────────────────────────────
- *   default   — blue shimmer  (question card, option buttons, top bar)
- *   selected  — amber shimmer (option chosen by team)
- *   correct   — green static  (correct answer reveal)
- *   wrong     — red static    (wrong answer)
- *   dimmed    — near invisible (other options after reveal)
+ * ── STATES ────────────────────────────────────────────────────────────────────
+ *   default   — blue shimmer
+ *   selected  — amber shimmer
+ *   correct   — green shimmer
+ *   wrong     — red shimmer
+ *   dimmed    — near invisible
  *
  * @param {{
- *   children:      React.ReactNode,
- *   state?:        'default'|'selected'|'correct'|'wrong'|'dimmed',
- *   strokeWidth?:  number,  — visual stroke thickness in px (default 3)
- *   className?:    string,
- *   style?:        object,
+ *   children?:       React.ReactNode,
+ *   size?:           'wide' | 'medium' | 'compact',
+ *   state?:          'default' | 'selected' | 'correct' | 'wrong' | 'dimmed',
+ *   strokeWidth?:    number,
+ *   pointExtRatio?:  number,  — point extension as ratio of SVG_H (overrides preset)
+ *   whiskerRatio?:   number,  — whisker length as ratio of pointExt (overrides preset)
+ *   className?:      string,
+ *   style?:          object,
  * }} props
  */
 
-// ── Shape constants from original WWBAM SVG ────────────────────────────────
+// ── Control point ratios from original WWBAM SVG ───────────────────────────
 
-// Control point ratios extracted from the original SVG path data
 const CP1_RATIO = 23.80302 / 62.53058; // ≈ 0.381
 const CP2_RATIO = 36.4576 / 62.53058; // ≈ 0.583
 
-// Internal SVG coordinate space
-// H is fixed; W is nominal (preserveAspectRatio="none" stretches to container)
-const SVG_H = 100; // height units
-const SVG_W = 600; // nominal width (scales to container)
-const POINT_EXT = SVG_H * 0.866; // point extension ≈ P/H ratio from original SVG
-const WHISKER_LEN = POINT_EXT * 0.73; // whisker ratio from original SVG
-const MID = SVG_H / 2;
+// ── Size presets ───────────────────────────────────────────────────────────
+// pointExtRatio: how far the tip extends, as a multiple of SVG_H
+// whiskerRatio:  whisker length as a fraction of pointExt
 
-// Pre-computed control point offsets
-const CP1 = CP1_RATIO * POINT_EXT; // ≈ 33.1
-const CP2 = CP2_RATIO * POINT_EXT; // ≈ 50.5
-
-// ── SVG paths ─────────────────────────────────────────────────────────────
-
-/**
- * Main filled shape path.
- * Goes: top-right → top-left → left-tip → bottom-left → bottom-right → right-tip → close
- *
- * Starts at top-right corner (W, 0) and traces counter-clockwise.
- * Left side uses two chained cubics via the 'C' command.
- * Right side mirrors the left.
- */
-const SHAPE_PATH = [
-  `M ${SVG_W} 0`,
-  `L 0 0`,
-  // Left side: top-left corner → left tip → bottom-left corner
-  `C ${-CP1} 0, ${-CP2} ${MID}, ${-POINT_EXT} ${MID}`,
-  `C ${-CP2} ${MID}, ${-CP1} ${SVG_H}, 0 ${SVG_H}`,
-  `L ${SVG_W} ${SVG_H}`,
-  // Right side: bottom-right corner → right tip → top-right corner
-  `C ${SVG_W + CP1} ${SVG_H}, ${SVG_W + CP2} ${MID}, ${SVG_W + POINT_EXT} ${MID}`,
-  `C ${SVG_W + CP2} ${MID}, ${SVG_W + CP1} 0, ${SVG_W} 0`,
-  'Z',
-].join(' ');
-
-/** Whisker lines extending beyond each tip */
-const LEFT_WHISKER = `M ${-POINT_EXT} ${MID} L ${-POINT_EXT - WHISKER_LEN} ${MID}`;
-const RIGHT_WHISKER = `M ${SVG_W + POINT_EXT} ${MID} L ${SVG_W + POINT_EXT + WHISKER_LEN} ${MID}`;
-
-// ── ViewBox (includes stroke and whisker overflow) ─────────────────────────
-
-const PADDING = POINT_EXT + WHISKER_LEN + 4; // extra 4 for stroke overflow
-const VIEWBOX = {
-  x: -PADDING,
-  y: -4,
-  w: SVG_W + PADDING * 2,
-  h: SVG_H + 8,
+const SIZE_PRESETS = {
+  wide: {
+    pointExtRatio: 0.86, // generous — tips are bold and prominent
+    whiskerRatio: 0.73, // long whiskers extend well beyond tip
+  },
+  medium: {
+    pointExtRatio: 0.55, // moderate — balanced for half-width elements
+    whiskerRatio: 0.55,
+  },
+  compact: {
+    pointExtRatio: 0.32, // subtle — tips visible but don't dominate
+    whiskerRatio: 0.4,
+  },
 };
 
-// Content horizontal padding as % of rendered width so children clear the tips
-const CONTENT_PAD_PCT = (
-  ((POINT_EXT + WHISKER_LEN + 4) / VIEWBOX.w) *
-  100
-).toFixed(2);
+// ── Internal SVG coordinate space ─────────────────────────────────────────
+
+const SVG_H = 100; // height units (width is nominal; scaled by preserveAspectRatio)
+const SVG_W = 600; // nominal width
+const MID = SVG_H / 2;
 
 // ── State configurations ───────────────────────────────────────────────────
 
@@ -147,23 +123,74 @@ const STATE_CONFIG = {
   },
   dimmed: {
     fill: '#030508',
-    stops: ['#1a2030', '#1a2030', '#1a2030', '#1a2030', '#1a2030'],
-    dur: '999s',
+    stops: ['#141a24', '#1e2738', '#141a24', '#1e2738', '#141a24'],
+    dur: '8s',
   },
 };
+
+// ── Path builder ───────────────────────────────────────────────────────────
+
+function buildPaths(pointExt, whiskerLen) {
+  const CP1 = CP1_RATIO * pointExt;
+  const CP2 = CP2_RATIO * pointExt;
+
+  // Main shape: flat top/bottom, smooth cubic bezier pointed sides
+  const shape = [
+    `M ${SVG_W} 0`,
+    `L 0 0`,
+    // Left side: top-left → left tip → bottom-left
+    `C ${-CP1} 0, ${-CP2} ${MID}, ${-pointExt} ${MID}`,
+    `C ${-CP2} ${MID}, ${-CP1} ${SVG_H}, 0 ${SVG_H}`,
+    `L ${SVG_W} ${SVG_H}`,
+    // Right side: bottom-right → right tip → top-right
+    `C ${SVG_W + CP1} ${SVG_H}, ${SVG_W + CP2} ${MID}, ${SVG_W + pointExt} ${MID}`,
+    `C ${SVG_W + CP2} ${MID}, ${SVG_W + CP1} 0, ${SVG_W} 0`,
+    'Z',
+  ].join(' ');
+
+  // Whisker lines extending beyond each tip
+  const whiskers = [
+    `M ${-pointExt} ${MID} L ${-pointExt - whiskerLen} ${MID}`,
+    `M ${SVG_W + pointExt} ${MID} L ${SVG_W + pointExt + whiskerLen} ${MID}`,
+  ].join(' ');
+
+  return { shape, whiskers };
+}
 
 // ── Component ──────────────────────────────────────────────────────────────
 
 export default function WwbamShape({
   children,
+  size = 'wide',
   state = 'default',
   strokeWidth = 3,
+  pointExtRatio, // override preset if provided
+  whiskerRatio, // override preset if provided
   className = '',
   style = {},
 }) {
   const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
   const gradId = `wg-${uid}`;
   const cfg = STATE_CONFIG[state] ?? STATE_CONFIG.default;
+
+  // Resolve geometry — prop overrides take priority over preset
+  const preset = SIZE_PRESETS[size] ?? SIZE_PRESETS.wide;
+  const pRatio = pointExtRatio ?? preset.pointExtRatio;
+  const wRatio = whiskerRatio ?? preset.whiskerRatio;
+  const pointExt = SVG_H * pRatio;
+  const whiskerLen = pointExt * wRatio;
+
+  const { shape, whiskers } = buildPaths(pointExt, whiskerLen);
+
+  // ViewBox expands to include stroke overflow + whiskers on both sides
+  const pad = pointExt + whiskerLen + strokeWidth + 2;
+  const vx = -pad;
+  const vy = -(strokeWidth + 1);
+  const vw = SVG_W + pad * 2;
+  const vh = SVG_H + (strokeWidth + 1) * 2;
+
+  // Content padding as % of viewBox width — keeps children clear of tips
+  const padPct = ((pad / vw) * 100).toFixed(2);
 
   const stops = cfg.stops.map((color, i) => ({
     offset: `${(i / (cfg.stops.length - 1)) * 100}%`,
@@ -172,17 +199,16 @@ export default function WwbamShape({
 
   return (
     <div className={`relative flex ${className}`} style={style}>
-      {/* SVG border + fill — absolutely overlaid on the container */}
+      {/* Responsive SVG — absolutely fills container */}
       <svg
         aria-hidden="true"
         className="absolute inset-0 w-full h-full overflow-visible pointer-events-none"
-        viewBox={`${VIEWBOX.x} ${VIEWBOX.y} ${VIEWBOX.w} ${VIEWBOX.h}`}
+        viewBox={`${vx} ${vy} ${vw} ${vh}`}
         preserveAspectRatio="none">
         <defs>
           {/*
-            Gradient spans SVG_W units with spreadMethod="repeat" so it tiles.
-            animateTransform shifts it by SVG_W each cycle → seamless loop.
-            gradientUnits="userSpaceOnUse" anchors coords in SVG space.
+            Gradient spans SVG_W units, tiles via spreadMethod="repeat".
+            SMIL animateTransform shifts by SVG_W per cycle → seamless loop.
           */}
           <linearGradient
             id={gradId}
@@ -206,9 +232,9 @@ export default function WwbamShape({
           </linearGradient>
         </defs>
 
-        {/* Filled shape with neon border */}
+        {/* Filled shape with animated neon border */}
         <path
-          d={SHAPE_PATH}
+          d={shape}
           fill={cfg.fill}
           stroke={`url(#${gradId})`}
           strokeWidth={strokeWidth}
@@ -216,9 +242,9 @@ export default function WwbamShape({
           vectorEffect="non-scaling-stroke"
         />
 
-        {/* Whisker lines — same animated gradient stroke */}
+        {/* Whisker lines */}
         <path
-          d={`${LEFT_WHISKER} ${RIGHT_WHISKER}`}
+          d={whiskers}
           fill="none"
           stroke={`url(#${gradId})`}
           strokeWidth={strokeWidth}
@@ -227,12 +253,12 @@ export default function WwbamShape({
         />
       </svg>
 
-      {/* Content — sits above the SVG, padded to clear pointed ends + whiskers */}
+      {/* Content — padded horizontally to clear tips and whiskers */}
       <div
         className="relative z-10 flex flex-1 min-w-0 w-full"
         style={{
-          paddingLeft: `${CONTENT_PAD_PCT}%`,
-          paddingRight: `${CONTENT_PAD_PCT}%`,
+          paddingLeft: `${padPct}%`,
+          paddingRight: `${padPct}%`,
         }}>
         {children}
       </div>

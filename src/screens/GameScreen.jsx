@@ -84,27 +84,14 @@ function deriveOverlay(gameState, currentTeam) {
  *   Center        — QuestionCard + OptionGrid (flex-1, always centered)
  *   Right sidebar — PrizeLadder   (w-72, hidden when showPrizeLadder is false)
  *
+ * Top bar proportions:
+ *   TeamInfoBar    — capped at 55% width (max-w-[55%]) so lifelines have room
+ *   LifelineIndicator — fixed minimum width via shrink-0, grows if space allows
+ *   Gap between    — gap-4 for visual breathing room
+ *
  * teamResult delay:
  *   deriveOverlay returns 'teamResult' immediately, but the card only renders
  *   after TEAM_RESULT_DELAY_MS via a `teamResultUnlocked` boolean.
- *
- *   Previous approaches (readyResultTeamId) were fragile because:
- *   - For wrong-answer eliminations, completeGame() fires automatically right
- *     after eliminateTeam(), causing a brief intermediate render where
- *     deriveOverlay returns null (currentTeamId cleared, gameStatus not yet
- *     'completed'). This cancelled the in-flight timer via the effect cleanup.
- *     When 'teamResult' resumed, readyResultTeamId already matched, so the
- *     card showed immediately.
- *
- *   Current approach:
- *   - `teamResultUnlocked` is a plain boolean, always reset to false when
- *     overlay leaves 'teamResult', and unlocked after TEAM_RESULT_DELAY_MS
- *     when it enters 'teamResult'.
- *   - Both effect branches use setTimeout so setState is never synchronous
- *     (satisfies react-hooks/set-state-in-effect lint rule).
- *   - If overlay briefly flickers null → 'teamResult' → null → 'teamResult'
- *     (race condition during completeGame), the reset (0 ms) and new delay
- *     timer are both non-blocking and independently correct.
  *
  * @param {{
  *   gameState:      object,
@@ -133,22 +120,17 @@ export default function GameScreen({
   const queuePosition = currentTeam ? playQueue.indexOf(currentTeam.id) + 1 : 0;
 
   // ── Delayed teamResult ─────────────────────────────────────────────────────
-  // Simple boolean: true only after the delay has elapsed since entering
-  // the 'teamResult' overlay state. Resets (via setTimeout 0) when overlay
-  // leaves 'teamResult', ready for the next team.
   const [teamResultUnlocked, setTeamResultUnlocked] = useState(false);
   const showTeamResult = overlay === 'teamResult' && teamResultUnlocked;
 
   useEffect(() => {
     if (overlay === 'teamResult') {
-      // Unlock after delay — setTimeout keeps this out of the effect body
       const timer = setTimeout(
         () => setTeamResultUnlocked(true),
         TEAM_RESULT_DELAY_MS,
       );
       return () => clearTimeout(timer);
     } else {
-      // Reset for next team — setTimeout 0 is still async, satisfies lint rule
       const timer = setTimeout(() => setTeamResultUnlocked(false), 0);
       return () => clearTimeout(timer);
     }
@@ -167,18 +149,31 @@ export default function GameScreen({
         animate="visible"
         exit="exit">
         {/* ── Top bar ───────────────────────────────────────────────────── */}
+        {/*
+          Fixed 3-column grid: 2fr 1fr 1fr
+            col 1 (50%) — TeamInfoBar
+            col 2 (25%) — Phone a Friend lifeline
+            col 3 (25%) — 50/50 lifeline
+          Each column stretches its child to full width via flex.
+        */}
         <div
-          className="flex items-center justify-between px-6 py-3 shrink-0"
+          className="grid items-stretch px-6 py-3 shrink-0 gap-3"
           style={{
+            gridTemplateColumns: '2fr 1fr 1fr',
             background:
               'linear-gradient(180deg, rgba(13,27,75,0.85) 0%, rgba(10,10,46,0.6) 100%)',
             borderBottom: '1px solid rgba(255,255,255,0.06)',
           }}>
-          <TeamInfoBar
-            currentTeam={currentTeam}
-            currentQuestionNumber={gameState?.currentQuestionNumber}
-            prizeStructure={prizeStructure}
-          />
+          {/* col 1 — Team info */}
+          <div className="flex min-w-0">
+            <TeamInfoBar
+              currentTeam={currentTeam}
+              currentQuestionNumber={gameState?.currentQuestionNumber}
+              prizeStructure={prizeStructure}
+            />
+          </div>
+
+          {/* cols 2 & 3 — one lifeline per column, each fills its cell */}
           <LifelineIndicator
             lifelinesAvailable={currentTeam?.lifelinesAvailable}
             activeLifeline={gameState?.activeLifeline}

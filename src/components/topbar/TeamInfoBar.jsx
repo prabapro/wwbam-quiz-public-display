@@ -32,9 +32,8 @@ export default function TeamInfoBar({
 
   return (
     <WwbamShape
+      size="wide"
       state="default"
-      pointExt={12}
-      cornerR={10}
       strokeWidth={3}
       className="flex-1"
       style={{ minHeight: '64px' }}>
