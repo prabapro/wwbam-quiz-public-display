@@ -151,7 +151,7 @@ export default function GameScreen({
         exit="exit">
         {/* ── Top bar ───────────────────────────────────────────────────── */}
         <div
-          className="shrink-0 grid gap-3 p-3"
+          className="shrink-0 grid gap-0 px-0 py-8 items-center"
           style={{ gridTemplateColumns: '2fr 1fr 1fr' }}>
           <div className="flex">
             <TeamInfoBar
@@ -171,7 +171,7 @@ export default function GameScreen({
           {/* Left sidebar — Team List */}
           {displayConfig?.showTeamList && (
             <div
-              className="flex flex-col shrink-0 w-80 border-r"
+              className="flex flex-col shrink-0 w-80"
               style={{ borderColor: 'var(--c-border-subtle)' }}>
               <TeamList
                 teams={teams}
@@ -215,7 +215,7 @@ export default function GameScreen({
           {/* Right sidebar — Prize Ladder */}
           {displayConfig?.showPrizeLadder && (
             <div
-              className="flex flex-col shrink-0 w-80 border-l"
+              className="flex flex-col shrink-0 w-80"
               style={{ borderColor: 'var(--c-border-subtle)' }}>
               <PrizeLadder
                 prizeStructure={prizeStructure}

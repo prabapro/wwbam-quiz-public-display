@@ -138,14 +138,9 @@ export default function TeamList({ teams, playQueue }) {
   const orderedTeams = sortByPlayQueue(teams, playQueue);
 
   return (
-    <div className="h-full flex flex-col overflow-hidden">
-      {/* ── Header ────────────────────────────────────────────────────── */}
-      <div className="shrink-0 px-4 py-2 text-center wwbam-sep--horizontal">
-        <p className="wwbam-sidebar-header">Teams</p>
-      </div>
-
+    <div className="h-full flex flex-col overflow-hidden pt-6">
       {/* ── Team cards ────────────────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto scrollbar-none py-2 px-2 flex flex-col gap-8">
+      <div className="flex-1 overflow-y-auto scrollbar-none py-2 flex flex-col gap-8">
         {orderedTeams.map((team, index) => {
           const cfg = getStatusConfig(team.status);
 
