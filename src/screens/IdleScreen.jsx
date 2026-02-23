@@ -497,6 +497,7 @@ export default function IdleScreen({ gameStatus, teams, gameState }) {
     setPrevGameStatus(gameStatus);
     if (prevGameStatus === 'not-started' && gameStatus === 'initialized') {
       setStepperTriggered(true);
+      setStepperDone(false);
     }
   }
 
