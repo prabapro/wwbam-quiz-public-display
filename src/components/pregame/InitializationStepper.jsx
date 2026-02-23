@@ -28,11 +28,11 @@ const STEPS = [
 ];
 
 // Delay (ms) after which each step is marked as complete.
-const STEP_COMPLETE_DELAYS = [1400, 3000, 4800, 6800];
+const STEP_COMPLETE_DELAYS = [2000, 4000, 6000, 8000];
 
 // Delay after the last step completes before calling onComplete.
 // Gives the audience time to read the "All set!" confirmation.
-const COMPLETION_DELAY = 9000;
+const COMPLETION_DELAY = 10000;
 
 // ── Shape state mapping ────────────────────────────────────────────────────────
 
