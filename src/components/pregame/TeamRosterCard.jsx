@@ -47,23 +47,17 @@ export default function TeamRosterCard({ team, index }) {
         className="flex-1"
         style={{ minHeight: '72px' }}>
         <div className="flex items-center w-full py-2">
-          {/* ── Team number ───────────────────────────────────────────────── */}
+          {/* ── Team number ─────────────────────────────────────────────── */}
           <div className="flex flex-col items-center justify-center shrink-0 px-4">
             <span className="wwbam-label">Team</span>
-            <span
-              className="leading-none"
-              style={{
-                fontFamily: 'var(--font-numeric)',
-                fontSize: '1.6rem',
-                color: 'var(--c-gold)',
-              }}>
+            <span className="wwbam-team-number">
               {String(index + 1).padStart(2, '0')}
             </span>
           </div>
 
           <div className="wwbam-sep" />
 
-          {/* ── Team name + participants ───────────────────────────────────── */}
+          {/* ── Team name + participants ─────────────────────────────────── */}
           <div className="flex flex-col justify-center min-w-0 flex-1 px-4">
             <span className="wwbam-team-name truncate">{team.name}</span>
             {team.participants ? (
@@ -71,9 +65,7 @@ export default function TeamRosterCard({ team, index }) {
                 {team.participants}
               </span>
             ) : (
-              <span
-                className="wwbam-participants"
-                style={{ color: 'var(--c-text-muted)' }}>
+              <span className="wwbam-participants wwbam-used-subtext">
                 No participants listed
               </span>
             )}

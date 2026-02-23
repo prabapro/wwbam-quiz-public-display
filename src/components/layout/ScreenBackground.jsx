@@ -13,25 +13,25 @@
  *   </ScreenBackground>
  *
  * The overlay opacity can be tuned via the `overlayOpacity` prop (0–1).
- * Defaults to 0.7 — dark enough for text legibility, light enough for
+ * Defaults to 0.25 — dark enough for text legibility, light enough for
  * the set atmosphere to come through.
  *
  * @param {{
  *   children:       React.ReactNode,
- *   overlayOpacity: number,           - Dark overlay opacity (default: 0.7)
+ *   overlayOpacity: number,           - Dark overlay opacity (default: 0.25)
  *   className:      string,           - Extra classes on the root element
  * }} props
  */
 export default function ScreenBackground({
   children,
-  overlayOpacity = 0.7,
+  overlayOpacity = 0.25,
   className = '',
 }) {
   return (
     <div
       className={`relative w-full h-full ${className}`}
       style={{
-        backgroundImage: 'url(/images/wwbam-set-background-2.jpg)',
+        backgroundImage: 'url(/images/wwbam-set-background-1.jpg)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',

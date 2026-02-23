@@ -6,12 +6,25 @@
 
 :root {
   /* ── Typography ─────────────────────────────────────────────────────────── */
-  --font-body: 'Barlow Semi Condensed', system-ui, sans-serif;
-  --font-condensed: 'Barlow Condensed', system-ui, sans-serif;
+
+  /*
+    Three font roles — update here to restyle the entire app:
+      --font-question : question text + option text (legible, friendly)
+      --font-body     : all other UI — labels, team names, headings, status text
+      --font-numeric  : prize amounts, question numbers, numeric badges
+  */
+  --font-question: 'Outfit', sans-serif;
+  --font-body: 'Barlow Condensed', system-ui, sans-serif;
   --font-numeric: 'Hammersmith One', sans-serif;
 
   /* ── Screen background ──────────────────────────────────────────────────── */
   --c-screen-bg: #05051c;
+
+  /* ── Screen overlay ──────────────────────────────────────────────────────
+     Semi-transparent overlay applied over the screen background.
+     Used by: pause overlay (GameScreen), initializing overlay (IdleScreen).
+  ──────────────────────────────────────────────────────────────────────── */
+  --c-screen-bg-overlay: rgba(5, 5, 28, 0.75);
 
   /* ── Gold / Amber palette ────────────────────────────────────────────────
      Used by: selected WwbamShape stroke, prize displays, active lifeline text,
@@ -43,6 +56,38 @@
   --c-red-mid: #e03030;
   --c-red-light: #ff6060;
 
+  /* ── Result row palette ──────────────────────────────────────────────────
+     Used by: ResultsScreen leaderboard rows.
+     Winner row uses a distinct gold-tinted gradient + border.
+     Standard rows use the same deep navy base.
+  ──────────────────────────────────────────────────────────────────────── */
+  --c-result-row-bg: rgba(13, 27, 75, 0.7);
+  --c-result-row-border: rgba(255, 255, 255, 0.07);
+  --c-result-winner-bg: linear-gradient(
+    135deg,
+    rgba(245, 158, 11, 0.2) 0%,
+    rgba(13, 27, 75, 0.9) 100%
+  );
+  --c-result-winner-border: rgba(245, 158, 11, 0.4);
+  --c-result-winner-glow: rgba(245, 158, 11, 0.1);
+
+  /* ── Status badge palette ────────────────────────────────────────────────
+     Used by: ResultsScreen completed / eliminated status pills.
+  ──────────────────────────────────────────────────────────────────────── */
+  --c-badge-completed-bg: rgba(21, 128, 61, 0.3);
+  --c-badge-completed-text: #4ade80;
+  --c-badge-completed-border: rgba(74, 222, 128, 0.3);
+  --c-badge-eliminated-bg: rgba(185, 28, 28, 0.3);
+  --c-badge-eliminated-text: #f87171;
+  --c-badge-eliminated-border: rgba(248, 113, 113, 0.3);
+
+  /* ── "All questions answered" badge ─────────────────────────────────────
+     Used by: TeamResult overlay (completed state).
+  ──────────────────────────────────────────────────────────────────────── */
+  --c-badge-all-answered-bg: rgba(74, 222, 128, 0.12);
+  --c-badge-all-answered-text: #4ade80;
+  --c-badge-all-answered-border: rgba(74, 222, 128, 0.25);
+
   /* ── Used / spent state ──────────────────────────────────────────────────
      Applied when a lifeline is spent, an answer option is disabled, or any
      interactive element transitions to a permanently inactive state.
@@ -73,6 +118,20 @@
   --c-text-dim: rgba(255, 255, 255, 0.55);
   --c-text-muted: rgba(255, 255, 255, 0.3);
   --c-diamond: #5a92f4;
+
+  /* ── Borders & separators ────────────────────────────────────────────────
+     Used by: sidebar dividers (GameScreen), TeamList header border,
+              InitializationStepper step separator.
+  ──────────────────────────────────────────────────────────────────────── */
+  --c-border-subtle: rgba(255, 255, 255, 0.06); /* sidebar column borders */
+  --c-border-separator: rgba(255, 255, 255, 0.12); /* within-card separators */
+
+  /* ── Gold glow ───────────────────────────────────────────────────────────
+     Reusable text-shadow / box-shadow glow value for gold-emphasis elements.
+     Used by: ResultsScreen heading, GameScreen pause overlay heading.
+  ──────────────────────────────────────────────────────────────────────── */
+  --glow-gold: 0 0 40px rgba(245, 158, 11, 0.5);
+  --glow-gold-soft: 0 0 30px rgba(245, 158, 11, 0.5); /* TeamResult prize */
 
   /* ── Transitions ─────────────────────────────────────────────────────────── */
   --t-fast: 0.2s ease;

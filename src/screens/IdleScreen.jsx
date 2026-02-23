@@ -95,7 +95,7 @@ function SpinningLogo({ size = 'w-20 h-20' }) {
       <motion.img
         src="/images/wwbam-logo.svg"
         alt="WWBAM Logo"
-        className={`${size}`}
+        className={size}
         style={{ filter: 'drop-shadow(0 0 28px var(--c-gold-dark))' }}
         animate={{ rotateY: [0, 360] }}
         transition={{
@@ -125,7 +125,7 @@ function GoldDivider() {
       <span
         style={{
           color: 'var(--c-gold)',
-          fontFamily: 'var(--font-condensed)',
+          fontFamily: 'var(--font-body)',
           fontSize: '0.85rem',
         }}>
         ✦
@@ -164,16 +164,13 @@ function AppEyebrow() {
  *
  * Layout (top → bottom):
  *   Logo + APP_NAME eyebrow (gold shimmer) + GoldDivider
- *   [WwbamShape default]  — "Tonight's Teams" / "Get Ready to Play" heading
- *   [team cards]          — TeamRosterCard × N  (or a "used" placeholder shape)
- *   [WwbamShape used]     — footer note
- *   "Waiting for host"    — dim pulsing text (no shape, truly secondary)
+ *   [WwbamShape selected]  — "Tonight's Teams" / "Get Ready to Play" heading
+ *   [team cards]           — TeamRosterCard × N  (or a "used" placeholder shape)
+ *   [WwbamShape used]      — footer note
+ *   "Waiting for host"     — dim pulsing text (no shape, truly secondary)
  *
- * FIX: The card stagger container uses `key={teams.length}` so that whenever
- * the host adds a new team, the container remounts and all cards animate in
- * cleanly from their initial state. Without this, Framer Motion's stagger
- * parent — already settled in "show" — would not re-trigger for newly
- * inserted children, leaving them stuck at opacity 0.
+ * The card stagger container uses `key={teams.length}` so that whenever the
+ * host adds a new team, the container remounts and all cards animate in cleanly.
  */
 function LobbyPhase({ teams }) {
   const hasTeams = teams.length > 0;
@@ -214,16 +211,7 @@ function LobbyPhase({ teams }) {
             className="flex-1"
             style={{ minHeight: '88px' }}>
             <div className="flex items-center justify-center py-4 w-full text-center">
-              <h1
-                className="wwbam-text-gold-gradient"
-                style={{
-                  fontFamily: 'var(--font-condensed)',
-                  fontSize: '3.4rem',
-                  fontWeight: 900,
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                  lineHeight: 1,
-                }}>
+              <h1 className="wwbam-screen-heading wwbam-text-gold-gradient">
                 {hasTeams
                   ? COPY_LOBBY.HEADING_WITH_TEAMS
                   : COPY_LOBBY.HEADING_NO_TEAMS}
@@ -248,10 +236,6 @@ function LobbyPhase({ teams }) {
               a team is added. All cards, including previously visible ones,
               re-enter with the stagger sequence, so the full roster always
               animates in correctly without requiring a page reload.
-
-              The brief re-animation of existing cards is intentional and
-              matches the show aesthetic — a celebratory cascade each time
-              a new team joins the lobby.
             */}
             <motion.div
               key={teams.length}
@@ -259,27 +243,26 @@ function LobbyPhase({ teams }) {
               initial="enter"
               animate="show"
               variants={cardStaggerVariants}>
-              {teams.map((team, index) => (
+              {teams.map((team, i) => (
                 <motion.div key={team.id} variants={cardItemVariants}>
-                  <TeamRosterCard team={team} index={index} />
+                  <TeamRosterCard team={team} index={i} />
                 </motion.div>
               ))}
             </motion.div>
           </motion.div>
         ) : (
+          // No-teams placeholder — "used" shape communicates "waiting" state
           <motion.div
             variants={sectionVariants}
             className="w-full max-w-3xl flex">
             <WwbamShape
               size="wide"
               state="used"
-              strokeWidth={3}
+              strokeWidth={2}
               className="flex-1"
               style={{ minHeight: '72px' }}>
               <div className="flex items-center justify-center py-4 w-full">
-                <p
-                  className="wwbam-team-name"
-                  style={{ color: 'var(--c-used-text)' }}>
+                <p className="wwbam-label wwbam-used-text">
                   {COPY_LOBBY.NO_TEAMS_MESSAGE}
                 </p>
               </div>
@@ -287,28 +270,18 @@ function LobbyPhase({ teams }) {
           </motion.div>
         )}
 
-        {/* Footer note — gold shape, prominent */}
+        {/* Footer note */}
         <motion.div
           variants={sectionVariants}
           className="w-full max-w-3xl flex">
           <WwbamShape
             size="wide"
             state="selected"
-            strokeWidth={3}
+            strokeWidth={2}
             className="flex-1"
-            style={{ minHeight: '60px' }}>
-            <div className="flex items-center justify-center py-3 w-full text-center">
-              <p
-                style={{
-                  fontFamily: 'var(--font-condensed)',
-                  fontSize: '1.25rem',
-                  fontWeight: 700,
-                  color: 'var(--c-gold)',
-                  letterSpacing: '0.18em',
-                  textTransform: 'uppercase',
-                }}>
-                {COPY_LOBBY.FOOTER_NOTE}
-              </p>
+            style={{ minHeight: '52px' }}>
+            <div className="flex items-center justify-center py-3 w-full">
+              <p className="wwbam-label">{COPY_LOBBY.FOOTER_NOTE}</p>
             </div>
           </WwbamShape>
         </motion.div>
@@ -321,7 +294,8 @@ function LobbyPhase({ teams }) {
 
 /**
  * InitializingPhase
- * Darkened overlay so the stepper pops against the background.
+ *
+ * Full-screen overlay over the lobby content while the stepper runs.
  * The stepper itself (InitializationStepper) already uses WwbamShape per step.
  */
 function InitializingPhase({ onComplete }) {
@@ -329,8 +303,10 @@ function InitializingPhase({ onComplete }) {
     <motion.div
       key="initializing"
       className="w-full h-full flex items-center justify-center"
-      // #05051c @ 60% — same hue as --c-screen-bg, no CSS variable needed for rgba
-      style={{ background: 'rgba(5, 5, 28, 0.6)', backdropFilter: 'blur(2px)' }}
+      style={{
+        background: 'var(--c-screen-bg-overlay)',
+        backdropFilter: 'blur(2px)',
+      }}
       variants={phaseContainerVariants}
       initial="hidden"
       animate="visible"
@@ -353,8 +329,7 @@ function InitializingPhase({ onComplete }) {
  *
  * Layout (top → bottom):
  *   Logo + APP_NAME eyebrow + GoldDivider
- *   [WwbamShape selected]  — "Game Ready" heading (gold-on-gold)
- *   "Play Order" label     — floating dim label above team list
+ *   [WwbamShape selected]  — "Play Order" heading (gold gradient)
  *   [team cards]           — TeamRosterCard × N in play order
  *   [WwbamShape selected]  — "Starting soon..." pulsing the whole shape
  */
@@ -389,7 +364,7 @@ function ReadyPhase({ teams, gameState }) {
           <GoldDivider />
         </motion.div>
 
-        {/* "Game Ready" heading — gold-on-gold: selected shape + gradient text */}
+        {/* "Play Order" heading */}
         <motion.div
           variants={sectionVariants}
           className="w-full max-w-3xl flex">
@@ -400,16 +375,7 @@ function ReadyPhase({ teams, gameState }) {
             className="flex-1"
             style={{ minHeight: '96px' }}>
             <div className="flex items-center justify-center py-5 w-full">
-              <h1
-                className="wwbam-text-gold-gradient"
-                style={{
-                  fontFamily: 'var(--font-condensed)',
-                  fontSize: '3.8rem',
-                  fontWeight: 900,
-                  letterSpacing: '0.1em',
-                  textTransform: 'uppercase',
-                  lineHeight: 1,
-                }}>
+              <h1 className="wwbam-screen-heading wwbam-screen-heading--lg wwbam-text-gold-gradient">
                 {COPY_READY.HEADING}
               </h1>
             </div>
@@ -449,17 +415,7 @@ function ReadyPhase({ teams, gameState }) {
             className="flex-1"
             style={{ minHeight: '56px' }}>
             <div className="flex items-center justify-center py-3 w-full">
-              <p
-                style={{
-                  fontFamily: 'var(--font-condensed)',
-                  fontSize: '1.1rem',
-                  fontWeight: 700,
-                  color: 'var(--c-gold)',
-                  letterSpacing: '0.4em',
-                  textTransform: 'uppercase',
-                }}>
-                {COPY_READY.STARTING_SOON}
-              </p>
+              <p className="wwbam-starting-soon">{COPY_READY.STARTING_SOON}</p>
             </div>
           </WwbamShape>
         </motion.div>

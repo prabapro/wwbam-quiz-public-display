@@ -88,12 +88,16 @@ const SHAPE_TOKENS = {
 
 // ── Shape fills (background inside the stroke) ─────────────────────────────
 // Kept as separate local constants to keep STATE_CONFIG readable.
+//
+// correct / wrong fills are intentionally rich and saturated so the
+// background colour change is clearly visible to the audience at TV distance —
+// not just the stroke colour change.
 
 const FILLS = {
   default: '#06090f',
-  selected: '#080500',
-  correct: '#051802',
-  wrong: '#130101',
+  selected: '#1a0e00',
+  correct: '#0b2e10', // rich dark green — clearly green at TV distance
+  wrong: '#2e0b0b', // rich dark red   — clearly red   at TV distance
   used: SHAPE_TOKENS.usedFill,
   dimmed: SHAPE_TOKENS.dimmedFill,
 };

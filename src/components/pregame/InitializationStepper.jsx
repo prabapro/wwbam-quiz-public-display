@@ -73,10 +73,8 @@ const rowVariants = {
  * StepIcon
  *
  * Left-side icon badge rendered inside each WwbamShape.
- * Animates between the step's Lucide icon (pending / active) and
- * a Lucide Check (complete) with a spring pop transition.
- *
- * @param {{ Icon: LucideIcon, isComplete: boolean, isActive: boolean }} props
+ * Animates between the step's Lucide icon (pending / active) and a Lucide
+ * Check (complete) with a spring pop transition.
  */
 function StepIcon({ Icon, isComplete, isActive }) {
   const iconColor = isComplete
@@ -146,17 +144,17 @@ function StepRow({ step, isComplete, isActive }) {
             isActive={isActive}
           />
 
-          {/* Vertical separator */}
+          {/* Vertical separator — token-driven */}
           <div
             className="w-px self-stretch"
-            style={{ background: 'rgba(255,255,255,0.12)' }}
+            style={{ background: 'var(--c-border-separator)' }}
           />
 
           {/* Step label */}
           <span
             className="flex-1 transition-colors duration-500 uppercase"
             style={{
-              fontFamily: 'var(--font-condensed)',
+              fontFamily: 'var(--font-body)',
               fontSize: '1.6rem',
               fontWeight: 700,
               letterSpacing: '0.06em',
@@ -239,24 +237,14 @@ export default function InitializationStepper({ onComplete }) {
         initial={{ opacity: 0, y: -16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: 'easeOut' }}>
-        {/* Eyebrow — matches AppEyebrow style from IdleScreen */}
+        {/* Eyebrow */}
         <p
           className="wwbam-label wwbam-text-gold-gradient"
           style={{ letterSpacing: '0.4em' }}>
           {COPY_STEPPER.EYEBROW}
         </p>
-
-        {/* Main heading — matches LobbyPhase / ReadyPhase heading scale */}
-        <h2
-          className="wwbam-text-gold-gradient"
-          style={{
-            fontFamily: 'var(--font-condensed)',
-            fontSize: '3.4rem',
-            fontWeight: 900,
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
-            lineHeight: 1,
-          }}>
+        {/* Main heading — matches LobbyPhase / ReadyPhase scale */}
+        <h2 className="wwbam-screen-heading wwbam-text-gold-gradient">
           {COPY_STEPPER.HEADING}
         </h2>
       </motion.div>
@@ -277,7 +265,7 @@ export default function InitializationStepper({ onComplete }) {
         ))}
       </motion.div>
 
-      {/* ── "All set!" confirmation — gold selected shape with Sparkles ───── */}
+      {/* ── "All set!" confirmation — gold selected shape with Sparkles ── */}
       <AnimatePresence>
         {allDone && (
           <motion.div
@@ -296,7 +284,7 @@ export default function InitializationStepper({ onComplete }) {
                 <p
                   className="wwbam-text-gold-gradient"
                   style={{
-                    fontFamily: 'var(--font-condensed)',
+                    fontFamily: 'var(--font-body)',
                     fontSize: '2.2rem',
                     fontWeight: 900,
                     letterSpacing: '0.25em',

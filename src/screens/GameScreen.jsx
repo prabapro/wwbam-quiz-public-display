@@ -85,10 +85,10 @@ function deriveOverlay(gameState, currentTeam) {
  *   Center        — QuestionCard + OptionGrid (flex-1, always centered)
  *   Right sidebar — PrizeLadder   (w-80, hidden when showPrizeLadder is false)
  *
- * Top bar proportions:
- *   TeamInfoBar    — capped at 55% width (max-w-[55%]) so lifelines have room
- *   LifelineIndicator — fixed minimum width via shrink-0, grows if space allows
- *   Gap between    — gap-4 for visual breathing room
+ * Top bar proportions (fixed 3-column grid: 2fr 1fr 1fr):
+ *   col 1 (50%) — TeamInfoBar
+ *   col 2 (25%) — Phone a Friend lifeline
+ *   col 3 (25%) — 50/50 lifeline
  *
  * teamResult delay:
  *   deriveOverlay returns 'teamResult' immediately, but the card only renders
@@ -150,15 +150,8 @@ export default function GameScreen({
         animate="visible"
         exit="exit">
         {/* ── Top bar ───────────────────────────────────────────────────── */}
-        {/*
-          Fixed 3-column grid: 2fr 1fr 1fr
-            col 1 (50%) — TeamInfoBar
-            col 2 (25%) — Phone a Friend lifeline
-            col 3 (25%) — 50/50 lifeline
-          Each column stretches its child to full width via flex.
-        */}
         <div
-          className="shrink-0 grid gap-3 p-3"
+          className="shrink-0 grid gap-0 px-0 py-8 items-center"
           style={{ gridTemplateColumns: '2fr 1fr 1fr' }}>
           <div className="flex">
             <TeamInfoBar
@@ -178,8 +171,8 @@ export default function GameScreen({
           {/* Left sidebar — Team List */}
           {displayConfig?.showTeamList && (
             <div
-              className="flex flex-col shrink-0 w-80 border-r"
-              style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+              className="flex flex-col shrink-0 w-80"
+              style={{ borderColor: 'var(--c-border-subtle)' }}>
               <TeamList
                 teams={teams}
                 playQueue={playQueue}
@@ -222,8 +215,8 @@ export default function GameScreen({
           {/* Right sidebar — Prize Ladder */}
           {displayConfig?.showPrizeLadder && (
             <div
-              className="flex flex-col shrink-0 w-80 border-l"
-              style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+              className="flex flex-col shrink-0 w-80"
+              style={{ borderColor: 'var(--c-border-subtle)' }}>
               <PrizeLadder
                 prizeStructure={prizeStructure}
                 currentQuestionNumber={gameState?.currentQuestionNumber}
@@ -238,6 +231,7 @@ export default function GameScreen({
             <PhoneAFriendOverlay
               key="phone-a-friend"
               startedAt={gameState?.lifelineTimerStartedAt ?? null}
+              currentTeam={currentTeam}
               timerDuration={timerDuration}
             />
           )}
@@ -247,19 +241,15 @@ export default function GameScreen({
               key="pause"
               className="absolute inset-0 flex flex-col items-center justify-center gap-4"
               style={{
-                background: 'rgba(5,5,28,0.75)',
+                background: 'var(--c-screen-bg-overlay)',
                 backdropFilter: 'blur(4px)',
               }}
               variants={pauseOverlayVariants}
               initial="hidden"
               animate="visible"
               exit="exit">
-              <p
-                className="text-5xl font-black tracking-widest uppercase text-white"
-                style={{ textShadow: '0 0 40px rgba(245,158,11,0.4)' }}>
-                {COPY_PAUSE.HEADING}
-              </p>
-              <p className="text-slate-400 text-base tracking-widest uppercase">
+              <p className="wwbam-overlay-heading">{COPY_PAUSE.HEADING}</p>
+              <p className="wwbam-overlay-subheading">
                 {COPY_PAUSE.SUBHEADING}
               </p>
             </motion.div>

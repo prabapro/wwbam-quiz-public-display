@@ -75,6 +75,11 @@ const headerVariants = {
  * Shown when `displayFinalResults` is true in the Firebase game-state.
  * Displays the final leaderboard — all teams ranked by prize won.
  *
+ * Row surfaces use plain rounded divs (no WwbamShape) — a deliberately
+ * different visual language that signals "summary" rather than "active game".
+ * Row and badge styling is driven entirely by .wwbam-result-* and
+ * .wwbam-status-badge-* classes from components.css — no inline colour strings.
+ *
  * @param {{
  *   teams: Array,
  * }} props
@@ -98,13 +103,9 @@ export default function ResultsScreen({ teams }) {
             transition={{ delay: 0.8, duration: 0.6 }}>
             🏆
           </motion.p>
-          <h1
-            className="text-5xl font-black tracking-widest uppercase text-white"
-            style={{ textShadow: '0 0 40px rgba(245,158,11,0.5)' }}>
-            {COPY_RESULTS.HEADING}
-          </h1>
+          <h1 className="wwbam-overlay-heading">{COPY_RESULTS.HEADING}</h1>
           {winner && (
-            <p className="text-amber-400 text-xl font-semibold tracking-wide">
+            <p className="wwbam-result-winner-line">
               {COPY_RESULTS.WINNER_PREFIX} {winner.name}
             </p>
           )}
@@ -125,58 +126,39 @@ export default function ResultsScreen({ teams }) {
               <motion.div
                 key={team.id}
                 variants={rowVariants}
-                className="flex items-center gap-5 px-6 py-4 rounded-xl"
-                style={{
-                  background: isFirst
-                    ? 'linear-gradient(135deg, rgba(245,158,11,0.2) 0%, rgba(13,27,75,0.9) 100%)'
-                    : 'rgba(13,27,75,0.7)',
-                  border: isFirst
-                    ? '1px solid rgba(245,158,11,0.4)'
-                    : '1px solid rgba(255,255,255,0.07)',
-                  boxShadow: isFirst ? '0 0 30px rgba(245,158,11,0.1)' : 'none',
-                }}>
-                {/* Rank / Medal */}
+                className={`flex items-center gap-5 px-6 py-4 wwbam-result-row ${isFirst ? 'wwbam-result-row--winner' : ''}`}>
+                {/* ── Rank / Medal ─────────────────────────────────────── */}
                 <div className="w-10 flex items-center justify-center shrink-0">
                   {teamMedal ? (
                     <span className="text-2xl">{teamMedal}</span>
                   ) : (
-                    <span className="text-slate-500 font-bold text-lg">
-                      {team.rank}
-                    </span>
+                    <span className="wwbam-rank-number">{team.rank}</span>
                   )}
                 </div>
 
-                {/* Team info */}
+                {/* ── Team info ────────────────────────────────────────── */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-white font-bold text-lg truncate">
-                    {team.name}
-                  </p>
+                  <p className="wwbam-result-name truncate">{team.name}</p>
                   {team.participants && (
-                    <p className="text-slate-400 text-sm truncate">
+                    <p className="wwbam-result-participants truncate">
                       {team.participants}
                     </p>
                   )}
                 </div>
 
-                {/* Status badge */}
+                {/* ── Status badge ─────────────────────────────────────── */}
                 <span
-                  className="shrink-0 text-xs font-semibold uppercase tracking-wider px-3 py-1 rounded-full"
-                  style={{
-                    background: isCompleted
-                      ? 'rgba(21,128,61,0.3)'
-                      : 'rgba(185,28,28,0.3)',
-                    color: isCompleted ? '#4ade80' : '#f87171',
-                    border: isCompleted
-                      ? '1px solid rgba(74,222,128,0.3)'
-                      : '1px solid rgba(248,113,113,0.3)',
-                  }}>
+                  className={`wwbam-status-badge ${
+                    isCompleted
+                      ? 'wwbam-status-badge--completed'
+                      : 'wwbam-status-badge--eliminated'
+                  }`}>
                   {isCompleted ? 'Completed' : 'Eliminated'}
                 </span>
 
-                {/* Prize */}
+                {/* ── Prize ────────────────────────────────────────────── */}
                 <p
-                  className="shrink-0 font-mono font-bold text-xl"
-                  style={{ color: isCompleted ? '#f59e0b' : '#94a3b8' }}>
+                  className={`wwbam-result-prize ${isFirst ? 'wwbam-result-prize--winner' : ''}`}>
                   {formatPrize(team.currentPrize ?? 0)}
                 </p>
               </motion.div>

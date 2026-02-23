@@ -1,21 +1,18 @@
 // src/components/question/OptionGrid.jsx
 
 import { motion, AnimatePresence } from 'framer-motion';
+import WwbamShape from '@components/ui/WwbamShape';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
-/** Fixed display order for the 4 options. */
+/** Fixed display order for the four options. */
 const OPTION_KEYS = ['A', 'B', 'C', 'D'];
-
-/** WWBAM hexagon shape — wide elongated diamond. */
-const HEXAGON_CLIP =
-  'polygon(2% 0%, 98% 0%, 100% 50%, 98% 100%, 2% 100%, 0% 50%)';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
 /**
- * Looks up an option value from the Firebase options object.
- * Handles both lowercase keys (host panel) and uppercase keys.
+ * Reads an option value from the Firebase options object.
+ * Handles both lowercase keys (host panel normalises to lowercase) and uppercase.
  */
 function getOptionText(options, key) {
   return options[key.toLowerCase()] ?? options[key];
@@ -24,18 +21,14 @@ function getOptionText(options, key) {
 // ── Option state derivation ────────────────────────────────────────────────────
 
 /**
- * Derives the visual state for a single option.
+ * Derives the logical visual state for a single option button.
  *
- * States:
- *   'default'  → dark blue, no highlight
- *   'selected' → amber/orange — host locked this answer, awaiting reveal
- *   'correct'  → green  — answerRevealed + this is the correct option
- *   'wrong'    → red    — answerRevealed + this was the selected wrong answer
- *   'dimmed'   → muted  — answerRevealed + neither selected nor correct
- *   'removed'  → hidden — 50/50 lifeline removed this option
- *
- * After reveal all 4 options stay visible:
- *   correct → green, selected wrong → red, others → dimmed (muted but readable)
+ *   'default'  — idle, no selection yet
+ *   'selected' — host has locked this answer, awaiting reveal
+ *   'correct'  — answerRevealed + this is the correct option  → green
+ *   'wrong'    — answerRevealed + this was selected incorrectly → red
+ *   'dimmed'   — answerRevealed + neither selected nor correct (post-reveal bystanders)
+ *   'removed'  — 50/50 lifeline eliminated this option
  */
 function deriveOptionState(
   key,
@@ -57,54 +50,66 @@ function deriveOptionState(
   return 'default';
 }
 
-// ── Style map ──────────────────────────────────────────────────────────────────
+// ── WwbamShape state mapping ───────────────────────────────────────────────────
 
 /**
- * Visual styles per option state.
+ * Maps the logical option state to a WwbamShape `state` prop.
  *
- * 'dimmed' is now fully opaque with a visible muted style so all 4 options
- * stay on screen after the answer is revealed — hiding them removes context
- * from the audience. Previously opacity: 0.4 made them near-invisible.
+ *   dimmed  → 'used'   — post-reveal bystanders: visible but clearly inactive
+ *                        (slate shimmer, mirrors spent lifelines)
+ *   removed → 'dimmed' — 50/50 eliminated: near-invisible layout placeholder
+ *                        (WwbamShape "dimmed" is reserved for this exact purpose)
  */
-const STATE_STYLES = {
+const SHAPE_STATE = {
+  default: 'default',
+  selected: 'selected',
+  correct: 'correct',
+  wrong: 'wrong',
+  dimmed: 'used', // post-reveal bystander — slate shimmer
+  removed: 'dimmed', // 50/50 placeholder    — near-invisible
+};
+
+// ── Per-state text & badge colours (token-driven) ──────────────────────────────
+
+const TEXT_COLOR = {
+  default: 'var(--c-text)',
+  selected: 'var(--c-text)',
+  correct: 'var(--c-text)',
+  wrong: 'var(--c-text)',
+  dimmed: 'var(--c-used-text)',
+  removed: 'transparent',
+};
+
+const BADGE_STYLE = {
   default: {
-    background: 'linear-gradient(135deg, #0d1b4b 0%, #1a3a8f 100%)',
-    border: '1.5px solid rgba(99,132,255,0.35)',
-    color: '#ffffff',
-    opacity: 1,
+    background: 'rgba(255,255,255,0.12)',
+    border: '1.5px solid rgba(255,255,255,0.2)',
+    color: 'var(--c-text)',
   },
   selected: {
-    background: 'linear-gradient(135deg, #92400e 0%, #b45309 100%)',
-    border: '1.5px solid rgba(245,158,11,0.7)',
-    color: '#ffffff',
-    opacity: 1,
-    boxShadow: '0 0 24px rgba(180,83,9,0.5)',
+    background: 'rgba(245,158,11,0.2)',
+    border: '1.5px solid rgba(245,158,11,0.45)',
+    color: 'var(--c-gold-light)',
   },
   correct: {
-    background: 'linear-gradient(135deg, #14532d 0%, #15803d 100%)',
-    border: '1.5px solid rgba(74,222,128,0.6)',
-    color: '#ffffff',
-    opacity: 1,
-    boxShadow: '0 0 28px rgba(21,128,61,0.5)',
+    background: 'rgba(94,199,42,0.18)',
+    border: '1.5px solid rgba(94,199,42,0.4)',
+    color: 'var(--c-green-light)',
   },
   wrong: {
-    background: 'linear-gradient(135deg, #7f1d1d 0%, #b91c1c 100%)',
-    border: '1.5px solid rgba(248,113,113,0.6)',
-    color: '#ffffff',
-    opacity: 1,
-    boxShadow: '0 0 24px rgba(185,28,28,0.4)',
+    background: 'rgba(224,48,48,0.18)',
+    border: '1.5px solid rgba(224,48,48,0.4)',
+    color: 'var(--c-red-light)',
   },
-  // Fully visible but clearly deprioritised — dark, desaturated, low contrast
-  // Keeps all 4 options on screen so the audience can see the full picture
   dimmed: {
-    background: 'linear-gradient(135deg, #0a0f1e 0%, #0f1729 100%)',
-    border: '1.5px solid rgba(255,255,255,0.06)',
-    color: '#334155',
-    opacity: 1,
+    background: 'rgba(255,255,255,0.04)',
+    border: '1.5px solid rgba(255,255,255,0.07)',
+    color: 'var(--c-used-text)',
   },
   removed: {
-    opacity: 0,
-    pointerEvents: 'none',
+    background: 'transparent',
+    border: 'none',
+    color: 'transparent',
   },
 };
 
@@ -132,49 +137,67 @@ const optionVariants = {
 // ── Option button ──────────────────────────────────────────────────────────────
 
 /**
- * Single option button. Handles its own state-driven styling and animations.
+ * Single option button backed by WwbamShape.
+ * Handles state-driven shape colour, text colour, badge colour, and Framer
+ * Motion pulse animations (selected: continuous; correct/wrong: brief flash).
  */
 function OptionButton({ optionKey, optionText, state }) {
-  const style = STATE_STYLES[state] ?? STATE_STYLES.default;
+  const shapeState = SHAPE_STATE[state] ?? 'default';
+  const textColor = TEXT_COLOR[state] ?? 'var(--c-text)';
+  const badgeStyle = BADGE_STYLE[state] ?? BADGE_STYLE.default;
 
   const pulseAnimate =
     state === 'selected'
-      ? { scale: [1, 1.02, 1], transition: { duration: 1.4, repeat: Infinity } }
+      ? {
+          scale: [1, 1.025, 1],
+          transition: { duration: 1.4, repeat: Infinity },
+        }
       : state === 'correct' || state === 'wrong'
         ? { scale: [1, 1.03, 1], transition: { duration: 0.35, repeat: 2 } }
         : {};
-
-  // 'removed' renders an invisible placeholder to preserve grid layout
-  if (state === 'removed') return <div className="w-full" />;
 
   return (
     <motion.div
       variants={optionVariants}
       animate={pulseAnimate}
-      className="w-full flex items-center"
-      style={{ clipPath: HEXAGON_CLIP }}>
-      <div
-        className="w-full flex items-center gap-4 px-6 py-4 cursor-default select-none"
-        style={{
-          ...style,
-          transition:
-            'background 0.4s ease, border-color 0.4s ease, opacity 0.4s ease, color 0.4s ease',
-        }}>
-        {/* Label badge */}
-        <span
-          className="shrink-0 w-9 h-9 flex items-center justify-center rounded-full text-sm font-black"
-          style={{
-            background: 'rgba(255,255,255,0.12)',
-            border: '1.5px solid rgba(255,255,255,0.2)',
-          }}>
-          {optionKey}
-        </span>
+      className="w-full flex">
+      <WwbamShape
+        size="medium"
+        state={shapeState}
+        strokeWidth={3}
+        className="flex-1">
+        {/* Skip rendering inner content for near-invisible removed placeholders */}
+        {state !== 'removed' && (
+          <div
+            className="flex items-center gap-4 w-full py-5 cursor-default select-none"
+            style={{ color: textColor, transition: 'color 0.4s ease' }}>
+            {/* Option label badge (A / B / C / D) */}
+            <span
+              className="shrink-0 w-10 h-10 flex items-center justify-center rounded-full font-black"
+              style={{
+                fontSize: '1.25rem',
+                ...badgeStyle,
+                transition:
+                  'background 0.4s ease, border-color 0.4s ease, color 0.4s ease',
+              }}>
+              {optionKey}
+            </span>
 
-        {/* Option text */}
-        <span className="text-base font-semibold leading-snug">
-          {optionText}
-        </span>
-      </div>
+            {/* Option text */}
+            <span
+              style={{
+                fontFamily: 'var(--font-question)',
+                fontSize: '1.5rem',
+                fontWeight: 500,
+                lineHeight: 1.35,
+                transition: 'color 0.4s ease',
+                letterSpacing: '0.05em',
+              }}>
+              {optionText}
+            </span>
+          </div>
+        )}
+      </WwbamShape>
     </motion.div>
   );
 }
@@ -184,20 +207,24 @@ function OptionButton({ optionKey, optionText, state }) {
 /**
  * OptionGrid
  *
- * Renders a 2×2 grid of WWBAM-style hexagon option buttons.
- * Each option's visual state is derived from Firebase game-state fields.
+ * Renders a 2×2 grid of WWBAM option buttons, each backed by WwbamShape.
  * Options stagger in A → B → C → D with 150 ms between each.
  *
- * After answer reveal all 4 options remain visible:
- *   correct → green, selected wrong → red, others → dimmed (dark but readable)
+ * State → WwbamShape mapping:
+ *   default  → blue shimmer   (idle)
+ *   selected → amber shimmer  (host locked answer, awaiting reveal)
+ *   correct  → green shimmer  + rich green fill (answer revealed correct)
+ *   wrong    → red shimmer    + rich red fill   (answer revealed wrong)
+ *   dimmed   → slate shimmer  (post-reveal bystander — visible but inactive)
+ *   removed  → near-invisible (50/50 lifeline placeholder, preserves grid space)
  *
  * @param {{
  *   options:        { A: string, B: string, C: string, D: string } | null,
  *   optionsVisible: boolean,
- *   selectedOption: string|null,
- *   correctOption:  string|null,
+ *   selectedOption: string | null,
+ *   correctOption:  string | null,
  *   answerRevealed: boolean,
- *   activeLifeline: string|null,
+ *   activeLifeline: string | null,
  * }} props
  */
 export default function OptionGrid({
@@ -208,7 +235,7 @@ export default function OptionGrid({
   answerRevealed,
 }) {
   return (
-    <div className="w-full max-w-3xl">
+    <div className="w-full max-w-7xl">
       <AnimatePresence mode="wait">
         {optionsVisible && options ? (
           <motion.div
