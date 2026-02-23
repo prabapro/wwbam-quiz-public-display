@@ -81,9 +81,9 @@ function deriveOverlay(gameState, currentTeam) {
  * The main gameplay display. Shown when gameStatus is active/paused/completed.
  *
  * Layout (3-column):
- *   Left sidebar  — TeamList      (w-72, hidden when showTeamList is false)
+ *   Left sidebar  — TeamList      (w-80, hidden when showTeamList is false)
  *   Center        — QuestionCard + OptionGrid (flex-1, always centered)
- *   Right sidebar — PrizeLadder   (w-72, hidden when showPrizeLadder is false)
+ *   Right sidebar — PrizeLadder   (w-80, hidden when showPrizeLadder is false)
  *
  * Top bar proportions:
  *   TeamInfoBar    — capped at 55% width (max-w-[55%]) so lifelines have room
@@ -178,10 +178,11 @@ export default function GameScreen({
           {/* Left sidebar — Team List */}
           {displayConfig?.showTeamList && (
             <div
-              className="flex flex-col shrink-0 w-72 border-r"
+              className="flex flex-col shrink-0 w-80 border-r"
               style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
               <TeamList
                 teams={teams}
+                playQueue={playQueue}
                 currentTeamId={gameState?.currentTeamId ?? null}
               />
             </div>
@@ -221,7 +222,7 @@ export default function GameScreen({
           {/* Right sidebar — Prize Ladder */}
           {displayConfig?.showPrizeLadder && (
             <div
-              className="flex flex-col shrink-0 w-72 border-l"
+              className="flex flex-col shrink-0 w-80 border-l"
               style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
               <PrizeLadder
                 prizeStructure={prizeStructure}

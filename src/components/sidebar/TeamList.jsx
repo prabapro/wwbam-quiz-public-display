@@ -1,45 +1,69 @@
 // src/components/sidebar/TeamList.jsx
 
-import { formatPrizeShort } from '@utils/formatters';
+import { motion } from 'framer-motion';
+import WwbamShape from '@components/ui/WwbamShape';
+import { formatPrize } from '@utils/formatters';
+
+// ── Constants ──────────────────────────────────────────────────────────────────
+
+/**
+ * Per-status display config.
+ *
+ *  active    → selected  (amber shimmer — currently playing)
+ *  completed → default   (blue shimmer  — finished successfully)
+ *  eliminated→ wrong     (red shimmer   — answered incorrectly)
+ *  waiting   → used      (slate shimmer — not yet played)
+ *
+ * Shape colour communicates status — no icons needed.
+ * All text colours are CSS token references — no hardcoded hex values.
+ */
+const STATUS_CONFIG = {
+  active: {
+    shapeState: 'selected',
+    numberColor: 'var(--c-gold)',
+    nameColor: 'var(--c-gold)',
+    prizeColor: 'var(--c-gold)',
+  },
+  completed: {
+    shapeState: 'default',
+    numberColor: 'var(--c-blue-light)',
+    nameColor: 'var(--c-text)',
+    prizeColor: 'var(--c-blue-light)',
+  },
+  eliminated: {
+    shapeState: 'wrong',
+    numberColor: 'var(--c-red-mid)',
+    nameColor: 'var(--c-text-dim)',
+    prizeColor: 'var(--c-red-mid)',
+  },
+  waiting: {
+    shapeState: 'used',
+    numberColor: 'var(--c-used-text)',
+    nameColor: 'var(--c-used-text)',
+    prizeColor: 'var(--c-used-text)',
+  },
+};
+
+const DEFAULT_STATUS = STATUS_CONFIG.waiting;
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
+function getStatusConfig(status) {
+  return STATUS_CONFIG[status] ?? DEFAULT_STATUS;
+}
+
 /**
- * Returns the display config for a team status badge.
- * @param {'waiting'|'active'|'eliminated'|'completed'} status
+ * Returns teams sorted by play queue order.
+ * Teams not present in the queue are appended at the end.
  */
-function statusConfig(status) {
-  switch (status) {
-    case 'active':
-      return {
-        label: 'Playing',
-        color: '#f59e0b',
-        bg: 'rgba(245,158,11,0.15)',
-        dot: '#f59e0b',
-      };
-    case 'completed':
-      return {
-        label: 'Done',
-        color: '#4ade80',
-        bg: 'rgba(74,222,128,0.12)',
-        dot: '#4ade80',
-      };
-    case 'eliminated':
-      return {
-        label: 'Out',
-        color: '#f87171',
-        bg: 'rgba(248,113,113,0.12)',
-        dot: '#f87171',
-      };
-    case 'waiting':
-    default:
-      return {
-        label: 'Waiting',
-        color: '#475569',
-        bg: 'transparent',
-        dot: '#334155',
-      };
-  }
+function sortByPlayQueue(teams, playQueue) {
+  if (!playQueue?.length) return teams;
+  const indexMap = Object.fromEntries(playQueue.map((id, i) => [id, i]));
+  return [...teams].sort((a, b) => {
+    const ai = indexMap[a.id] ?? Infinity;
+    const bi = indexMap[b.id] ?? Infinity;
+    return ai - bi;
+  });
 }
 
 // ── Component ──────────────────────────────────────────────────────────────────
@@ -47,76 +71,87 @@ function statusConfig(status) {
 /**
  * TeamList
  *
- * Compact list of all teams shown in the lower sidebar during gameplay.
- * Highlights the currently active team. Shows status badge + prize earned.
+ * Sidebar list of all teams in play order. Max 10 teams so cards have
+ * generous breathing room. Shape state communicates status visually.
+ *
+ * Layout per card (2 rows):
+ *   Row 1: [#]  [Team name]
+ *   Row 2: [Prize amount]   ← only shown if prize > 0
  *
  * @param {{
  *   teams:         Array,
+ *   playQueue:     string[],
  *   currentTeamId: string|null,
  * }} props
  */
-export default function TeamList({ teams, currentTeamId }) {
+export default function TeamList({ teams, playQueue }) {
   if (!teams?.length) return null;
 
+  const orderedTeams = sortByPlayQueue(teams, playQueue);
+
   return (
-    <div>
+    <div className="h-full flex flex-col overflow-hidden">
       {/* Header */}
       <div
-        className="px-4 py-2 text-center"
+        className="shrink-0 px-4 py-2 text-center"
         style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         <p className="text-slate-400 text-xs uppercase tracking-widest font-medium">
           Teams
         </p>
       </div>
 
-      {/* Team rows */}
-      <div>
-        {teams.map((team) => {
-          const isCurrent = team.id === currentTeamId;
-          const cfg = statusConfig(team.status);
+      {/* Team cards */}
+      <div className="flex-1 overflow-y-auto scrollbar-none py-2 px-3 flex flex-col gap-3">
+        {orderedTeams.map((team, index) => {
+          const cfg = getStatusConfig(team.status);
+          const hasPrize = (team.currentPrize ?? 0) > 0;
 
           return (
-            <div
-              key={team.id}
-              className="flex items-center gap-2 px-4 py-2"
-              style={{
-                background: isCurrent ? 'rgba(245,158,11,0.08)' : 'transparent',
-                borderLeft: isCurrent
-                  ? '3px solid #f59e0b'
-                  : '3px solid transparent',
-                borderBottom: '1px solid rgba(255,255,255,0.04)',
-              }}>
-              {/* Status dot */}
-              <span
-                className="shrink-0 w-2 h-2 rounded-full"
-                style={{ background: cfg.dot }}
-              />
+            <motion.div key={team.id} layout className="flex">
+              <WwbamShape
+                size="compact"
+                state={cfg.shapeState}
+                strokeWidth={2}
+                className="flex-1"
+                style={{ minHeight: hasPrize ? '60px' : '48px' }}>
+                <div className="flex flex-col justify-center w-full px-4 py-2.5 gap-1">
+                  {/* ── Row 1: position · team name ─────────────────────── */}
+                  <div className="flex items-baseline gap-2">
+                    <span
+                      className="shrink-0"
+                      style={{
+                        fontFamily: 'var(--font-numeric)',
+                        fontSize: '0.8rem',
+                        color: cfg.numberColor,
+                      }}>
+                      {String(index + 1).padStart(2, '0')}
+                    </span>
+                    <p
+                      className="flex-1 font-semibold truncate"
+                      style={{
+                        fontSize: '0.85rem',
+                        color: cfg.nameColor,
+                      }}>
+                      {team.name}
+                    </p>
+                  </div>
 
-              {/* Team name */}
-              <p
-                className="flex-1 text-xs font-semibold truncate"
-                style={{ color: isCurrent ? '#f59e0b' : '#94a3b8' }}>
-                {team.name}
-              </p>
-
-              {/* Prize (if earned) */}
-              {(team.currentPrize ?? 0) > 0 && (
-                <span
-                  className="shrink-0 text-xs font-mono"
-                  style={{
-                    color: team.status === 'eliminated' ? '#475569' : '#64748b',
-                  }}>
-                  {formatPrizeShort(team.currentPrize)}
-                </span>
-              )}
-
-              {/* Status badge */}
-              <span
-                className="shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full"
-                style={{ background: cfg.bg, color: cfg.color }}>
-                {cfg.label}
-              </span>
-            </div>
+                  {/* ── Row 2: prize amount ──────────────────────────────── */}
+                  {hasPrize && (
+                    <p
+                      className="truncate"
+                      style={{
+                        fontFamily: 'var(--font-numeric)',
+                        fontSize: '0.8rem',
+                        color: cfg.prizeColor,
+                        paddingLeft: '1.4rem', // align under team name
+                      }}>
+                      {formatPrize(team.currentPrize)}
+                    </p>
+                  )}
+                </div>
+              </WwbamShape>
+            </motion.div>
           );
         })}
       </div>
