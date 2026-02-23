@@ -8,10 +8,12 @@ import { formatPrize } from '@utils/formatters';
 // ── Constants ──────────────────────────────────────────────────────────────────
 
 /**
- * Shape + text colour config.
+ * Shape + text colour config per display state.
  *
- *  active  → selected  (amber shimmer — currently playing)
- *  dim     → used      (slate shimmer — completed, eliminated, waiting)
+ *  active → selected  (amber shimmer — currently playing)
+ *  dim    → used      (slate shimmer — completed, eliminated, waiting)
+ *
+ * Colours reference CSS tokens — no raw values.
  */
 const STATUS_CONFIG = {
   active: {
@@ -36,6 +38,8 @@ const STATUS_CONFIG = {
  *   completed → ✓ Rs. X,XXX.00       (dim — prize earned)
  *   eliminated→ ✓ Rs. X,XXX.00       (dim — last safe-haven prize, or "Done")
  *   waiting   → ⏱ Waiting            (dim)
+ *
+ * All colours reference CSS tokens via JS constants or var() — no raw values.
  */
 function StatusRow({ status, currentPrize }) {
   const hasPrize = (currentPrize ?? 0) > 0;
@@ -63,9 +67,7 @@ function StatusRow({ status, currentPrize }) {
         <CheckCircle2 size={iconSize} strokeWidth={2} />
         <span
           style={{
-            fontFamily: hasPrize
-              ? 'var(--font-numeric)'
-              : 'var(--font-condensed)',
+            fontFamily: hasPrize ? 'var(--font-numeric)' : 'var(--font-body)',
             fontSize: '0.78rem',
             color: dimColor,
             letterSpacing: hasPrize ? '0.02em' : '0.18em',
@@ -137,16 +139,12 @@ export default function TeamList({ teams, playQueue }) {
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
-      {/* Header */}
-      <div
-        className="shrink-0 px-4 py-2 text-center"
-        style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-        <p className="text-slate-400 text-xs uppercase tracking-widest font-medium">
-          Teams
-        </p>
+      {/* ── Header ────────────────────────────────────────────────────── */}
+      <div className="shrink-0 px-4 py-2 text-center wwbam-sep--horizontal">
+        <p className="wwbam-sidebar-header">Teams</p>
       </div>
 
-      {/* Team cards */}
+      {/* ── Team cards ────────────────────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto scrollbar-none py-2 px-2 flex flex-col gap-8">
         {orderedTeams.map((team, index) => {
           const cfg = getStatusConfig(team.status);
@@ -160,12 +158,12 @@ export default function TeamList({ teams, playQueue }) {
                 className="flex-1"
                 style={{ minHeight: '60px' }}>
                 <div className="flex flex-col justify-center w-full px-2 py-2.5 gap-1">
-                  {/* ── Row 1: position · team name ─────────────────────── */}
+                  {/* ── Row 1: position · team name ───────────────────── */}
                   <div className="flex items-baseline gap-2">
+                    {/* Team number — class supplies font/size, inline supplies colour */}
                     <span
-                      className="shrink-0"
+                      className="wwbam-team-number shrink-0"
                       style={{
-                        fontFamily: 'var(--font-numeric)',
                         fontSize: '0.8rem',
                         color: cfg.numberColor,
                       }}>
@@ -174,6 +172,7 @@ export default function TeamList({ teams, playQueue }) {
                     <p
                       className="flex-1 font-semibold truncate"
                       style={{
+                        fontFamily: 'var(--font-body)',
                         fontSize: '0.85rem',
                         color: cfg.nameColor,
                       }}>
@@ -181,7 +180,7 @@ export default function TeamList({ teams, playQueue }) {
                     </p>
                   </div>
 
-                  {/* ── Row 2: status indicator ──────────────────────────── */}
+                  {/* ── Row 2: status indicator ───────────────────────── */}
                   <div style={{ paddingLeft: '1.4rem' }}>
                     <StatusRow
                       status={team.status}
