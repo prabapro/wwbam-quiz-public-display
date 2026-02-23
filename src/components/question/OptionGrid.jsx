@@ -186,7 +186,7 @@ function OptionButton({ optionKey, optionText, state }) {
             {/* Option text */}
             <span
               style={{
-                fontFamily: 'var(--font-body)',
+                fontFamily: 'var(--font-question)',
                 fontSize: '1.5rem',
                 fontWeight: 500,
                 lineHeight: 1.35,
