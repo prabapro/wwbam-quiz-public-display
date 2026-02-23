@@ -16,12 +16,11 @@ const cardVariants = {
 /**
  * QuestionCard
  *
- * Displays the current question text inside a WwbamShape (wide, default).
- * Animates in when `questionVisible` becomes true and re-animates on
- * each new question (keyed on question id / number).
+ * Displays the current question number in its own compact WwbamShape badge
+ * (gold shimmer, centered) above the question text in a wide WwbamShape.
  *
- * Renders an invisible placeholder when hidden to keep the layout stable
- * so the option grid below does not shift position.
+ * Both elements animate together as a single unit on question change.
+ * Renders an invisible placeholder when hidden to keep the layout stable.
  *
  * @param {{
  *   question:              object | null,
@@ -44,36 +43,46 @@ export default function QuestionCard({
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="w-full flex">
-            <WwbamShape
-              size="wide"
-              state="default"
-              strokeWidth={6}
-              className="flex-1">
-              <div className="flex flex-col items-center justify-center gap-3 py-7 w-full text-center">
-                {/* Question number label */}
-                <span
-                  className="wwbam-label"
-                  style={{
-                    color: 'var(--c-diamond)',
-                    letterSpacing: '0.25em',
-                  }}>
-                  Question {currentQuestionNumber}
-                </span>
+            className="w-full flex flex-col items-center gap-3">
+            {/* ── Question number badge ────────────────────────────────────── */}
+            <div className="flex" style={{ minWidth: '14rem' }}>
+              <WwbamShape
+                size="compact"
+                state="selected"
+                strokeWidth={1}
+                className="flex-1"
+                style={{ minHeight: '44px' }}>
+                <div className="flex items-center justify-center gap-2 px-6 py-2 w-full">
+                  <span
+                    className="wwbam-label"
+                    style={{ letterSpacing: '0.25em' }}>
+                    Question
+                  </span>
+                  <span
+                    className="wwbam-text-gold-gradient"
+                    style={{
+                      fontFamily: 'var(--font-numeric)',
+                      fontSize: '1.3rem',
+                      lineHeight: 1,
+                    }}>
+                    {currentQuestionNumber}
+                  </span>
+                </div>
+              </WwbamShape>
+            </div>
 
-                {/* Question text */}
-                <p
-                  style={{
-                    fontFamily: 'var(--font-body)',
-                    fontSize: '1.75rem',
-                    fontWeight: 700,
-                    color: 'var(--c-text)',
-                    lineHeight: 1.35,
-                  }}>
-                  {question.text}
-                </p>
-              </div>
-            </WwbamShape>
+            {/* ── Question text card ───────────────────────────────────────── */}
+            <div className="w-full flex">
+              <WwbamShape
+                size="wide"
+                state="default"
+                strokeWidth={6}
+                className="flex-1">
+                <div className="flex items-center justify-center py-7 w-full text-center">
+                  <p className="wwbam-question-text">{question.text}</p>
+                </div>
+              </WwbamShape>
+            </div>
           </motion.div>
         ) : (
           // Invisible placeholder — preserves layout height while hidden
