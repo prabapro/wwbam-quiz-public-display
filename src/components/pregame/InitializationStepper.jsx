@@ -9,6 +9,7 @@ import {
   ClipboardList,
   Check,
   Loader2,
+  Sparkles,
 } from 'lucide-react';
 import WwbamShape from '@components/ui/WwbamShape';
 import { COPY_STEPPER } from '@constants/app';
@@ -27,10 +28,11 @@ const STEPS = [
 ];
 
 // Delay (ms) after which each step is marked as complete.
-const STEP_COMPLETE_DELAYS = [1200, 2400, 3600, 4800];
+const STEP_COMPLETE_DELAYS = [1400, 3000, 4800, 6800];
 
 // Delay after the last step completes before calling onComplete.
-const COMPLETION_DELAY = 7000;
+// Gives the audience time to read the "All set!" confirmation.
+const COMPLETION_DELAY = 9000;
 
 // ── Shape state mapping ────────────────────────────────────────────────────────
 
@@ -171,8 +173,7 @@ function StepRow({ step, isComplete, isActive }) {
                 className="shrink-0 mr-1"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                style={{ color: 'var(--c-gold)' }}>
+                exit={{ opacity: 0 }}>
                 <motion.div
                   animate={{ rotate: 360 }}
                   transition={{
@@ -180,7 +181,7 @@ function StepRow({ step, isComplete, isActive }) {
                     repeat: Infinity,
                     ease: 'linear',
                   }}>
-                  <Loader2 size={22} strokeWidth={2} />
+                  <Loader2 size={22} color="var(--c-gold)" strokeWidth={2} />
                 </motion.div>
               </motion.div>
             )}
@@ -204,14 +205,7 @@ function StepRow({ step, isComplete, isActive }) {
  *
  * Steps complete on a fixed schedule (STEP_COMPLETE_DELAYS). Once all steps
  * are done, fires `onComplete` after a brief final pause so the audience can
- * read the completed state before the IdleScreen transitions to "ready".
- *
- * Typography and layout match the LobbyPhase / ReadyPhase screens:
- *   - Eyebrow: wwbam-label + wwbam-text-gold-gradient
- *   - Heading: var(--font-condensed) at 3.4rem uppercase gold gradient
- *   - Step labels: var(--font-condensed) at 1.6rem uppercase
- *   - Icons: Lucide at 26px, colour driven by step state
- *   - "All done": WwbamShape correct + condensed uppercase text
+ * read the "All set!" confirmation before IdleScreen transitions to "ready".
  *
  * @param {{ onComplete: () => void }} props
  */
@@ -283,7 +277,7 @@ export default function InitializationStepper({ onComplete }) {
         ))}
       </motion.div>
 
-      {/* ── "All done" confirmation — WwbamShape correct ─────────────────── */}
+      {/* ── "All set!" confirmation — gold selected shape with Sparkles ───── */}
       <AnimatePresence>
         {allDone && (
           <motion.div
@@ -293,27 +287,25 @@ export default function InitializationStepper({ onComplete }) {
             exit={{ opacity: 0 }}>
             <WwbamShape
               size="wide"
-              state="correct"
+              state="selected"
               strokeWidth={3}
               className="flex-1"
-              style={{ minHeight: '64px' }}>
-              <div className="flex items-center justify-center gap-3 py-3 w-full">
-                <Check
-                  size={22}
-                  color="var(--c-green-light)"
-                  strokeWidth={2.5}
-                />
+              style={{ minHeight: '88px' }}>
+              <div className="flex items-center justify-center gap-4 py-4 w-full">
+                <Sparkles size={28} color="var(--c-gold)" strokeWidth={1.8} />
                 <p
+                  className="wwbam-text-gold-gradient"
                   style={{
                     fontFamily: 'var(--font-condensed)',
-                    fontSize: '1.4rem',
-                    fontWeight: 700,
-                    letterSpacing: '0.3em',
+                    fontSize: '2.2rem',
+                    fontWeight: 900,
+                    letterSpacing: '0.25em',
                     textTransform: 'uppercase',
-                    color: 'var(--c-green-light)',
+                    lineHeight: 1,
                   }}>
                   {COPY_STEPPER.COMPLETE_MESSAGE}
                 </p>
+                <Sparkles size={28} color="var(--c-gold)" strokeWidth={1.8} />
               </div>
             </WwbamShape>
           </motion.div>
