@@ -13,18 +13,18 @@
  *   </ScreenBackground>
  *
  * The overlay opacity can be tuned via the `overlayOpacity` prop (0–1).
- * Defaults to 0.72 — dark enough for text legibility, light enough for
+ * Defaults to 0.7 — dark enough for text legibility, light enough for
  * the set atmosphere to come through.
  *
  * @param {{
  *   children:       React.ReactNode,
- *   overlayOpacity: number,           - Dark overlay opacity (default: 0.72)
+ *   overlayOpacity: number,           - Dark overlay opacity (default: 0.7)
  *   className:      string,           - Extra classes on the root element
  * }} props
  */
 export default function ScreenBackground({
   children,
-  overlayOpacity = 0.75,
+  overlayOpacity = 0.7,
   className = '',
 }) {
   return (
