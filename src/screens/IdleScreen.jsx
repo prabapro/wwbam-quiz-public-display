@@ -168,6 +168,12 @@ function AppEyebrow() {
  *   [team cards]          — TeamRosterCard × N  (or a "used" placeholder shape)
  *   [WwbamShape used]     — footer note
  *   "Waiting for host"    — dim pulsing text (no shape, truly secondary)
+ *
+ * FIX: The card stagger container uses `key={teams.length}` so that whenever
+ * the host adds a new team, the container remounts and all cards animate in
+ * cleanly from their initial state. Without this, Framer Motion's stagger
+ * parent — already settled in "show" — would not re-trigger for newly
+ * inserted children, leaving them stuck at opacity 0.
  */
 function LobbyPhase({ teams }) {
   const hasTeams = teams.length > 0;
@@ -228,11 +234,27 @@ function LobbyPhase({ teams }) {
 
         {/* Teams list or no-teams placeholder */}
         {hasTeams ? (
-          // Outer: participates in section stagger as one block
+          // Outer: participates in section stagger as one block.
           <motion.div variants={sectionVariants} className="w-full max-w-3xl">
-            {/* Inner: isolated card stagger — different variant keys (enter/show)
-                avoid any conflict with the outer hidden/visible stagger */}
+            {/*
+              Inner: isolated card stagger with `key={teams.length}`.
+
+              WHY THE KEY: Framer Motion stagger containers animate their
+              children on mount. Once the container has settled, newly
+              inserted children don't automatically receive the stagger
+              propagation — they stay at their `initial` state (invisible).
+
+              By keying on `teams.length`, the container remounts every time
+              a team is added. All cards, including previously visible ones,
+              re-enter with the stagger sequence, so the full roster always
+              animates in correctly without requiring a page reload.
+
+              The brief re-animation of existing cards is intentional and
+              matches the show aesthetic — a celebratory cascade each time
+              a new team joins the lobby.
+            */}
             <motion.div
+              key={teams.length}
               className="flex flex-col gap-3"
               initial="enter"
               animate="show"
@@ -399,12 +421,6 @@ function ReadyPhase({ teams, gameState }) {
           <motion.div
             variants={sectionVariants}
             className="w-full max-w-3xl flex flex-col gap-3">
-            {/* <p
-              className="wwbam-label text-center"
-              style={{ letterSpacing: '0.3em', color: 'var(--c-text-muted)' }}>
-              {COPY_READY.PLAY_ORDER_LABEL}
-            </p> */}
-
             {/* Independent card stagger — isolated variant keys */}
             <motion.div
               className="flex flex-col gap-3"
