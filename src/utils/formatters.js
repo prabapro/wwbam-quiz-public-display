@@ -4,8 +4,8 @@
  * Prize formatting utilities for the public display app.
  *
  * Two formats are used across the UI:
- *  - Full:  "Rs. 1,000,000"  → TeamInfoBar, ResultsScreen
- *  - Short: "Rs. 1M"         → PrizeLadder (space-constrained)
+ *  - Full:  "Rs. 1,000,000.00"  → TeamInfoBar, ResultsScreen, PrizeLadder
+ *  - Short: "Rs. 1M"            → TeamList (space-constrained)
  */
 
 const CURRENCY = 'Rs.';
@@ -28,19 +28,24 @@ const toSafeNumber = (value) => {
 // ── Public API ─────────────────────────────────────────────────────────────────
 
 /**
- * Formats a prize amount in full with locale-aware thousands separators.
+ * Formats a prize amount with locale-aware thousands separators and
+ * exactly 2 decimal places.
  *
  * @param {number} amount - Prize in Rs.
- * @returns {string} e.g. "Rs. 1,000,000"
+ * @returns {string} e.g. "Rs. 1,000,000.00"
  *
  * @example
- * formatPrize(1000000) // "Rs. 1,000,000"
- * formatPrize(500)     // "Rs. 500"
- * formatPrize(0)       // "Rs. 0"
+ * formatPrize(1000000) // "Rs. 1,000,000.00"
+ * formatPrize(2000)    // "Rs. 2,000.00"
+ * formatPrize(500)     // "Rs. 500.00"
+ * formatPrize(0)       // "Rs. 0.00"
  */
 export const formatPrize = (amount) => {
   const n = toSafeNumber(amount);
-  return `${CURRENCY} ${n.toLocaleString(LOCALE)}`;
+  return `${CURRENCY} ${n.toLocaleString(LOCALE, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
 };
 
 /**
