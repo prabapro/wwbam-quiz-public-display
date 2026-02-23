@@ -20,7 +20,7 @@
   font-weight: 600;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--c-text-muted);
+  color: var(--c-text);
   line-height: 1.2;
 }
 
