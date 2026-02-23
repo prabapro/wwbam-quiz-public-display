@@ -47,7 +47,7 @@ const ICON_COLOR = {
 /** Status sub-label colour per lifeline state — token-driven. */
 const STATUS_LABEL_COLOR = {
   active: 'var(--c-gold)',
-  available: 'var(--c-text-dim)',
+  available: 'var(--c-green-light)',
   used: 'var(--c-used-subtext)',
 };
 
