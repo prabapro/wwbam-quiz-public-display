@@ -2,12 +2,31 @@
 
 import { useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { formatPrizeShort } from '@utils/formatters';
+import WwbamShape from '@components/ui/WwbamShape';
+import { formatPrize } from '@utils/formatters';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
-/** Safe-haven milestone question numbers. */
-const MILESTONES = new Set([5, 10, 15, 20]);
+/**
+ * Maps a row's logical state to a WwbamShape visual state.
+ *
+ *  current   → selected  (amber shimmer — active question)
+ *  completed → default   (blue shimmer  — already answered)
+ *  upcoming  → used      (slate shimmer — not yet reached)
+ */
+const SHAPE_STATE = {
+  current: 'selected',
+  completed: 'default',
+  upcoming: 'used',
+};
+
+/** Derive which logical state a row is in. */
+function deriveRowState(questionNumber, currentQuestionNumber) {
+  if (questionNumber === currentQuestionNumber) return 'current';
+  if (currentQuestionNumber !== null && questionNumber < currentQuestionNumber)
+    return 'completed';
+  return 'upcoming';
+}
 
 // ── Component ──────────────────────────────────────────────────────────────────
 
@@ -15,21 +34,25 @@ const MILESTONES = new Set([5, 10, 15, 20]);
  * PrizeLadder
  *
  * Vertical prize ladder displayed in the sidebar during gameplay.
- * Shows all prize levels top-to-bottom (Q20 → Q1), with:
- *   - Current question highlighted in amber
- *   - Milestone questions (Q5, Q10, Q15, Q20) in gold with a trophy icon
- *   - Completed levels dimmed
- *   - Auto-scrolls so the current question is always in view
+ * Renders prize rows top-to-bottom (highest question first) using WwbamShape,
+ * consistent with the rest of the WWBAM design system.
+ *
+ * Visual states per row:
+ *  - current   → amber shimmer (selected)
+ *  - completed → blue shimmer  (default — already answered)
+ *  - upcoming  → slate shimmer (used    — not yet reached)
+ *
+ * Auto-scrolls so the current question row is always in view.
  *
  * @param {{
- *   prizeStructure:        number[],  // index 0 = Q1 prize
+ *   prizeStructure:        number[],    // index 0 = Q1 prize
  *   currentQuestionNumber: number|null,
  * }} props
  */
 export default function PrizeLadder({ prizeStructure, currentQuestionNumber }) {
   const currentRef = useRef(null);
 
-  // Auto-scroll to keep current question visible whenever it changes
+  // Scroll current question into view whenever it changes
   useEffect(() => {
     if (currentRef.current) {
       currentRef.current.scrollIntoView({
@@ -41,7 +64,7 @@ export default function PrizeLadder({ prizeStructure, currentQuestionNumber }) {
 
   if (!prizeStructure?.length) return null;
 
-  // Build rows top-to-bottom: highest question first
+  // Build rows top-to-bottom: highest question number first
   const rows = prizeStructure
     .map((prize, index) => ({ questionNumber: index + 1, prize }))
     .reverse();
@@ -58,73 +81,59 @@ export default function PrizeLadder({ prizeStructure, currentQuestionNumber }) {
       </div>
 
       {/* Scrollable list */}
-      <div className="flex-1 overflow-y-auto scrollbar-none">
+      <div className="flex-1 overflow-y-auto scrollbar-none py-2 px-3 flex flex-col gap-1.5">
         {rows.map(({ questionNumber, prize }) => {
-          const isCurrent = questionNumber === currentQuestionNumber;
-          const isMilestone = MILESTONES.has(questionNumber);
-          const isCompleted =
-            currentQuestionNumber !== null &&
-            questionNumber < currentQuestionNumber;
+          const rowState = deriveRowState(
+            questionNumber,
+            currentQuestionNumber,
+          );
+          const isCurrent = rowState === 'current';
+          const isCompleted = rowState === 'completed';
 
           return (
-            <div key={questionNumber} ref={isCurrent ? currentRef : null}>
-              <motion.div
-                layout
-                className="flex items-center gap-2 px-4 py-2"
-                style={{
-                  background: isCurrent
-                    ? 'rgba(245,158,11,0.15)'
-                    : 'transparent',
-                  borderLeft: isCurrent
-                    ? '3px solid #f59e0b'
-                    : '3px solid transparent',
-                  borderBottom: '1px solid rgba(255,255,255,0.04)',
-                }}
-                transition={{ duration: 0.3 }}>
-                {/* Milestone icon or question number */}
-                <span
-                  className="shrink-0 w-6 text-center text-xs font-bold"
-                  style={{
-                    color: isCurrent
-                      ? '#f59e0b'
-                      : isMilestone
-                        ? '#fbbf24'
+            <motion.div
+              key={questionNumber}
+              ref={isCurrent ? currentRef : null}
+              layout
+              className="flex">
+              <WwbamShape
+                size="compact"
+                state={SHAPE_STATE[rowState]}
+                strokeWidth={2}
+                className="flex-1"
+                style={{ minHeight: '40px' }}>
+                <div className="flex items-center justify-between w-full px-4 py-1.5">
+                  {/* Question number */}
+                  <span
+                    className="wwbam-label shrink-0"
+                    style={{
+                      color: isCurrent
+                        ? 'var(--c-gold)'
                         : isCompleted
-                          ? '#1e293b'
-                          : '#475569',
-                  }}>
-                  {isMilestone ? '🏆' : questionNumber}
-                </span>
+                          ? 'var(--c-text-dim)'
+                          : 'var(--c-used-text)',
+                      fontSize: '0.7rem',
+                      letterSpacing: '0.08em',
+                    }}>
+                    Q{questionNumber}
+                  </span>
 
-                {/* Prize amount */}
-                <span
-                  className="flex-1 text-right text-xs font-mono font-semibold"
-                  style={{
-                    color: isCurrent
-                      ? '#f59e0b'
-                      : isMilestone
-                        ? '#fbbf24'
+                  {/* Prize amount */}
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-numeric)',
+                      fontSize: '0.85rem',
+                      color: isCurrent
+                        ? 'var(--c-gold)'
                         : isCompleted
-                          ? '#1e293b'
-                          : '#64748b',
-                    textShadow: isCurrent
-                      ? '0 0 12px rgba(245,158,11,0.5)'
-                      : 'none',
-                  }}>
-                  {formatPrizeShort(prize)}
-                </span>
-
-                {/* Current indicator arrow */}
-                {isCurrent && (
-                  <motion.span
-                    className="text-amber-400 text-xs shrink-0"
-                    animate={{ opacity: [1, 0.4, 1] }}
-                    transition={{ duration: 1, repeat: Infinity }}>
-                    ◀
-                  </motion.span>
-                )}
-              </motion.div>
-            </div>
+                          ? 'var(--c-text)'
+                          : 'var(--c-used-text)',
+                    }}>
+                    {formatPrize(prize)}
+                  </span>
+                </div>
+              </WwbamShape>
+            </motion.div>
           );
         })}
       </div>
