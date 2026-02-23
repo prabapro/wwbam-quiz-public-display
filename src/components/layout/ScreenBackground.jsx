@@ -24,14 +24,14 @@
  */
 export default function ScreenBackground({
   children,
-  overlayOpacity = 0.7,
+  overlayOpacity = 0.5,
   className = '',
 }) {
   return (
     <div
       className={`relative w-full h-full ${className}`}
       style={{
-        backgroundImage: 'url(/images/wwbam-set-background-2.jpg)',
+        backgroundImage: 'url(/images/wwbam-set-background-1.jpg)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',

@@ -6,7 +6,7 @@
 
 :root {
   /* ── Typography ─────────────────────────────────────────────────────────── */
-  --font-body: 'Barlow Semi Condensed', system-ui, sans-serif;
+  --font-family: 'Outfit', sans-serif;
   --font-condensed: 'Barlow Condensed', system-ui, sans-serif;
   --font-numeric: 'Hammersmith One', sans-serif;
 

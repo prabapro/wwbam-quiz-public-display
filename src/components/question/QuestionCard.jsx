@@ -78,7 +78,7 @@ export default function QuestionCard({
                 state="default"
                 strokeWidth={6}
                 className="flex-1">
-                <div className="flex items-center justify-center py-7 w-full text-center">
+                <div className="flex items-center justify-center py-12 w-full text-center">
                   <p className="wwbam-question-text">{question.text}</p>
                 </div>
               </WwbamShape>

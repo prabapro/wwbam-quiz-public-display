@@ -187,10 +187,11 @@ function OptionButton({ optionKey, optionText, state }) {
             <span
               style={{
                 fontFamily: 'var(--font-body)',
-                fontSize: '1.35rem',
-                fontWeight: 600,
+                fontSize: '1.5rem',
+                fontWeight: 500,
                 lineHeight: 1.35,
                 transition: 'color 0.4s ease',
+                letterSpacing: '0.05em',
               }}>
               {optionText}
             </span>

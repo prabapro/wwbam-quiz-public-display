@@ -59,8 +59,8 @@
 /* Question text inside QuestionCard */
 .wwbam-question-text {
   font-family: var(--font-body);
-  font-size: 1.55rem;
-  font-weight: 700;
+  font-size: 2.25rem;
+  font-weight: 500;
   color: var(--c-text);
   line-height: 1.3;
   text-align: center;
