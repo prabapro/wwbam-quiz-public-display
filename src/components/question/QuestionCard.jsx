@@ -35,11 +35,10 @@ export default function QuestionCard({
   currentQuestionNumber,
 }) {
   return (
-    <div className="w-full max-w-3xl">
+    <div className="w-full max-w-7xl">
       <AnimatePresence mode="wait">
         {questionVisible && question ? (
           <motion.div
-            // Re-animate whenever the question changes
             key={question.id ?? currentQuestionNumber}
             variants={cardVariants}
             initial="hidden"
@@ -49,9 +48,9 @@ export default function QuestionCard({
             <WwbamShape
               size="wide"
               state="default"
-              strokeWidth={3}
+              strokeWidth={6}
               className="flex-1">
-              <div className="flex flex-col items-center justify-center gap-3 py-6 w-full text-center">
+              <div className="flex flex-col items-center justify-center gap-3 py-7 w-full text-center">
                 {/* Question number label */}
                 <span
                   className="wwbam-label"
@@ -66,7 +65,7 @@ export default function QuestionCard({
                 <p
                   style={{
                     fontFamily: 'var(--font-body)',
-                    fontSize: '1.55rem',
+                    fontSize: '1.75rem',
                     fontWeight: 700,
                     color: 'var(--c-text)',
                     lineHeight: 1.35,

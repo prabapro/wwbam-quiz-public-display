@@ -65,8 +65,8 @@ const SHAPE_STATE = {
   selected: 'selected',
   correct: 'correct',
   wrong: 'wrong',
-  dimmed: 'used', // post-reveal bystander
-  removed: 'dimmed', // 50/50 placeholder
+  dimmed: 'used', // post-reveal bystander — slate shimmer
+  removed: 'dimmed', // 50/50 placeholder    — near-invisible
 };
 
 // ── Per-state text & badge colours (token-driven) ──────────────────────────────
@@ -169,12 +169,13 @@ function OptionButton({ optionKey, optionText, state }) {
         {/* Skip rendering inner content for near-invisible removed placeholders */}
         {state !== 'removed' && (
           <div
-            className="flex items-center gap-4 w-full py-4 cursor-default select-none"
+            className="flex items-center gap-4 w-full py-5 cursor-default select-none"
             style={{ color: textColor, transition: 'color 0.4s ease' }}>
             {/* Option label badge (A / B / C / D) */}
             <span
-              className="shrink-0 w-9 h-9 flex items-center justify-center rounded-full text-sm font-black"
+              className="shrink-0 w-10 h-10 flex items-center justify-center rounded-full font-black"
               style={{
+                fontSize: '1.25rem',
                 ...badgeStyle,
                 transition:
                   'background 0.4s ease, border-color 0.4s ease, color 0.4s ease',
@@ -186,7 +187,7 @@ function OptionButton({ optionKey, optionText, state }) {
             <span
               style={{
                 fontFamily: 'var(--font-body)',
-                fontSize: '1.05rem',
+                fontSize: '1.35rem',
                 fontWeight: 600,
                 lineHeight: 1.35,
                 transition: 'color 0.4s ease',
@@ -211,8 +212,8 @@ function OptionButton({ optionKey, optionText, state }) {
  * State → WwbamShape mapping:
  *   default  → blue shimmer   (idle)
  *   selected → amber shimmer  (host locked answer, awaiting reveal)
- *   correct  → green shimmer  (answer revealed correct)
- *   wrong    → red shimmer    (answer revealed wrong)
+ *   correct  → green shimmer  + rich green fill (answer revealed correct)
+ *   wrong    → red shimmer    + rich red fill   (answer revealed wrong)
  *   dimmed   → slate shimmer  (post-reveal bystander — visible but inactive)
  *   removed  → near-invisible (50/50 lifeline placeholder, preserves grid space)
  *
@@ -233,7 +234,7 @@ export default function OptionGrid({
   answerRevealed,
 }) {
   return (
-    <div className="w-full max-w-3xl">
+    <div className="w-full max-w-7xl">
       <AnimatePresence mode="wait">
         {optionsVisible && options ? (
           <motion.div
