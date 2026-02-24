@@ -45,6 +45,26 @@ export const COPY_BETWEEN_QUESTIONS = {
   LABEL: 'Get ready for the next question',
 };
 
+// Game screen — Team announcement overlay
+export const COPY_ANNOUNCEMENT = {
+  FIRST_UP: 'First Up',
+  UP_NEXT: 'Up Next',
+};
+
+// Game screen — Team result overlay
+export const COPY_TEAM_RESULT = {
+  COMPLETED: 'Completed',
+  ELIMINATED: 'Eliminated',
+  TAKES_HOME: 'Takes Home',
+};
+
+// Game screen — Phone a Friend overlay
+export const COPY_PHONE_A_FRIEND = {
+  TITLE: 'Phone a Friend',
+  CALL_IN_PROGRESS: 'Call in progress',
+  TIMER_RUNNING: 'Connected',
+};
+
 // Results screen
 export const COPY_RESULTS = {
   HEADING: 'Final Results',

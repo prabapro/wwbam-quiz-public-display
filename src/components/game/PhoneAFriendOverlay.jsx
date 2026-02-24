@@ -2,6 +2,9 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Phone } from 'lucide-react';
+import WwbamShape from '@components/ui/WwbamShape';
+import { COPY_PHONE_A_FRIEND } from '@constants/app';
 
 // ── Timestamp-based countdown hook ────────────────────────────────────────────
 
@@ -50,14 +53,7 @@ function useTimestampCountdown(startedAt, durationSeconds) {
   const seconds = secondsLeft % 60;
   const display = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 
-  return {
-    secondsLeft,
-    display,
-    progressPct,
-    hasStarted,
-    hasExpired,
-    isExpiring,
-  };
+  return { display, progressPct, hasStarted, hasExpired, isExpiring };
 }
 
 // ── Animation variants ─────────────────────────────────────────────────────────
@@ -69,14 +65,14 @@ const overlayVariants = {
 };
 
 const barVariants = {
-  hidden: { y: '100%', opacity: 0 },
+  hidden: { y: 80, opacity: 0 },
   visible: {
     y: 0,
     opacity: 1,
     transition: { duration: 0.45, ease: [0.16, 1, 0.3, 1] },
   },
   exit: {
-    y: '100%',
+    y: 80,
     opacity: 0,
     transition: { duration: 0.35, ease: 'easeIn' },
   },
@@ -87,17 +83,17 @@ const barVariants = {
 /**
  * PhoneAFriendOverlay
  *
- * Full-width bottom bar shown during a Phone-a-Friend call.
- * Slides up from the bottom with an orange background and a large
- * MM:SS countdown. Turns red when expiring (≤10 s).
+ * Floating bar shown at the bottom of GameScreen during a Phone-a-Friend call.
+ * Slides up from below with breathing room from the screen edge.
  *
- * Before the host starts the timer, the bar is visible but shows
- * "—:—" with a pulsing "Call in progress" label so the audience
- * knows a call is happening even without the countdown.
+ * The countdown is visualised as a fill drain inside the WwbamShape — the shape's
+ * fillProgress prop renders a tinted rect clipped precisely to the shape boundary,
+ * draining from right to left as time runs out.
  *
- * Prop alignment note:
- *   GameScreen passes `timerDuration` — this component accepts `timerDuration`
- *   and forwards it internally as `durationSeconds` to the hook.
+ * States:
+ *   - Not started : amber (selected) shape, pulsing label, --:-- countdown
+ *   - Timer running: amber (selected) shape, live MM:SS countdown, drain active
+ *   - Expiring (≤10s): red (wrong) shape, pulsing countdown, red drain
  *
  * @param {{
  *   startedAt:     number|null, - Unix ms timestamp from Firebase, null if not started
@@ -105,94 +101,119 @@ const barVariants = {
  * }} props
  */
 export default function PhoneAFriendOverlay({ startedAt, timerDuration }) {
-  const { display, hasStarted, isExpiring, progressPct } =
+  const { display, progressPct, hasStarted, isExpiring } =
     useTimestampCountdown(startedAt, timerDuration);
 
-  // Colour shifts from orange → red as time runs out
-  const bgColor = isExpiring
-    ? 'linear-gradient(90deg, #b91c1c 0%, #dc2626 50%, #b91c1c 100%)'
-    : 'linear-gradient(90deg, #c2410c 0%, #ea580c 50%, #c2410c 100%)';
+  const shapeState = isExpiring ? 'wrong' : hasStarted ? 'correct' : 'selected';
+  const iconColor = isExpiring
+    ? 'var(--c-red-light)'
+    : hasStarted
+      ? 'var(--c-green-light)'
+      : 'var(--c-gold)';
+
+  // Fill tint colours — semi-transparent so the shape's own fill shows through
+  const fillColor = isExpiring
+    ? 'rgba(224, 48, 48, 0.28)'
+    : 'rgba(94, 199, 42, 0.2)';
 
   return (
     <motion.div
-      className="absolute inset-0 z-50 flex flex-col justify-end"
+      className="absolute inset-0 z-50 flex flex-col justify-end px-8 pb-10"
       style={{ pointerEvents: 'none' }}
       variants={overlayVariants}
       initial="hidden"
       animate="visible"
       exit="exit">
       <motion.div
-        className="w-full flex flex-col"
+        className="w-full"
         variants={barVariants}
         initial="hidden"
         animate="visible"
         exit="exit">
-        {/* Progress bar — thin strip above the bar, drains left to right */}
-        <div className="w-full h-1 bg-black/20">
-          <motion.div
-            className="h-full bg-white/40"
-            animate={{ width: `${progressPct}%` }}
-            transition={{ duration: 1, ease: 'linear' }}
-          />
-        </div>
-
-        {/* Main bar */}
-        <div
-          className="w-full flex items-center justify-between px-16 py-5"
-          style={{ background: bgColor, transition: 'background 1s ease' }}>
-          {/* Left — label */}
-          <motion.div
-            className="flex items-center gap-3"
-            animate={!hasStarted ? { opacity: [1, 0.5, 1] } : { opacity: 1 }}
-            transition={{
-              duration: 1.6,
-              repeat: hasStarted ? 0 : Infinity,
-              ease: 'easeInOut',
-            }}>
-            <span className="text-2xl">📞</span>
-            <div className="flex flex-col">
-              <span className="text-white font-black text-lg uppercase tracking-widest">
-                Phone a Friend
+        <WwbamShape
+          size="wide"
+          state={shapeState}
+          strokeWidth={5}
+          fillProgress={hasStarted ? progressPct : undefined}
+          fillColor={fillColor}
+          className="w-full"
+          style={{ minHeight: '120px' }}>
+          <div className="flex items-center justify-between w-full px-10 py-5">
+            {/* Left — icon + label */}
+            <motion.div
+              className="flex items-center gap-4"
+              animate={!hasStarted ? { opacity: [1, 0.5, 1] } : { opacity: 1 }}
+              transition={{
+                duration: 1.6,
+                repeat: hasStarted ? 0 : Infinity,
+                ease: 'easeInOut',
+              }}>
+              <span style={{ color: iconColor, display: 'flex' }}>
+                <Phone size={30} strokeWidth={2} />
               </span>
-              <span className="text-orange-200 text-xs uppercase tracking-[0.3em]">
-                {hasStarted ? 'Timer running' : 'Call in progress'}
-              </span>
-            </div>
-          </motion.div>
+              <div className="flex flex-col">
+                <span
+                  className="wwbam-label"
+                  style={{ fontSize: '1rem', letterSpacing: '0.2em' }}>
+                  {COPY_PHONE_A_FRIEND.TITLE}
+                </span>
+                <span
+                  className="wwbam-label"
+                  style={{
+                    color: 'var(--c-used-text)',
+                    letterSpacing: '0.2em',
+                  }}>
+                  {hasStarted
+                    ? COPY_PHONE_A_FRIEND.TIMER_RUNNING
+                    : COPY_PHONE_A_FRIEND.CALL_IN_PROGRESS}
+                </span>
+              </div>
+            </motion.div>
 
-          {/* Right — countdown */}
-          <AnimatePresence mode="wait">
-            {!hasStarted ? (
-              <motion.span
-                key="waiting"
-                className="font-black font-mono text-white/40"
-                style={{ fontSize: '4rem', lineHeight: 1 }}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}>
-                --:--
-              </motion.span>
-            ) : (
-              <motion.span
-                key="countdown"
-                className="font-black font-mono text-white tabular-nums"
-                style={{ fontSize: '4rem', lineHeight: 1 }}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={
-                  isExpiring
-                    ? { opacity: 1, scale: [1, 1.05, 1] }
-                    : { opacity: 1, scale: 1 }
-                }
-                transition={{
-                  duration: isExpiring ? 0.6 : 0.3,
-                  repeat: isExpiring ? Infinity : 0,
-                  ease: 'easeInOut',
-                }}>
-                {display}
-              </motion.span>
-            )}
-          </AnimatePresence>
-        </div>
+            {/* Right — countdown */}
+            <AnimatePresence mode="wait">
+              {!hasStarted ? (
+                <motion.span
+                  key="waiting"
+                  style={{
+                    fontFamily: 'var(--font-numeric)',
+                    fontSize: '3.5rem',
+                    lineHeight: 1,
+                    color: 'var(--c-used-text)',
+                  }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}>
+                  --:--
+                </motion.span>
+              ) : (
+                <motion.span
+                  key="countdown"
+                  style={{
+                    fontFamily: 'var(--font-numeric)',
+                    fontSize: '3.5rem',
+                    lineHeight: 1,
+                    color: isExpiring
+                      ? 'var(--c-red-light)'
+                      : 'var(--c-green-light)',
+                  }}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={
+                    isExpiring
+                      ? { opacity: 1, scale: [1, 1.05, 1] }
+                      : { opacity: 1, scale: 1 }
+                  }
+                  transition={{
+                    duration: isExpiring ? 0.6 : 0.3,
+                    repeat: isExpiring ? Infinity : 0,
+                    ease: 'easeInOut',
+                  }}>
+                  {display}
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </div>
+        </WwbamShape>
       </motion.div>
     </motion.div>
   );
