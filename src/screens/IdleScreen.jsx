@@ -3,10 +3,11 @@
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ScreenBackground from '@components/layout/ScreenBackground';
+import ScreenHeader from '@components/layout/ScreenHeader';
 import WwbamShape from '@components/ui/WwbamShape';
 import TeamRosterCard from '@components/pregame/TeamRosterCard';
 import InitializationStepper from '@components/pregame/InitializationStepper';
-import { APP_NAME, COPY_LOBBY, COPY_READY } from '@constants/app';
+import { COPY_LOBBY, COPY_READY } from '@constants/app';
 
 // ── Phase constants ────────────────────────────────────────────────────────────
 
@@ -85,76 +86,6 @@ function AmbientGlow() {
   );
 }
 
-/**
- * SpinningLogo
- * WWBAM logo with a slow Y-axis rotation loop and gold drop-shadow.
- */
-function SpinningLogo({ size = 'w-20 h-20' }) {
-  return (
-    <div style={{ perspective: '800px' }}>
-      <motion.img
-        src="/images/wwbam-logo.svg"
-        alt="WWBAM Logo"
-        className={size}
-        style={{ filter: 'drop-shadow(0 0 28px var(--c-gold-dark))' }}
-        animate={{ rotateY: [0, 360] }}
-        transition={{
-          duration: 2.5,
-          ease: 'easeInOut',
-          repeat: Infinity,
-          repeatDelay: 3,
-        }}
-      />
-    </div>
-  );
-}
-
-/**
- * GoldDivider
- * Horizontal rule with a ✦ centrepiece — all colours via tokens.
- */
-function GoldDivider() {
-  return (
-    <div className="flex items-center gap-4 w-56">
-      <span
-        className="flex-1 h-px"
-        style={{
-          background: 'linear-gradient(90deg, transparent, var(--c-gold-dark))',
-        }}
-      />
-      <span
-        style={{
-          color: 'var(--c-gold)',
-          fontFamily: 'var(--font-body)',
-          fontSize: '0.85rem',
-        }}>
-        ✦
-      </span>
-      <span
-        className="flex-1 h-px"
-        style={{
-          background:
-            'linear-gradient(270deg, transparent, var(--c-gold-dark))',
-        }}
-      />
-    </div>
-  );
-}
-
-/**
- * AppEyebrow
- * Show title displayed above the main heading — animated gold shimmer text.
- */
-function AppEyebrow() {
-  return (
-    <p
-      className="wwbam-label wwbam-text-gold-gradient"
-      style={{ letterSpacing: '0.28em' }}>
-      {APP_NAME}
-    </p>
-  );
-}
-
 // ── Phase: Lobby ───────────────────────────────────────────────────────────────
 
 /**
@@ -163,7 +94,7 @@ function AppEyebrow() {
  * Shown when gameStatus is "not-started".
  *
  * Layout (top → bottom):
- *   Logo + APP_NAME eyebrow (gold shimmer) + GoldDivider
+ *   ScreenHeader (logo + APP_NAME eyebrow + GoldDivider)
  *   [WwbamShape selected]  — "Tonight's Teams" / "Get Ready to Play" heading
  *   [team cards]           — TeamRosterCard × N  (or a "used" placeholder shape)
  *   [WwbamShape used]      — footer note
@@ -192,12 +123,8 @@ function LobbyPhase({ teams }) {
         initial="hidden"
         animate="visible">
         {/* Logo + eyebrow + divider */}
-        <motion.div
-          variants={sectionVariants}
-          className="flex flex-col items-center gap-3">
-          <SpinningLogo size="w-20 h-20" />
-          <AppEyebrow />
-          <GoldDivider />
+        <motion.div variants={sectionVariants}>
+          <ScreenHeader logoSize="w-20 h-20" />
         </motion.div>
 
         {/* Main heading — inside WwbamShape */}
@@ -233,9 +160,7 @@ function LobbyPhase({ teams }) {
               propagation — they stay at their `initial` state (invisible).
 
               By keying on `teams.length`, the container remounts every time
-              a team is added. All cards, including previously visible ones,
-              re-enter with the stagger sequence, so the full roster always
-              animates in correctly without requiring a page reload.
+              a team is added.
             */}
             <motion.div
               key={teams.length}
@@ -251,18 +176,19 @@ function LobbyPhase({ teams }) {
             </motion.div>
           </motion.div>
         ) : (
-          // No-teams placeholder — "used" shape communicates "waiting" state
           <motion.div
             variants={sectionVariants}
             className="w-full max-w-3xl flex">
             <WwbamShape
               size="wide"
               state="used"
-              strokeWidth={2}
+              strokeWidth={3}
               className="flex-1"
               style={{ minHeight: '72px' }}>
               <div className="flex items-center justify-center py-4 w-full">
-                <p className="wwbam-label wwbam-used-text">
+                <p
+                  className="wwbam-overlay-subheading"
+                  style={{ color: 'var(--c-used-text)' }}>
                   {COPY_LOBBY.NO_TEAMS_MESSAGE}
                 </p>
               </div>
@@ -281,7 +207,11 @@ function LobbyPhase({ teams }) {
             className="flex-1"
             style={{ minHeight: '52px' }}>
             <div className="flex items-center justify-center py-3 w-full">
-              <p className="wwbam-label">{COPY_LOBBY.FOOTER_NOTE}</p>
+              <p
+                className="wwbam-overlay-subheading"
+                style={{ color: 'var(--c-text)', fontSize: '0.8rem' }}>
+                {COPY_LOBBY.FOOTER_NOTE}
+              </p>
             </div>
           </WwbamShape>
         </motion.div>
@@ -295,7 +225,7 @@ function LobbyPhase({ teams }) {
 /**
  * InitializingPhase
  *
- * Full-screen overlay over the lobby content while the stepper runs.
+ * Shown during the live not-started → initialized transition.
  * The stepper itself (InitializationStepper) already uses WwbamShape per step.
  */
 function InitializingPhase({ onComplete }) {
@@ -328,7 +258,7 @@ function InitializingPhase({ onComplete }) {
  * already initialized). Triumphant gold moment — everything is set.
  *
  * Layout (top → bottom):
- *   Logo + APP_NAME eyebrow + GoldDivider
+ *   ScreenHeader (logo + APP_NAME eyebrow + GoldDivider)
  *   [WwbamShape selected]  — "Play Order" heading (gold gradient)
  *   [team cards]           — TeamRosterCard × N in play order
  *   [WwbamShape selected]  — "Starting soon..." pulsing the whole shape
@@ -356,12 +286,8 @@ function ReadyPhase({ teams, gameState }) {
         initial="hidden"
         animate="visible">
         {/* Logo + eyebrow + divider */}
-        <motion.div
-          variants={sectionVariants}
-          className="flex flex-col items-center gap-3">
-          <SpinningLogo size="w-16 h-16" />
-          <AppEyebrow />
-          <GoldDivider />
+        <motion.div variants={sectionVariants}>
+          <ScreenHeader logoSize="w-16 h-16" />
         </motion.div>
 
         {/* "Play Order" heading */}
@@ -439,48 +365,51 @@ function ReadyPhase({ teams, gameState }) {
  * pattern — setState called conditionally during render (not inside an effect).
  *
  * @param {{
- *   gameStatus: string,
- *   teams:      Array,
- *   gameState:  object | null,
+ *   teams:     Array,
+ *   gameState: object | null,
  * }} props
  */
-export default function IdleScreen({ gameStatus, teams, gameState }) {
-  const [stepperDone, setStepperDone] = useState(false);
-  const [stepperTriggered, setStepperTriggered] = useState(false);
-  const [prevGameStatus, setPrevGameStatus] = useState(gameStatus);
+export default function IdleScreen({ teams, gameState }) {
+  const [phase, setPhase] = useState(() => {
+    return gameState?.gameStatus === 'initialized' ? PHASE.READY : PHASE.LOBBY;
+  });
 
-  if (prevGameStatus !== gameStatus) {
-    setPrevGameStatus(gameStatus);
-    if (prevGameStatus === 'not-started' && gameStatus === 'initialized') {
-      setStepperTriggered(true);
-      setStepperDone(false);
-    }
-  }
-
-  const phase = (() => {
-    if (gameStatus !== 'initialized') return PHASE.LOBBY;
-    if (stepperTriggered && !stepperDone) return PHASE.INITIALIZING;
-    return PHASE.READY;
-  })();
+  const [prevGameStatus, setPrevGameStatus] = useState(
+    gameState?.gameStatus ?? null,
+  );
 
   const handleStepperComplete = useCallback(() => {
-    setStepperDone(true);
+    setPhase(PHASE.READY);
   }, []);
+
+  // Detect the live not-started → initialized transition.
+  // Using render-time setState ("storing information from previous renders")
+  // instead of useEffect so the phase update is synchronous with the render cycle.
+  const currentGameStatus = gameState?.gameStatus ?? null;
+  if (currentGameStatus !== prevGameStatus) {
+    setPrevGameStatus(currentGameStatus);
+    if (
+      prevGameStatus === 'not-started' &&
+      currentGameStatus === 'initialized'
+    ) {
+      setPhase(PHASE.INITIALIZING);
+    }
+  }
 
   return (
     <ScreenBackground>
       <AnimatePresence mode="wait">
-        {phase === PHASE.LOBBY && <LobbyPhase key="lobby" teams={teams} />}
-
+        {phase === PHASE.LOBBY && (
+          <LobbyPhase key={PHASE.LOBBY} teams={teams} />
+        )}
         {phase === PHASE.INITIALIZING && (
           <InitializingPhase
-            key="initializing"
+            key={PHASE.INITIALIZING}
             onComplete={handleStepperComplete}
           />
         )}
-
         {phase === PHASE.READY && (
-          <ReadyPhase key="ready" teams={teams} gameState={gameState} />
+          <ReadyPhase key={PHASE.READY} teams={teams} gameState={gameState} />
         )}
       </AnimatePresence>
     </ScreenBackground>

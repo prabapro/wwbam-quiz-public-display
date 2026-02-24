@@ -24,7 +24,6 @@ export const COPY_LOBBY = {
 
 // Idle screen — Initializing phase (stepper)
 export const COPY_STEPPER = {
-  EYEBROW: 'Initializing',
   HEADING: 'Setting Up the Game',
   COMPLETE_MESSAGE: 'All set!',
 };
@@ -49,5 +48,4 @@ export const COPY_BETWEEN_QUESTIONS = {
 // Results screen
 export const COPY_RESULTS = {
   HEADING: 'Final Results',
-  WINNER_PREFIX: 'Winner:',
 };

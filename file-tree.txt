@@ -19,7 +19,8 @@
 │   │   │   ├── TeamAnnouncement.jsx
 │   │   │   └── TeamResult.jsx
 │   │   ├── layout
-│   │   │   └── ScreenBackground.jsx
+│   │   │   ├── ScreenBackground.jsx
+│   │   │   └── ScreenHeader.jsx
 │   │   ├── pregame
 │   │   │   ├── InitializationStepper.jsx
 │   │   │   └── TeamRosterCard.jsx
