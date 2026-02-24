@@ -104,13 +104,17 @@ export default function PhoneAFriendOverlay({ startedAt, timerDuration }) {
   const { display, progressPct, hasStarted, isExpiring } =
     useTimestampCountdown(startedAt, timerDuration);
 
-  const shapeState = isExpiring ? 'wrong' : 'selected';
-  const iconColor = isExpiring ? 'var(--c-red-light)' : 'var(--c-gold)';
+  const shapeState = isExpiring ? 'wrong' : hasStarted ? 'correct' : 'selected';
+  const iconColor = isExpiring
+    ? 'var(--c-red-light)'
+    : hasStarted
+      ? 'var(--c-green-light)'
+      : 'var(--c-gold)';
 
   // Fill tint colours — semi-transparent so the shape's own fill shows through
   const fillColor = isExpiring
     ? 'rgba(224, 48, 48, 0.28)'
-    : 'rgba(232, 146, 10, 0.22)';
+    : 'rgba(94, 199, 42, 0.2)';
 
   return (
     <motion.div
@@ -189,7 +193,9 @@ export default function PhoneAFriendOverlay({ startedAt, timerDuration }) {
                     fontFamily: 'var(--font-numeric)',
                     fontSize: '3.5rem',
                     lineHeight: 1,
-                    color: isExpiring ? 'var(--c-red-light)' : 'var(--c-gold)',
+                    color: isExpiring
+                      ? 'var(--c-red-light)'
+                      : 'var(--c-green-light)',
                   }}
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={
