@@ -91,8 +91,15 @@ function deriveOverlay(gameState, currentTeam) {
  *   col 3 (25%) — 50/50 lifeline
  *
  * teamResult delay:
- *   deriveOverlay returns 'teamResult' immediately, but the card only renders
- *   after TEAM_RESULT_DELAY_MS via a `teamResultUnlocked` boolean.
+ *   `teamResultKey` is a stable identity string for the current result team
+ *   (e.g. "team-3-eliminated"). `unlockedKey` holds the key whose delay timer
+ *   last fired. `showTeamResult` is only true when they match.
+ *
+ *   When overlay re-enters 'teamResult' (e.g. last-team rapid transition),
+ *   the effect cleanup cancels the in-flight timer and a fresh one starts for
+ *   the same key. `unlockedKey` remains null (old timer cancelled) until the
+ *   new timer fires — no synchronous setState in any effect body, no ref reads
+ *   during render.
  *
  * @param {{
  *   gameState:      object,
@@ -121,21 +128,36 @@ export default function GameScreen({
   const queuePosition = currentTeam ? playQueue.indexOf(currentTeam.id) + 1 : 0;
 
   // ── Delayed teamResult ─────────────────────────────────────────────────────
-  const [teamResultUnlocked, setTeamResultUnlocked] = useState(false);
-  const showTeamResult = overlay === 'teamResult' && teamResultUnlocked;
+  //
+  // `teamResultKey` encodes the identity of the team being shown as a result.
+  // `unlockedKey` holds the key whose delay timer has fired. `showTeamResult`
+  // is only true when they match — i.e. the delay has completed for the
+  // *current* team, not a stale one.
+  //
+  // Reset is implicit: when a new team enters the result state with a
+  // different key, `unlockedKey !== teamResultKey` is immediately true with
+  // no setState needed. For the last-team race (same key, rapid transitions),
+  // the effect cleanup cancels the old timer and starts a fresh one, keeping
+  // `unlockedKey` as null until the new timer completes.
+  const teamResultKey = resultTeam
+    ? `${resultTeam.id}-${resultTeam.status}`
+    : null;
+  const [unlockedKey, setUnlockedKey] = useState(null);
+  const showTeamResult =
+    overlay === 'teamResult' &&
+    teamResultKey !== null &&
+    unlockedKey === teamResultKey;
 
   useEffect(() => {
-    if (overlay === 'teamResult') {
-      const timer = setTimeout(
-        () => setTeamResultUnlocked(true),
-        TEAM_RESULT_DELAY_MS,
-      );
-      return () => clearTimeout(timer);
-    } else {
-      const timer = setTimeout(() => setTeamResultUnlocked(false), 0);
-      return () => clearTimeout(timer);
-    }
-  }, [overlay]);
+    if (overlay !== 'teamResult' || !teamResultKey) return;
+
+    const keyToUnlock = teamResultKey;
+    const timer = setTimeout(
+      () => setUnlockedKey(keyToUnlock),
+      TEAM_RESULT_DELAY_MS,
+    );
+    return () => clearTimeout(timer);
+  }, [overlay, teamResultKey]);
 
   // ── Between-questions logo ─────────────────────────────────────────────────
   const showBetweenQuestionsLogo =
@@ -231,7 +253,6 @@ export default function GameScreen({
             <PhoneAFriendOverlay
               key="phone-a-friend"
               startedAt={gameState?.lifelineTimerStartedAt ?? null}
-              currentTeam={currentTeam}
               timerDuration={timerDuration}
             />
           )}
