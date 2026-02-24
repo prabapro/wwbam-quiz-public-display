@@ -12,6 +12,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import WwbamShape from '@components/ui/WwbamShape';
+import ScreenHeader from '@components/layout/ScreenHeader';
 import { COPY_STEPPER } from '@constants/app';
 
 // ── Step definitions ───────────────────────────────────────────────────────────
@@ -49,6 +50,11 @@ function shapeStateFor(isComplete, isActive) {
 }
 
 // ── Animation variants ─────────────────────────────────────────────────────────
+
+const containerVariants = {
+  hidden: { opacity: 0, y: -16 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } },
+};
 
 const listVariants = {
   hidden: { opacity: 0 },
@@ -198,8 +204,11 @@ function StepRow({ step, isComplete, isActive }) {
  * Plays a timed step-by-step animation sequence when the host triggers game
  * initialization. Runs entirely on the display side — no Firebase writes.
  *
- * Each step is rendered as a WwbamShape that transitions through states:
- *   used (pending) → selected (active, amber) → correct (complete, green)
+ * Layout (top → bottom):
+ *   ScreenHeader (logo + APP_NAME eyebrow + GoldDivider) — consistent with all screens
+ *   [WwbamShape selected]  — "Setting Up the Game" heading (gold gradient)
+ *   [step rows]            — WwbamShape per step, state: used → selected → correct
+ *   [WwbamShape selected]  — "All set!" confirmation (visible once all steps done)
  *
  * Steps complete on a fixed schedule (STEP_COMPLETE_DELAYS). Once all steps
  * are done, fires `onComplete` after a brief final pause so the audience can
@@ -230,26 +239,31 @@ export default function InitializationStepper({ onComplete }) {
   const allDone = completedSteps.size === STEPS.length;
 
   return (
-    <div className="flex flex-col items-center gap-8 w-full max-w-3xl">
-      {/* ── Header ──────────────────────────────────────────────────────── */}
-      <motion.div
-        className="flex flex-col items-center gap-3 text-center"
-        initial={{ opacity: 0, y: -16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}>
-        {/* Eyebrow */}
-        <p
-          className="wwbam-label wwbam-text-gold-gradient"
-          style={{ letterSpacing: '0.4em' }}>
-          {COPY_STEPPER.EYEBROW}
-        </p>
-        {/* Main heading — matches LobbyPhase / ReadyPhase scale */}
-        <h2 className="wwbam-screen-heading wwbam-text-gold-gradient">
-          {COPY_STEPPER.HEADING}
-        </h2>
-      </motion.div>
+    <motion.div
+      className="flex flex-col items-center gap-5 w-full max-w-3xl"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible">
+      {/* ── Branding header ───────────────────────────────────────────────── */}
+      <ScreenHeader logoSize="w-16 h-16" />
 
-      {/* ── Step list ────────────────────────────────────────────────────── */}
+      {/* ── Heading ───────────────────────────────────────────────────────── */}
+      <div className="w-full flex">
+        <WwbamShape
+          size="wide"
+          state="selected"
+          strokeWidth={3}
+          className="flex-1"
+          style={{ minHeight: '88px' }}>
+          <div className="flex items-center justify-center py-4 w-full text-center">
+            <h2 className="wwbam-screen-heading wwbam-text-gold-gradient">
+              {COPY_STEPPER.HEADING}
+            </h2>
+          </div>
+        </WwbamShape>
+      </div>
+
+      {/* ── Step list ─────────────────────────────────────────────────────── */}
       <motion.div
         className="flex flex-col gap-3 w-full"
         variants={listVariants}
@@ -265,7 +279,7 @@ export default function InitializationStepper({ onComplete }) {
         ))}
       </motion.div>
 
-      {/* ── "All set!" confirmation — gold selected shape with Sparkles ── */}
+      {/* ── "All set!" confirmation ───────────────────────────────────────── */}
       <AnimatePresence>
         {allDone && (
           <motion.div
@@ -299,6 +313,6 @@ export default function InitializationStepper({ onComplete }) {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 }

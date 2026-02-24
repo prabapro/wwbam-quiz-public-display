@@ -24,7 +24,6 @@ export const COPY_LOBBY = {
 
 // Idle screen — Initializing phase (stepper)
 export const COPY_STEPPER = {
-  EYEBROW: 'Initializing',
   HEADING: 'Setting Up the Game',
   COMPLETE_MESSAGE: 'All set!',
 };
