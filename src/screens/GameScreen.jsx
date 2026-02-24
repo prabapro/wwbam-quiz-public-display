@@ -22,7 +22,7 @@ import { COPY_PAUSE } from '@constants/app';
  * appears. Gives the audience time to see the correct/wrong colours on the
  * options grid before the result card covers the screen.
  */
-const TEAM_RESULT_DELAY_MS = 3000;
+const TEAM_RESULT_DELAY_MS = 5000;
 
 // ── Animation variants ─────────────────────────────────────────────────────────
 
@@ -95,11 +95,20 @@ function deriveOverlay(gameState, currentTeam) {
  *   (e.g. "team-3-eliminated"). `unlockedKey` holds the key whose delay timer
  *   last fired. `showTeamResult` is only true when they match.
  *
- *   When overlay re-enters 'teamResult' (e.g. last-team rapid transition),
- *   the effect cleanup cancels the in-flight timer and a fresh one starts for
- *   the same key. `unlockedKey` remains null (old timer cancelled) until the
- *   new timer fires — no synchronous setState in any effect body, no ref reads
- *   during render.
+ * Gameplay snapshot:
+ *   completeGame() clears questionVisible, optionsVisible, currentQuestion etc.
+ *   in the same Firebase write that sets gameStatus:'completed'. Without a
+ *   snapshot, the center column goes blank during the delay window.
+ *
+ *   We capture a snapshot of the question/options state the moment
+ *   `answerRevealed:true` AND `currentTeam.status` is terminal — this is the
+ *   render cycle BEFORE completeGame() wipes the data. The render-time setState
+ *   pattern (React's "storing information from previous renders") is used so the
+ *   snapshot is captured synchronously in the same render as the source data,
+ *   with no async effect or timer that could race against completeGame().
+ *
+ *   During the delay window, `activeGameplay` serves the frozen values with
+ *   questionVisible/optionsVisible forced to true.
  *
  * @param {{
  *   gameState:      object,
@@ -128,17 +137,6 @@ export default function GameScreen({
   const queuePosition = currentTeam ? playQueue.indexOf(currentTeam.id) + 1 : 0;
 
   // ── Delayed teamResult ─────────────────────────────────────────────────────
-  //
-  // `teamResultKey` encodes the identity of the team being shown as a result.
-  // `unlockedKey` holds the key whose delay timer has fired. `showTeamResult`
-  // is only true when they match — i.e. the delay has completed for the
-  // *current* team, not a stale one.
-  //
-  // Reset is implicit: when a new team enters the result state with a
-  // different key, `unlockedKey !== teamResultKey` is immediately true with
-  // no setState needed. For the last-team race (same key, rapid transitions),
-  // the effect cleanup cancels the old timer and starts a fresh one, keeping
-  // `unlockedKey` as null until the new timer completes.
   const teamResultKey = resultTeam
     ? `${resultTeam.id}-${resultTeam.status}`
     : null;
@@ -158,6 +156,65 @@ export default function GameScreen({
     );
     return () => clearTimeout(timer);
   }, [overlay, teamResultKey]);
+
+  // ── Gameplay snapshot for the teamResult delay window ─────────────────────
+  //
+  // completeGame() clears question/options data in Firebase at the same time
+  // it sets gameStatus:'completed'. By the time the delay effect runs, the data
+  // is already gone. We capture a snapshot synchronously during render at the
+  // last moment we have the data: when answerRevealed:true AND currentTeam is
+  // terminal. After completeGame(), currentTeam becomes null so captureKey
+  // becomes null and we stop capturing.
+  //
+  // React's "storing information from previous renders" pattern is intentional
+  // here — calling setState during render is documented and lint-safe (no effect
+  // involved). React discards the current render and immediately re-runs with
+  // the new state, so no intermediate blank frame is painted.
+  const currentTeamIsTerminal =
+    currentTeam?.status === 'eliminated' || currentTeam?.status === 'completed';
+
+  const captureKey =
+    gameState?.answerRevealed && currentTeamIsTerminal
+      ? `${currentTeam.id}-${currentTeam.status}`
+      : null;
+
+  const [snapshotKey, setSnapshotKey] = useState(null);
+  const [frozenGameplay, setFrozenGameplay] = useState(null);
+
+  if (captureKey !== null && captureKey !== snapshotKey) {
+    setSnapshotKey(captureKey);
+    setFrozenGameplay({
+      currentQuestion: gameState?.currentQuestion ?? null,
+      selectedOption: gameState?.selectedOption ?? null,
+      correctOption: gameState?.correctOption ?? null,
+      answerRevealed: true,
+      activeLifeline: gameState?.activeLifeline ?? null,
+    });
+  }
+
+  // During the delay window, serve frozen values so question/options stay
+  // visible. Force questionVisible/optionsVisible true since completeGame()
+  // clears them. Outside the delay window, always use live gameState.
+  const activeGameplay =
+    overlay === 'teamResult' && !showTeamResult && frozenGameplay
+      ? {
+          currentQuestion: frozenGameplay.currentQuestion,
+          questionVisible: true,
+          optionsVisible: true,
+          selectedOption: frozenGameplay.selectedOption,
+          correctOption: frozenGameplay.correctOption,
+          answerRevealed: frozenGameplay.answerRevealed,
+          activeLifeline: frozenGameplay.activeLifeline,
+        }
+      : {
+          currentQuestion: gameState?.currentQuestion ?? null,
+          questionVisible: gameState?.questionVisible ?? false,
+          optionsVisible: gameState?.optionsVisible ?? false,
+          selectedOption: gameState?.selectedOption ?? null,
+          correctOption: gameState?.correctOption ?? null,
+          answerRevealed: gameState?.answerRevealed ?? false,
+          activeLifeline: gameState?.activeLifeline ?? null,
+        };
 
   // ── Between-questions logo ─────────────────────────────────────────────────
   const showBetweenQuestionsLogo =
@@ -217,17 +274,17 @@ export default function GameScreen({
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.4 }}>
                   <QuestionCard
-                    question={gameState?.currentQuestion}
-                    questionVisible={gameState?.questionVisible}
+                    question={activeGameplay.currentQuestion}
+                    questionVisible={activeGameplay.questionVisible}
                     currentQuestionNumber={gameState?.currentQuestionNumber}
                   />
                   <OptionGrid
-                    options={gameState?.currentQuestion?.options}
-                    optionsVisible={gameState?.optionsVisible}
-                    selectedOption={gameState?.selectedOption}
-                    correctOption={gameState?.correctOption}
-                    answerRevealed={gameState?.answerRevealed}
-                    activeLifeline={gameState?.activeLifeline}
+                    options={activeGameplay.currentQuestion?.options}
+                    optionsVisible={activeGameplay.optionsVisible}
+                    selectedOption={activeGameplay.selectedOption}
+                    correctOption={activeGameplay.correctOption}
+                    answerRevealed={activeGameplay.answerRevealed}
+                    activeLifeline={activeGameplay.activeLifeline}
                   />
                 </motion.div>
               )}
