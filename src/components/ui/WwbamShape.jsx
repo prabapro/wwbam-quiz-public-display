@@ -24,6 +24,13 @@ import { useId } from 'react';
  *   used      — slate shimmer  (spent lifeline, disabled option — visible but clearly inactive)
  *   dimmed    — near-invisible (layout placeholder only — 50/50 removed options)
  *
+ * ── FILL PROGRESS ─────────────────────────────────────────────────────────────
+ *
+ *   fillProgress (0–100) renders a tinted overlay rect clipped exactly to the
+ *   shape path — draining from right to left as the value decreases. Used by
+ *   PhoneAFriendOverlay to visualise the countdown timer inside the shape.
+ *   Pair with fillColor to set the tint.
+ *
  * ── COLOUR TOKENS ─────────────────────────────────────────────────────────────
  *
  * SHAPE_TOKENS mirrors the palette groups in src/styles/tokens.css.
@@ -41,6 +48,8 @@ import { useId } from 'react';
  *   size?:           'wide' | 'medium' | 'compact',
  *   state?:          'default' | 'selected' | 'correct' | 'wrong' | 'used' | 'dimmed',
  *   strokeWidth?:    number,
+ *   fillProgress?:   number,   - 0–100; renders a clipped tint overlay. Omit to disable.
+ *   fillColor?:      string,   - CSS colour for the fill overlay (default: semi-white)
  *   pointExtRatio?:  number,
  *   whiskerRatio?:   number,
  *   className?:      string,
@@ -226,6 +235,8 @@ export default function WwbamShape({
   size = 'wide',
   state = 'default',
   strokeWidth = 3,
+  fillProgress,
+  fillColor = 'rgba(255,255,255,0.12)',
   pointExtRatio,
   whiskerRatio,
   className = '',
@@ -233,6 +244,7 @@ export default function WwbamShape({
 }) {
   const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
   const gradId = `wg-${uid}`;
+  const clipId = `wc-${uid}`;
   const cfg = STATE_CONFIG[state] ?? STATE_CONFIG.default;
 
   const preset = SIZE_PRESETS[size] ?? SIZE_PRESETS.wide;
@@ -255,6 +267,10 @@ export default function WwbamShape({
     offset: `${(i / (cfg.stops.length - 1)) * 100}%`,
     color,
   }));
+
+  // Fill overlay width in SVG units — drains from right to left
+  const hasFill = fillProgress != null;
+  const fillWidth = hasFill ? (fillProgress / 100) * vw : 0;
 
   return (
     <div className={`relative flex ${className}`} style={style}>
@@ -285,8 +301,16 @@ export default function WwbamShape({
               repeatCount="indefinite"
             />
           </linearGradient>
+
+          {/* Clip path — shape outline, used by the fill overlay rect */}
+          {hasFill && (
+            <clipPath id={clipId}>
+              <path d={shape} />
+            </clipPath>
+          )}
         </defs>
 
+        {/* Shape fill + stroke */}
         <path
           d={shape}
           fill={cfg.fill}
@@ -296,6 +320,7 @@ export default function WwbamShape({
           vectorEffect="non-scaling-stroke"
         />
 
+        {/* Whiskers */}
         <path
           d={whiskers}
           fill="none"
@@ -304,6 +329,19 @@ export default function WwbamShape({
           strokeLinecap="round"
           vectorEffect="non-scaling-stroke"
         />
+
+        {/* Fill overlay — clipped to shape, drains from right to left */}
+        {hasFill && (
+          <rect
+            x={vx}
+            y={vy}
+            width={fillWidth}
+            height={vh}
+            fill={fillColor}
+            clipPath={`url(#${clipId})`}
+            style={{ transition: 'width 1s linear' }}
+          />
+        )}
       </svg>
 
       {/* Content — padded horizontally to clear tips and whiskers */}
