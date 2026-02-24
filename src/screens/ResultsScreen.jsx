@@ -50,13 +50,15 @@ function medal(rank) {
 
 /**
  * Maps a ranked team to a WwbamShape state.
- *   rank 1  → selected  (gold shimmer — winner highlight)
- *   others  → default   (blue shimmer)
+ *   rank 1 + prize > 0  → selected  (gold shimmer — winner highlight)
+ *   prize === 0         → used      (slate shimmer — no prize won)
+ *   others              → default   (blue shimmer)
  *
- * @param {{ rank: number }} team
- * @returns {'selected'|'default'}
+ * @param {{ rank: number, currentPrize: number }} team
+ * @returns {'selected'|'default'|'used'}
  */
 function deriveShapeState(team) {
+  if ((team.currentPrize ?? 0) === 0) return 'used';
   if (team.rank === 1) return 'selected';
   return 'default';
 }
