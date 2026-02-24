@@ -1,7 +1,9 @@
 // src/components/game/TeamAnnouncement.jsx
 
 import { motion } from 'framer-motion';
-import { formatPrize } from '@utils/formatters';
+import WwbamShape from '@components/ui/WwbamShape';
+import { COPY_ANNOUNCEMENT } from '@constants/app';
+import { splitParticipants } from '@utils/participants';
 
 // ── Animation variants ─────────────────────────────────────────────────────────
 
@@ -37,9 +39,26 @@ const nameVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.5, delay: 0.55 } },
 };
 
-const detailVariants = {
+const dividerVariants = {
   hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { duration: 0.4, delay: 0.75 } },
+  visible: { opacity: 1, transition: { duration: 0.4, delay: 0.7 } },
+};
+
+const playersVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1, delayChildren: 0.8 },
+  },
+};
+
+const playerItemVariants = {
+  hidden: { opacity: 0, y: 8 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.35, ease: 'easeOut' },
+  },
 };
 
 // ── Component ──────────────────────────────────────────────────────────────────
@@ -58,119 +77,144 @@ const detailVariants = {
  * (currentQuestionNumber advances to 1).
  *
  * @param {{
- *   team:          object,         - Current team object from useTeams
- *   queuePosition: number,         - 1-based position in the play queue
- *   queueTotal:    number,         - Total number of teams in the queue
- *   prizeStructure: number[],      - Full prize structure array
+ *   team:           object,    - Current team object from useTeams
+ *   queuePosition:  number,    - 1-based position in the play queue
+ *   queueTotal:     number,    - Total number of teams in the queue (unused, kept for API stability)
+ *   prizeStructure: number[],  - Full prize structure array (unused, kept for API stability)
  * }} props
  */
 export default function TeamAnnouncement({
   team,
   queuePosition,
+  // eslint-disable-next-line no-unused-vars
   queueTotal,
+  // eslint-disable-next-line no-unused-vars
   prizeStructure,
 }) {
   if (!team) return null;
 
-  const topPrize = prizeStructure?.length
-    ? prizeStructure[prizeStructure.length - 1]
-    : null;
-
   const isFirstTeam = queuePosition === 1;
+  const positionLabel = isFirstTeam
+    ? COPY_ANNOUNCEMENT.FIRST_UP
+    : COPY_ANNOUNCEMENT.UP_NEXT;
+
+  const players = splitParticipants(team.participants).sort((a, b) =>
+    a.localeCompare(b),
+  );
 
   return (
     <motion.div
       className="absolute inset-0 z-40 flex items-center justify-center"
-      style={{ background: 'rgba(10,10,46,0.92)', backdropFilter: 'blur(6px)' }}
+      style={{
+        background: 'var(--c-screen-bg-overlay)',
+        backdropFilter: 'blur(6px)',
+      }}
       variants={backdropVariants}
       initial="hidden"
       animate="visible"
       exit="exit">
       <motion.div
-        className="flex flex-col items-center gap-8 text-center px-16"
+        className="flex flex-col items-center gap-6 w-full max-w-3xl px-8"
         variants={cardVariants}
         initial="hidden"
         animate="visible"
         exit="exit">
-        {/* Queue position pill */}
+        {/* ── First Up / Up Next label ───────────────────────────────────── */}
         <motion.div
           variants={labelVariants}
-          className="flex items-center gap-3">
-          <span className="h-px w-12 bg-amber-400/30" />
+          className="flex items-center gap-4">
           <span
-            className="text-xs font-bold uppercase tracking-[0.3em]"
-            style={{ color: '#f59e0b' }}>
-            {isFirstTeam
-              ? 'First Up'
-              : `Team ${queuePosition} of ${queueTotal}`}
+            className="h-px w-16"
+            style={{
+              background:
+                'linear-gradient(90deg, transparent, var(--c-gold-dark))',
+            }}
+          />
+          <span
+            className="wwbam-label"
+            style={{ color: 'var(--c-gold)', letterSpacing: '0.3em' }}>
+            {positionLabel}
           </span>
-          <span className="h-px w-12 bg-amber-400/30" />
+          <span
+            className="h-px w-16"
+            style={{
+              background:
+                'linear-gradient(270deg, transparent, var(--c-gold-dark))',
+            }}
+          />
         </motion.div>
 
-        {/* Team name */}
-        <motion.div
-          variants={nameVariants}
-          className="flex flex-col items-center gap-3">
-          <p className="text-slate-400 text-sm uppercase tracking-widest">
-            Now Playing
-          </p>
-          <h2
-            className="text-7xl font-black tracking-wide text-white leading-tight"
-            style={{ textShadow: '0 0 60px rgba(245,158,11,0.3)' }}>
-            {team.name}
-          </h2>
+        {/* ── Team name ─────────────────────────────────────────────────── */}
+        <motion.div variants={nameVariants} className="w-full flex">
+          <WwbamShape
+            size="wide"
+            state="selected"
+            strokeWidth={4}
+            className="flex-1"
+            style={{ minHeight: '108px' }}>
+            <div className="flex items-center justify-center py-5 w-full text-center">
+              <h2 className="wwbam-overlay-heading">{team.name}</h2>
+            </div>
+          </WwbamShape>
         </motion.div>
 
-        {/* Participants */}
-        {team.participants && (
+        {/* ── Gold divider ───────────────────────────────────────────────── */}
+        {players.length > 0 && (
           <motion.div
-            variants={detailVariants}
-            className="flex flex-col items-center gap-2">
-            <p className="text-slate-500 text-xs uppercase tracking-widest">
-              Players
-            </p>
-            <p className="text-slate-200 text-xl font-medium">
-              {team.participants}
-            </p>
-          </motion.div>
-        )}
-
-        {/* Divider */}
-        <motion.div
-          variants={detailVariants}
-          className="flex items-center gap-4 w-64">
-          <span className="flex-1 h-px bg-linear-to-r from-transparent to-amber-400/30" />
-          <span className="text-amber-400/40 text-sm">✦</span>
-          <span className="flex-1 h-px bg-linear-to-l from-transparent to-amber-400/30" />
-        </motion.div>
-
-        {/* Top prize */}
-        {topPrize && (
-          <motion.div
-            variants={detailVariants}
-            className="flex flex-col items-center gap-2">
-            <p className="text-slate-500 text-xs uppercase tracking-widest">
-              Playing for
-            </p>
-            <p
-              className="text-4xl font-black font-mono"
+            variants={dividerVariants}
+            className="flex items-center gap-4 w-48">
+            <span
+              className="flex-1 h-px"
               style={{
-                color: '#f59e0b',
-                textShadow: '0 0 30px rgba(245,158,11,0.4)',
+                background:
+                  'linear-gradient(90deg, transparent, var(--c-gold-dark))',
+              }}
+            />
+            <span
+              style={{
+                color: 'var(--c-gold)',
+                fontFamily: 'var(--font-body)',
+                fontSize: '0.85rem',
               }}>
-              {formatPrize(topPrize)}
-            </p>
+              ✦
+            </span>
+            <span
+              className="flex-1 h-px"
+              style={{
+                background:
+                  'linear-gradient(270deg, transparent, var(--c-gold-dark))',
+              }}
+            />
           </motion.div>
         )}
 
-        {/* Waiting indicator */}
-        <motion.p
-          variants={detailVariants}
-          className="text-slate-500 text-xs uppercase tracking-[0.3em]"
-          animate={{ opacity: [1, 0.4, 1] }}
-          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}>
-          Waiting for host...
-        </motion.p>
+        {/* ── Players — one per row, centred ────────────────────────────── */}
+        {players.length > 0 && (
+          <motion.div
+            variants={playersVariants}
+            initial="hidden"
+            animate="visible"
+            className="flex flex-col items-center gap-3 w-full"
+            style={{ maxWidth: '72%' }}>
+            {players.map((name) => (
+              <motion.div
+                key={name}
+                variants={playerItemVariants}
+                className="flex w-full">
+                <WwbamShape
+                  size="wide"
+                  state="default"
+                  strokeWidth={2}
+                  className="flex-1"
+                  style={{ minHeight: '56px' }}>
+                  <div className="flex items-center justify-center py-3 w-full text-center">
+                    <span className="wwbam-team-name">{name}</span>
+                  </div>
+                </WwbamShape>
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
       </motion.div>
     </motion.div>
   );

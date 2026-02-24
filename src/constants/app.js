@@ -45,6 +45,12 @@ export const COPY_BETWEEN_QUESTIONS = {
   LABEL: 'Get ready for the next question',
 };
 
+// Game screen — Team announcement overlay
+export const COPY_ANNOUNCEMENT = {
+  FIRST_UP: 'First Up',
+  UP_NEXT: 'Up Next',
+};
+
 // Results screen
 export const COPY_RESULTS = {
   HEADING: 'Final Results',
