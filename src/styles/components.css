@@ -235,6 +235,7 @@
 /* ═══════════════════════════════════════════════════════════════════════════
    TYPOGRAPHY — RESULTS SCREEN
    Classes for the final leaderboard shown on ResultsScreen.
+   Row surfaces use WwbamShape — state drives colour (selected/default/used).
 ═══════════════════════════════════════════════════════════════════════════ */
 
 /* Non-medal rank number (4th, 5th, …) */
@@ -269,7 +270,7 @@
   font-family: var(--font-numeric);
   font-size: 1.25rem;
   font-weight: 700;
-  color: var(--c-used-text);
+  color: var(--c-text);
   line-height: 1;
   letter-spacing: 0.02em;
   flex-shrink: 0;
@@ -277,33 +278,6 @@
 
 .wwbam-result-prize--winner {
   color: var(--c-gold);
-}
-
-/* Winner announcement line beneath the results heading */
-.wwbam-result-winner-line {
-  font-family: var(--font-body);
-  font-size: 1.25rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  color: var(--c-gold);
-  line-height: 1.2;
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   LAYOUT — RESULTS ROWS
-   Leaderboard card surfaces (no WwbamShape — plain rounded rows).
-═══════════════════════════════════════════════════════════════════════════ */
-
-.wwbam-result-row {
-  background: var(--c-result-row-bg);
-  border: 1px solid var(--c-result-row-border);
-  border-radius: 0.75rem;
-}
-
-.wwbam-result-row--winner {
-  background: var(--c-result-winner-bg);
-  border-color: var(--c-result-winner-border);
-  box-shadow: 0 0 30px var(--c-result-winner-glow);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

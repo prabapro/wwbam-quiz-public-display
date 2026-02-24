@@ -49,5 +49,4 @@ export const COPY_BETWEEN_QUESTIONS = {
 // Results screen
 export const COPY_RESULTS = {
   HEADING: 'Final Results',
-  WINNER_PREFIX: 'Winner:',
 };
