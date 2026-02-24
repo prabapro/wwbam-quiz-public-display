@@ -1,6 +1,7 @@
 // src/screens/ResultsScreen.jsx
 
 import { motion } from 'framer-motion';
+import { CheckCircle2, XCircle } from 'lucide-react';
 import { formatPrize } from '@utils/formatters';
 import ScreenBackground from '@components/layout/ScreenBackground';
 import ScreenHeader from '@components/layout/ScreenHeader';
@@ -22,10 +23,8 @@ function rankTeams(teams) {
   const sorted = [...teams].sort((a, b) => {
     const prizeDiff = (b.currentPrize ?? 0) - (a.currentPrize ?? 0);
     if (prizeDiff !== 0) return prizeDiff;
-    // Same prize: completed above eliminated
     if (a.status === 'completed' && b.status !== 'completed') return -1;
     if (b.status === 'completed' && a.status !== 'completed') return 1;
-    // Same prize + same status: alphabetical
     return a.name.localeCompare(b.name);
   });
 
@@ -51,10 +50,10 @@ function medal(rank) {
 
 /**
  * Maps a ranked team to a WwbamShape state.
- *   rank 1     → selected  (gold shimmer   — winner highlight)
- *   others  → default   (blue shimmer   — positive finish)
+ *   rank 1  → selected  (gold shimmer — winner highlight)
+ *   others  → default   (blue shimmer)
  *
- * @param {{ rank: number, status: string }} team
+ * @param {{ rank: number }} team
  * @returns {'selected'|'default'}
  */
 function deriveShapeState(team) {
@@ -64,7 +63,6 @@ function deriveShapeState(team) {
 
 // ── Animation variants ─────────────────────────────────────────────────────────
 
-// Stagger container — drives sequential reveal of major sections.
 const sectionStaggerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -73,13 +71,11 @@ const sectionStaggerVariants = {
   },
 };
 
-// Each staggered section fades up into position.
 const sectionVariants = {
   hidden: { opacity: 0, y: 18 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } },
 };
 
-// Leaderboard row stagger.
 const rowContainerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -93,6 +89,35 @@ const rowVariants = {
   visible: { opacity: 1, x: 0, transition: { duration: 0.5, ease: 'easeOut' } },
 };
 
+// ── Sub-components ─────────────────────────────────────────────────────────────
+
+/**
+ * StatusIcon
+ *
+ * Bare lucide icon indicating team outcome — no pill/badge wrapper.
+ *   completed  → CheckCircle2 (green)
+ *   eliminated → XCircle      (red)
+ *
+ * Colours pulled from CSS badge tokens to stay consistent with the palette.
+ *
+ * @param {{ isCompleted: boolean }} props
+ */
+function StatusIcon({ isCompleted }) {
+  return isCompleted ? (
+    <CheckCircle2
+      size={18}
+      strokeWidth={2}
+      style={{ color: 'var(--c-badge-completed-text)', flexShrink: 0 }}
+    />
+  ) : (
+    <XCircle
+      size={18}
+      strokeWidth={2}
+      style={{ color: 'var(--c-badge-eliminated-text)', flexShrink: 0 }}
+    />
+  );
+}
+
 // ── Component ──────────────────────────────────────────────────────────────────
 
 /**
@@ -102,21 +127,13 @@ const rowVariants = {
  * Displays the final leaderboard — all teams ranked by prize won.
  *
  * Layout (top → bottom):
- *   ScreenHeader (logo + APP_NAME eyebrow + GoldDivider) — matches IdleScreen style
+ *   ScreenHeader (logo + APP_NAME eyebrow + GoldDivider)
  *   [WwbamShape selected]  — "Final Results" heading (gold gradient)
  *   [leaderboard rows]     — WwbamShape per team, state driven by outcome
  *
- * Row WwbamShape states:
- *   rank 1     → selected  (gold shimmer)
- *   completed  → default   (blue shimmer)
- *   eliminated → used      (slate shimmer)
+ * Row layout: [Rank] [StatusIcon] [Team Name] [Prize]
  *
- * Typography driven by .wwbam-result-* and .wwbam-status-badge-* classes
- * from components.css — no inline colour strings.
- *
- * @param {{
- *   teams: Array,
- * }} props
+ * @param {{ teams: Array }} props
  */
 export default function ResultsScreen({ teams }) {
   const rankedTeams = rankTeams(teams);
@@ -124,7 +141,6 @@ export default function ResultsScreen({ teams }) {
   return (
     <ScreenBackground>
       <div className="w-full h-full flex flex-col items-center justify-center gap-5 px-16 py-10">
-        {/* ── Stagger container ──────────────────────────────────────────── */}
         <motion.div
           className="w-full flex flex-col items-center gap-5"
           variants={sectionStaggerVariants}
@@ -184,6 +200,9 @@ export default function ResultsScreen({ teams }) {
                         )}
                       </div>
 
+                      {/* ── Status icon ───────────────────────────────── */}
+                      <StatusIcon isCompleted={isCompleted} />
+
                       {/* ── Team info ──────────────────────────────────── */}
                       <div className="flex-1 min-w-0">
                         <p className="wwbam-result-name truncate">
@@ -195,16 +214,6 @@ export default function ResultsScreen({ teams }) {
                           </p>
                         )}
                       </div>
-
-                      {/* ── Status badge ───────────────────────────────── */}
-                      <span
-                        className={`wwbam-status-badge ${
-                          isCompleted
-                            ? 'wwbam-status-badge--completed'
-                            : 'wwbam-status-badge--eliminated'
-                        }`}>
-                        {isCompleted ? 'Completed' : 'Eliminated'}
-                      </span>
 
                       {/* ── Prize ──────────────────────────────────────── */}
                       <p
