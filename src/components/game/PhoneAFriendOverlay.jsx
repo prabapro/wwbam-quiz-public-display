@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Phone } from 'lucide-react';
 import WwbamShape from '@components/ui/WwbamShape';
 import { COPY_PHONE_A_FRIEND } from '@constants/app';
+import { maskContactNumber } from '@utils/formatters';
 
 // ── Timestamp-based countdown hook ────────────────────────────────────────────
 
@@ -91,16 +92,25 @@ const barVariants = {
  * draining from right to left as time runs out.
  *
  * States:
- *   - Not started : amber (selected) shape, pulsing label, --:-- countdown
- *   - Timer running: amber (selected) shape, live MM:SS countdown, drain active
+ *   - Not started : amber (selected) shape, pulsing label, "Calling •••• 567..."
+ *   - Timer running: amber (selected) shape, "On the line", live MM:SS countdown
  *   - Expiring (≤10s): red (wrong) shape, pulsing countdown, red drain
+ *
+ * The contact number is masked to show only the last 3 digits, preserving
+ * the original formatting characters (+, spaces, dashes) for readability.
+ * e.g. "+94 77 123 4567" → "+•• •• ••• 567"
  *
  * @param {{
  *   startedAt:     number|null, - Unix ms timestamp from Firebase, null if not started
  *   timerDuration: number,      - Call duration in seconds (from config)
+ *   contact:       string|null, - Team's contact number from Firebase
  * }} props
  */
-export default function PhoneAFriendOverlay({ startedAt, timerDuration }) {
+export default function PhoneAFriendOverlay({
+  startedAt,
+  timerDuration,
+  contact,
+}) {
   const { display, progressPct, hasStarted, isExpiring } =
     useTimestampCountdown(startedAt, timerDuration);
 
@@ -115,6 +125,14 @@ export default function PhoneAFriendOverlay({ startedAt, timerDuration }) {
   const fillColor = isExpiring
     ? 'rgba(224, 48, 48, 0.28)'
     : 'rgba(94, 199, 42, 0.2)';
+
+  // Masked number is stable — computed once from the contact prop
+  const maskedNumber = maskContactNumber(contact);
+
+  // Status line: "Calling +•• •• ••• 567..." before timer, "On the line" after
+  const statusLine = hasStarted
+    ? COPY_PHONE_A_FRIEND.ON_THE_LINE
+    : `${COPY_PHONE_A_FRIEND.CALLING_PREFIX} ${maskedNumber}...`;
 
   return (
     <motion.div
@@ -139,7 +157,7 @@ export default function PhoneAFriendOverlay({ startedAt, timerDuration }) {
           className="w-full"
           style={{ minHeight: '120px' }}>
           <div className="flex items-center justify-between w-full px-10 py-5">
-            {/* Left — icon + label */}
+            {/* Left — icon + label + status */}
             <motion.div
               className="flex items-center gap-4"
               animate={!hasStarted ? { opacity: [1, 0.5, 1] } : { opacity: 1 }}
@@ -160,12 +178,12 @@ export default function PhoneAFriendOverlay({ startedAt, timerDuration }) {
                 <span
                   className="wwbam-label"
                   style={{
-                    color: 'var(--c-used-text)',
-                    letterSpacing: '0.2em',
+                    color: hasStarted
+                      ? 'var(--c-green-light)'
+                      : 'var(--c-used-text)',
+                    letterSpacing: '0.15em',
                   }}>
-                  {hasStarted
-                    ? COPY_PHONE_A_FRIEND.TIMER_RUNNING
-                    : COPY_PHONE_A_FRIEND.CALL_IN_PROGRESS}
+                  {statusLine}
                 </span>
               </div>
             </motion.div>

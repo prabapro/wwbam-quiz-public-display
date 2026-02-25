@@ -311,6 +311,7 @@ export default function GameScreen({
               key="phone-a-friend"
               startedAt={gameState?.lifelineTimerStartedAt ?? null}
               timerDuration={timerDuration}
+              contact={currentTeam?.contact ?? null}
             />
           )}
 
