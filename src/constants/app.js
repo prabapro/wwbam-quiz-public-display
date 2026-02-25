@@ -11,6 +11,10 @@ export const APP_SHORT_NAME = 'WWBAM';
 // Loading screen
 export const COPY_LOADING = {
   CONNECTING: 'Connecting...',
+  CONNECTING_FIREBASE: 'Connecting to Firebase...',
+  AUTHENTICATING: 'Authenticating...',
+  AUTH_FAILED: 'Auth failed:', // suffix with `: ${errorMessage}` at call site
+  CONNECTION_ERROR: 'Connection error:', // suffix with `: ${errorMessage}` at call site
 };
 
 // Idle screen — Lobby phase

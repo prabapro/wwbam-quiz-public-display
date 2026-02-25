@@ -30,10 +30,16 @@
      Used by: selected WwbamShape stroke, prize displays, active lifeline text,
               .wwbam-text-gold-gradient, SHAPE_TOKENS.gold in WwbamShape.jsx
   ──────────────────────────────────────────────────────────────────────── */
-  --c-gold-deep: #7c3a00; /* gradient start / end — deepest amber */
-  --c-gold-dark: #e8920a; /* inner stop — rich orange-gold         */
-  --c-gold: #f0b429; /* primary gold — prize amounts, badges  */
-  --c-gold-light: #f5c842; /* gradient peak — brightest highlight   */
+  --c-gold-deep: #7c3a00; /* gradient start / end — deepest amber  */
+  --c-gold-dark: #e8920a; /* inner stop — rich orange-gold          */
+  --c-gold: #f0b429; /* primary gold — prize amounts, badges   */
+  --c-gold-light: #f5c842; /* gradient peak — brightest highlight    */
+  --c-gold-pulse-bg: rgba(
+    232,
+    146,
+    10,
+    0.2
+  ); /* --c-gold-dark @ 20% — active lifeline pulse ring */
 
   /* ── Blue palette ────────────────────────────────────────────────────────
      Used by: default WwbamShape stroke, SHAPE_TOKENS.blue in WwbamShape.jsx
