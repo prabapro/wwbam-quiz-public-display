@@ -129,10 +129,10 @@ export default function PhoneAFriendOverlay({
   // Masked number is stable — computed once from the contact prop
   const maskedNumber = maskContactNumber(contact);
 
-  // Status line: "Calling +•• •• ••• 567..." before timer, "On the line" after
+  // Status line: "Calling +•• •• ••• 567" before timer, "On the line" after
   const statusLine = hasStarted
     ? COPY_PHONE_A_FRIEND.ON_THE_LINE
-    : `${COPY_PHONE_A_FRIEND.CALLING_PREFIX} ${maskedNumber}...`;
+    : `${COPY_PHONE_A_FRIEND.CALLING_PREFIX} ${maskedNumber}`;
 
   return (
     <motion.div
@@ -180,7 +180,7 @@ export default function PhoneAFriendOverlay({
                   style={{
                     color: hasStarted
                       ? 'var(--c-green-light)'
-                      : 'var(--c-used-text)',
+                      : 'var(--c-gold)',
                     letterSpacing: '0.15em',
                   }}>
                   {statusLine}
