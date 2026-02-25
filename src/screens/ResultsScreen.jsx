@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { CheckCircle2, XCircle } from 'lucide-react';
 import { formatPrize } from '@utils/formatters';
+import { formatParticipantFirstNames } from '@utils/participants';
 import ScreenBackground from '@components/layout/ScreenBackground';
 import ScreenHeader from '@components/layout/ScreenHeader';
 import WwbamShape from '@components/ui/WwbamShape';
@@ -128,12 +129,15 @@ function StatusIcon({ isCompleted }) {
  * Shown when `displayFinalResults` is true in the Firebase game-state.
  * Displays the final leaderboard — all teams ranked by prize won.
  *
+ * Participants are shown as first names only — full names are reserved
+ * for the TeamAnnouncement overlay.
+ *
  * Layout (top → bottom):
  *   ScreenHeader (logo + APP_NAME eyebrow + GoldDivider)
  *   [WwbamShape selected]  — "Final Results" heading (gold gradient)
  *   [leaderboard rows]     — WwbamShape per team, state driven by outcome
  *
- * Row layout: [Rank] [StatusIcon] [Team Name] [Prize]
+ * Row layout: [Rank] [StatusIcon] [Team Name / Participants] [Prize]
  *
  * @param {{ teams: Array }} props
  */
@@ -180,6 +184,9 @@ export default function ResultsScreen({ teams }) {
               const isFirst = team.rank === 1;
               const teamMedal = medal(team.rank);
               const shapeState = deriveShapeState(team);
+              const participantFirstNames = formatParticipantFirstNames(
+                team.participants,
+              );
 
               return (
                 <motion.div
@@ -210,9 +217,9 @@ export default function ResultsScreen({ teams }) {
                         <p className="wwbam-result-name truncate">
                           {team.name}
                         </p>
-                        {team.participants && (
+                        {participantFirstNames && (
                           <p className="wwbam-result-participants truncate">
-                            {team.participants}
+                            {participantFirstNames}
                           </p>
                         )}
                       </div>

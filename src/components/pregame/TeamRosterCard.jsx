@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import WwbamShape from '@components/ui/WwbamShape';
+import { formatParticipantFirstNames } from '@utils/participants';
 
 // ── Animation variant ──────────────────────────────────────────────────────────
 // Internal — keys match parent staggerChildren container (hidden / visible).
@@ -18,6 +19,9 @@ const cardVariant = {
  *
  * Displays a single team's name and participant list.
  * Used in both the lobby phase and the ready phase (play order).
+ *
+ * Participants are shown as first names only — full names are reserved
+ * for the TeamAnnouncement overlay.
  *
  * Uses WwbamShape (compact, default) as the card surface — consistent with
  * LifelineIndicator and the rest of the WWBAM design system.
@@ -38,6 +42,8 @@ const cardVariant = {
  * }} props
  */
 export default function TeamRosterCard({ team, index }) {
+  const participantFirstNames = formatParticipantFirstNames(team.participants);
+
   return (
     <motion.div variants={cardVariant} className="flex">
       <WwbamShape
@@ -60,9 +66,9 @@ export default function TeamRosterCard({ team, index }) {
           {/* ── Team name + participants ─────────────────────────────────── */}
           <div className="flex flex-col justify-center min-w-0 flex-1 px-4">
             <span className="wwbam-team-name truncate">{team.name}</span>
-            {team.participants ? (
+            {participantFirstNames ? (
               <span className="wwbam-participants truncate">
-                {team.participants}
+                {participantFirstNames}
               </span>
             ) : (
               <span className="wwbam-participants wwbam-used-subtext">
