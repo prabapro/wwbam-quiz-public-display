@@ -37,12 +37,13 @@ export const getFirstName = (fullName) => {
 };
 
 /**
- * Converts a comma-separated full-names string into a formatted first-names-only string.
+ * Converts a comma-separated full-names string into a formatted first-names-only string,
+ * sorted in ascending alphabetical order.
  *
  * Intended for all display contexts EXCEPT TeamAnnouncement, which shows full names.
  *
- *   "Robert Brown, Jessica Martinez"  → "Robert, Jessica"
- *   "John,Jane, Charles"              → "John, Jane, Charles"
+ *   "Robert Brown, Jessica Martinez"  → "Jessica, Robert"
+ *   "John,Jane, Charles"              → "Charles, Jane, John"
  *   "Solo Player"                     → "Solo"
  *   ""  / null / undefined            → ""
  *
@@ -52,5 +53,9 @@ export const getFirstName = (fullName) => {
 export const formatParticipantFirstNames = (participants) => {
   const names = splitParticipants(participants);
   if (!names.length) return '';
-  return names.map(getFirstName).join(', ');
+
+  return names
+    .map(getFirstName)
+    .sort((a, b) => a.localeCompare(b))
+    .join(', ');
 };
