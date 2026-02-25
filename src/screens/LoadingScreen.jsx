@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import ScreenBackground from '@components/layout/ScreenBackground';
 import WwbamShape from '@components/ui/WwbamShape';
-import { APP_NAME, APP_SHORT_NAME } from '@constants/app';
+import { APP_NAME, APP_SHORT_NAME, COPY_LOADING } from '@constants/app';
 
 /**
  * LoadingScreen
@@ -18,7 +18,7 @@ import { APP_NAME, APP_SHORT_NAME } from '@constants/app';
  *
  * @param {{ message?: string }} props
  */
-export default function LoadingScreen({ message = 'Connecting...' }) {
+export default function LoadingScreen({ message = COPY_LOADING.CONNECTING }) {
   return (
     <ScreenBackground>
       <div className="w-full h-full flex flex-col items-center justify-center gap-10">
@@ -53,39 +53,34 @@ export default function LoadingScreen({ message = 'Connecting...' }) {
 
         {/* ── Spinner ───────────────────────────────────────────────────── */}
         <motion.div
-          className="relative w-14 h-14"
+          className="relative flex items-center justify-center w-20 h-20"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3, duration: 0.5 }}>
-          {/* Outer expanding ring */}
-          <motion.span
-            className="absolute inset-0 rounded-full border-2"
-            style={{ borderColor: 'var(--c-gold)' }}
-            animate={{ scale: [1, 1.6], opacity: [0.8, 0] }}
-            transition={{ duration: 1.2, repeat: Infinity, ease: 'easeOut' }}
+          {/* Outer ring */}
+          <motion.div
+            className="absolute w-20 h-20 rounded-full border-2"
+            style={{ borderColor: 'var(--c-gold-deep)' }}
+            animate={{ scale: [1, 1.15, 1], opacity: [0.4, 0.8, 0.4] }}
+            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
           />
-          {/* Mid expanding ring */}
-          <motion.span
-            className="absolute inset-0 rounded-full border-2"
+          {/* Inner ring */}
+          <motion.div
+            className="absolute w-12 h-12 rounded-full border-2"
             style={{ borderColor: 'var(--c-gold-dark)' }}
-            animate={{ scale: [1, 1.3], opacity: [0.6, 0] }}
+            animate={{ scale: [1, 1.2, 1], opacity: [0.6, 1, 0.6] }}
             transition={{
-              duration: 1.2,
+              duration: 2,
               repeat: Infinity,
-              ease: 'easeOut',
-              delay: 0.4,
+              ease: 'easeInOut',
+              delay: 0.3,
             }}
           />
-          {/* Static outer ring */}
-          <span
-            className="absolute inset-0 rounded-full border-2"
-            style={{ borderColor: 'var(--c-gold-deep)' }}
-          />
-          {/* Pulsing inner dot */}
-          <motion.span
-            className="absolute inset-3 rounded-full"
+          {/* Core dot */}
+          <motion.div
+            className="w-3 h-3 rounded-full"
             style={{ background: 'var(--c-gold)' }}
-            animate={{ opacity: [1, 0.4, 1] }}
+            animate={{ opacity: [0.8, 1, 0.8] }}
             transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
           />
         </motion.div>
@@ -93,19 +88,19 @@ export default function LoadingScreen({ message = 'Connecting...' }) {
         {/* ── Status message ────────────────────────────────────────────── */}
         <motion.div
           className="w-full max-w-lg flex"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.45, duration: 0.5 }}>
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, duration: 0.6, ease: 'easeOut' }}>
           <WwbamShape
             size="wide"
             state="default"
             strokeWidth={3}
             className="flex-1"
-            style={{ minHeight: '56px' }}>
-            <div className="flex items-center justify-center py-3 w-full">
+            style={{ minHeight: '64px' }}>
+            <div className="flex items-center justify-center py-4 w-full">
               <p
                 className="wwbam-label"
-                style={{ color: 'var(--c-text-dim)', letterSpacing: '0.35em' }}>
+                style={{ letterSpacing: '0.2em', color: 'var(--c-text-dim)' }}>
                 {message}
               </p>
             </div>

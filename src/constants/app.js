@@ -11,6 +11,10 @@ export const APP_SHORT_NAME = 'WWBAM';
 // Loading screen
 export const COPY_LOADING = {
   CONNECTING: 'Connecting...',
+  CONNECTING_FIREBASE: 'Connecting to Firebase...',
+  AUTHENTICATING: 'Authenticating...',
+  AUTH_FAILED: 'Auth failed:', // suffix with `: ${errorMessage}` at call site
+  CONNECTION_ERROR: 'Connection error:', // suffix with `: ${errorMessage}` at call site
 };
 
 // Idle screen — Lobby phase
@@ -59,10 +63,12 @@ export const COPY_TEAM_RESULT = {
 };
 
 // Game screen — Phone a Friend overlay
+// CALLING_PREFIX is combined with the masked number at render time:
+//   `${COPY_PHONE_A_FRIEND.CALLING_PREFIX} ${maskedNumber}...`
 export const COPY_PHONE_A_FRIEND = {
   TITLE: 'Phone a Friend',
-  CALL_IN_PROGRESS: 'Call in progress',
-  TIMER_RUNNING: 'Connected',
+  CALLING_PREFIX: 'Calling', // before timer starts — shown with masked number
+  ON_THE_LINE: 'On the line', // once timer starts
 };
 
 // Results screen

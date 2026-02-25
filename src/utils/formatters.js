@@ -82,3 +82,49 @@ export const formatPrizeShort = (amount) => {
 
   return `${CURRENCY} ${n}`;
 };
+
+/**
+ * Masks a contact number, revealing only the last 3 digits.
+ * Preserves the original formatting characters (+, spaces, dashes) so the
+ * masked string looks natural alongside the real number's structure.
+ *
+ * Strategy:
+ *  1. Extract all digit characters and count them.
+ *  2. Walk the original string character by character:
+ *     - Non-digit characters ('+', ' ', '-') are kept as-is.
+ *     - Digit characters are replaced with '•' for all but the final 3 digits.
+ *  3. Falls back to '•••' if the contact string is empty / not a string.
+ *
+ * @param {string|null|undefined} contact
+ * @returns {string}
+ *
+ * @example
+ * maskContactNumber('+94 77 123 4567') // '+•• •• ••• 567'
+ * maskContactNumber('0771234567')      // '•••••••567'
+ * maskContactNumber('+1 555 123 4567') // '+• ••• ••• 567'
+ * maskContactNumber(null)              // '•••'
+ */
+export const maskContactNumber = (contact) => {
+  if (!contact || typeof contact !== 'string') return '•••';
+
+  const digits = contact.replace(/\D/g, '');
+  const totalDigits = digits.length;
+
+  if (totalDigits === 0) return '•••';
+
+  const visibleCount = 3;
+  const maskCount = Math.max(0, totalDigits - visibleCount);
+
+  let digitsSeen = 0;
+  return contact
+    .split('')
+    .map((char) => {
+      if (/\d/.test(char)) {
+        const masked = digitsSeen < maskCount ? '•' : char;
+        digitsSeen++;
+        return masked;
+      }
+      return char;
+    })
+    .join('');
+};

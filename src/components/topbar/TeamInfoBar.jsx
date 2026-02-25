@@ -2,6 +2,7 @@
 
 import WwbamShape from '@components/ui/WwbamShape';
 import { formatPrize } from '@utils/formatters';
+import { formatParticipantFirstNames } from '@utils/participants';
 
 /**
  * TeamInfoBar
@@ -11,8 +12,8 @@ import { formatPrize } from '@utils/formatters';
  *
  *   [ Now Playing / Team Name / Participants ] | [ Q# ] | [ Prize ]
  *
- * Shape is rendered by <WwbamShape> — a responsive SVG with rounded-corner
- * beveled rectangle, outward left/right points, and animated gradient border.
+ * Participants are shown as first names only — full names are reserved
+ * for the TeamAnnouncement overlay.
  *
  * @param {{
  *   currentTeam:           object|null,
@@ -30,6 +31,10 @@ export default function TeamInfoBar({
       ? (prizeStructure[currentQuestionNumber - 1] ?? 0)
       : 0;
 
+  const participantFirstNames = formatParticipantFirstNames(
+    currentTeam?.participants,
+  );
+
   return (
     <WwbamShape
       size="wide"
@@ -44,9 +49,9 @@ export default function TeamInfoBar({
           <span className="wwbam-team-name truncate">
             {currentTeam?.name ?? '—'}
           </span>
-          {currentTeam?.participants && (
+          {participantFirstNames && (
             <span className="wwbam-participants truncate">
-              {currentTeam.participants}
+              {participantFirstNames}
             </span>
           )}
         </div>

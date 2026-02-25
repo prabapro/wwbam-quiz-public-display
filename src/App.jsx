@@ -10,6 +10,7 @@ import LoadingScreen from '@screens/LoadingScreen';
 import IdleScreen from '@screens/IdleScreen';
 import GameScreen from '@screens/GameScreen';
 import ResultsScreen from '@screens/ResultsScreen';
+import { COPY_LOADING } from '@constants/app';
 
 /**
  * App — Root component
@@ -50,34 +51,36 @@ export default function App() {
 
   // ── Loading states ──────────────────────────────────────────────────────────
   if (!authReady && !authError) {
-    return <LoadingScreen message="Authenticating..." />;
+    return <LoadingScreen message={COPY_LOADING.AUTHENTICATING} />;
   }
 
   if (authError) {
-    return <LoadingScreen message={`Auth failed: ${authErrorMessage}`} />;
+    return (
+      <LoadingScreen
+        message={`${COPY_LOADING.AUTH_FAILED} ${authErrorMessage}`}
+      />
+    );
   }
 
   if (!isListening && !dbError) {
-    return <LoadingScreen message="Connecting to Firebase..." />;
+    return <LoadingScreen message={COPY_LOADING.CONNECTING_FIREBASE} />;
   }
 
   if (dbError) {
-    return <LoadingScreen message={`Connection error: ${dbErrorMessage}`} />;
+    return (
+      <LoadingScreen
+        message={`${COPY_LOADING.CONNECTION_ERROR} ${dbErrorMessage}`}
+      />
+    );
   }
 
   // ── Screen routing ─────────────────────────────────────────────────────────
   const { gameStatus, displayFinalResults } = gameState ?? {};
 
-  // Results screen takes priority
   if (displayFinalResults) {
-    return (
-      <AnimatePresence mode="wait">
-        <ResultsScreen key="results" teams={teams} />
-      </AnimatePresence>
-    );
+    return <ResultsScreen teams={teams} />;
   }
 
-  // Active gameplay (including paused and completed-but-not-yet-results)
   if (
     gameStatus === 'active' ||
     gameStatus === 'paused' ||
@@ -97,17 +100,9 @@ export default function App() {
     );
   }
 
-  // Fallback: not-started / initialized / unknown
-  // Pass teams + gameState so IdleScreen can render the lobby roster,
-  // the initialization stepper, and the ready-state play order.
   return (
     <AnimatePresence mode="wait">
-      <IdleScreen
-        key="idle"
-        gameStatus={gameStatus}
-        teams={teams}
-        gameState={gameState}
-      />
+      <IdleScreen key="idle" gameState={gameState} teams={teams} />
     </AnimatePresence>
   );
 }

@@ -125,7 +125,7 @@ export default function LifelineIndicator({
                   {isActive && (
                     <motion.span
                       className="absolute inset-0 rounded-full pointer-events-none"
-                      style={{ background: 'rgba(232,146,10,0.2)' }}
+                      style={{ background: 'var(--c-gold-pulse-bg)' }}
                       animate={{ scale: [1, 1.9], opacity: [0.6, 0] }}
                       transition={{
                         duration: 1.2,
@@ -143,7 +143,7 @@ export default function LifelineIndicator({
                     {lifeline.label}
                   </span>
                   <span
-                    className={`wwbam-lifeline-status ${isUsed ? 'wwbam-used-subtext' : ''}`}
+                    className="wwbam-lifeline-status"
                     style={{ color: STATUS_LABEL_COLOR[state] }}>
                     {STATUS_LABELS[state]}
                   </span>
