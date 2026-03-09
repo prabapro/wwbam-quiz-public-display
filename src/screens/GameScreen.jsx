@@ -82,33 +82,15 @@ function deriveOverlay(gameState, currentTeam) {
  *
  * Layout (3-column):
  *   Left sidebar  — TeamList      (w-80, hidden when showTeamList is false)
- *   Center        — QuestionCard + OptionGrid (flex-1, always centered)
+ *   Center        — QuestionCard + OptionGrid (flex-1, always centred)
  *   Right sidebar — PrizeLadder   (w-80, hidden when showPrizeLadder is false)
  *
- * Top bar proportions (fixed 3-column grid: 2fr 1fr 1fr):
- *   col 1 (50%) — TeamInfoBar
- *   col 2 (25%) — Phone a Friend lifeline
- *   col 3 (25%) — 50/50 lifeline
- *
- * teamResult delay:
- *   `teamResultKey` is a stable identity string for the current result team
- *   (e.g. "team-3-eliminated"). `unlockedKey` holds the key whose delay timer
- *   last fired. `showTeamResult` is only true when they match.
- *
- * Gameplay snapshot:
- *   completeGame() clears questionVisible, optionsVisible, currentQuestion etc.
- *   in the same Firebase write that sets gameStatus:'completed'. Without a
- *   snapshot, the center column goes blank during the delay window.
- *
- *   We capture a snapshot of the question/options state the moment
- *   `answerRevealed:true` AND `currentTeam.status` is terminal — this is the
- *   render cycle BEFORE completeGame() wipes the data. The render-time setState
- *   pattern (React's "storing information from previous renders") is used so the
- *   snapshot is captured synchronously in the same render as the source data,
- *   with no async effect or timer that could race against completeGame().
- *
- *   During the delay window, `activeGameplay` serves the frozen values with
- *   questionVisible/optionsVisible forced to true.
+ * Answer lock deliberation:
+ *   When `selectedOption` is set but `answerRevealed` is still false, the host
+ *   has locked the answer for deliberation. OptionGrid already renders the
+ *   chosen option in amber automatically. A subtle "deliberating" banner is
+ *   shown below the options so the audience knows the host is considering.
+ *   The banner disappears once `answerRevealed` becomes true.
  *
  * @param {{
  *   gameState:      object,
@@ -160,16 +142,8 @@ export default function GameScreen({
   // ── Gameplay snapshot for the teamResult delay window ─────────────────────
   //
   // completeGame() clears question/options data in Firebase at the same time
-  // it sets gameStatus:'completed'. By the time the delay effect runs, the data
-  // is already gone. We capture a snapshot synchronously during render at the
-  // last moment we have the data: when answerRevealed:true AND currentTeam is
-  // terminal. After completeGame(), currentTeam becomes null so captureKey
-  // becomes null and we stop capturing.
-  //
-  // React's "storing information from previous renders" pattern is intentional
-  // here — calling setState during render is documented and lint-safe (no effect
-  // involved). React discards the current render and immediately re-runs with
-  // the new state, so no intermediate blank frame is painted.
+  // it sets gameStatus:'completed'. We capture a snapshot synchronously during
+  // render using React's "storing information from previous renders" pattern.
   const currentTeamIsTerminal =
     currentTeam?.status === 'eliminated' || currentTeam?.status === 'completed';
 
@@ -193,8 +167,7 @@ export default function GameScreen({
   }
 
   // During the delay window, serve frozen values so question/options stay
-  // visible. Force questionVisible/optionsVisible true since completeGame()
-  // clears them. Outside the delay window, always use live gameState.
+  // visible. Outside the delay window, use live gameState.
   const activeGameplay =
     overlay === 'teamResult' && !showTeamResult && frozenGameplay
       ? {
@@ -278,6 +251,7 @@ export default function GameScreen({
                     questionVisible={activeGameplay.questionVisible}
                     currentQuestionNumber={gameState?.currentQuestionNumber}
                   />
+
                   <OptionGrid
                     options={activeGameplay.currentQuestion?.options}
                     optionsVisible={activeGameplay.optionsVisible}
@@ -318,37 +292,39 @@ export default function GameScreen({
           {overlay === 'pause' && (
             <motion.div
               key="pause"
-              className="absolute inset-0 flex flex-col items-center justify-center gap-4"
-              style={{
-                background: 'var(--c-screen-bg-overlay)',
-                backdropFilter: 'blur(4px)',
-              }}
+              className="absolute inset-0 flex items-center justify-center"
+              style={{ background: 'var(--c-overlay)' }}
               variants={pauseOverlayVariants}
               initial="hidden"
               animate="visible"
               exit="exit">
-              <p className="wwbam-overlay-heading">{COPY_PAUSE.HEADING}</p>
-              <p className="wwbam-overlay-subheading">
-                {COPY_PAUSE.SUBHEADING}
+              <p
+                className="wwbam-label"
+                style={{
+                  letterSpacing: '0.35em',
+                  color: 'var(--c-used-text)',
+                  fontSize: '1.5rem',
+                }}>
+                {COPY_PAUSE.LABEL}
               </p>
             </motion.div>
           )}
 
-          {overlay === 'teamResult' && showTeamResult && (
-            <TeamResult
-              key="team-result"
-              team={resultTeam}
-              totalQuestions={prizeStructure?.length ?? 15}
-            />
-          )}
-
           {overlay === 'announcement' && (
             <TeamAnnouncement
-              key="announcement"
+              key={`announcement-${currentTeam?.id}`}
               team={currentTeam}
               queuePosition={queuePosition}
               queueTotal={playQueue.length}
               prizeStructure={prizeStructure}
+            />
+          )}
+
+          {showTeamResult && (
+            <TeamResult
+              key={`result-${resultTeam?.id}`}
+              team={resultTeam}
+              totalQuestions={prizeStructure?.length ?? 20}
             />
           )}
         </AnimatePresence>
